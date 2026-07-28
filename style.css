@@ -8,7 +8,7 @@ body { margin: 0; overflow: hidden; background: #020403; color: #d9e8dd; font-fa
 .panel { pointer-events: auto; width: 280px; align-self: flex-end; background: rgba(5,11,7,.68); border: 1px solid rgba(var(--accent-rgb),.26); border-radius: 12px; overflow: hidden; backdrop-filter: blur(14px); box-shadow: 0 20px 60px #0008; transition: opacity .3s, transform .3s; }
 .panel-top { height: 48px; padding: 0 15px 0 17px; display: flex; align-items: center; justify-content: space-between; color: var(--accent); border-bottom: 1px solid rgba(var(--accent-rgb),.16); font-size: 10px; letter-spacing: .14em; }
 .panel-top button { border: 0; color: inherit; background: transparent; cursor: pointer; font: 22px/1 sans-serif; padding: 4px; }
-.settings { padding: 17px; display: grid; gap: 9px; }
+.settings { padding: 17px; display: grid; gap: 9px; max-height: calc(100vh - 150px); overflow: auto; }
 label { color: #87958a; font-size: 9px; letter-spacing: .12em; display: flex; justify-content: space-between; margin-top: 4px; }
 output { color: #c3d2c5; letter-spacing: 0; }
 .color-row { display: flex; height: 34px; gap: 8px; }
