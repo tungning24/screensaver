@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; overflow: hidden; background: #020403; color: #d9e8dd; font-family: "DM Mono", monospace; }
 #matrix { position: fixed; inset: 0; width: 100%; height: 100%; }
-.hud { position: fixed; inset: 0; pointer-events: none; padding: 30px; display: flex; flex-direction: column; justify-content: space-between; }
+.hud { position: fixed; inset: 0; pointer-events: none; padding: 30px; display: flex; flex-direction: column; justify-content: flex-start; gap: 18px; }
 .brand { align-self: flex-start; display: flex; align-items: center; gap: 9px; color: #e9f5eb; font: 500 12px/1 "Space Grotesk", sans-serif; letter-spacing: .18em; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
 .panel { pointer-events: auto; width: 280px; align-self: flex-end; background: rgba(5,11,7,.68); border: 1px solid rgba(var(--accent-rgb),.26); border-radius: 12px; overflow: hidden; backdrop-filter: blur(14px); box-shadow: 0 20px 60px #0008; transition: opacity .3s, transform .3s; }
@@ -26,7 +26,7 @@ input[type=range] { width: 100%; height: 14px; margin: 0; accent-color: var(--ac
 .check-row input:checked { border-color: var(--accent); background: rgba(var(--accent-rgb),.22); }.check-row input:checked::after { left: 16px; background: var(--accent); }
 .swatch { width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid transparent; background: var(--swatch); box-shadow: inset 0 0 0 2px #09100b; cursor: pointer; }
 .swatch.active { outline: 1px solid var(--swatch); outline-offset: 3px; }
-.hint { align-self: center; color: #7d8a80; font-size: 9px; letter-spacing: .1em; transition: opacity .25s; }
+.hint { align-self: center; margin-top: auto; color: #7d8a80; font-size: 9px; letter-spacing: .1em; transition: opacity .25s; }
 kbd { border: 1px solid #506055; border-radius: 3px; padding: 2px 4px; color: #d4ded6; font: inherit; }
 .panel.collapsed .settings { display: none; }.panel.collapsed .panel-top { border-bottom: 0; }.hidden-ui .panel, .hidden-ui .brand, .hidden-ui .hint { opacity: 0; pointer-events: none; }
-@media (max-width: 560px) { .hud { padding: 18px; justify-content: flex-start; gap: 18px; }.panel { width: min(280px, 100%); }.hint { margin-top: auto; font-size: 8px; } }
+@media (max-width: 560px) { .hud { padding: 18px; }.panel { width: min(280px, 100%); }.hint { font-size: 8px; } }
