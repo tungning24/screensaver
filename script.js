@@ -599,8 +599,17 @@ $('toggle').onclick = e => {
     p.classList.toggle('collapsed');
     e.target.textContent = p.classList.contains('collapsed') ? '+' : '−'
 };
+function toggleControls() {
+    const hidden = document.body.classList.toggle('hidden-ui');
+    const button = $('uiVisibilityToggle');
+    button.textContent = hidden ? 'SHOW CONTROLS' : 'HIDE CONTROLS';
+    button.setAttribute('aria-pressed', String(hidden));
+    button.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
+    localStorage.screenControlsHidden = hidden ? '1' : '';
+}
+$('uiVisibilityToggle').onclick = toggleControls;
 document.onkeydown = e => {
-    if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('hidden-ui');
+    if (e.key === 'h' || e.key === 'H') toggleControls();
     if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()
 };
 setInterval(() => {
@@ -610,6 +619,7 @@ setInterval(() => {
     }
 }, 12000);
 setColor(palettes[theme] ? tone() : color);
+if (localStorage.screenControlsHidden === '1') toggleControls();
 pick(scene);
 resize();
 onresize = resize;
