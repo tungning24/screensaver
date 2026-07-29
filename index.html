@@ -1,71 +1,70 @@
-< !doctype html>
-    < html lang="th">
-        < head>
-            < meta charset="UTF-8">
-                < meta name="viewport" content="width=device-width,initial-scale=1">
-                    < meta name="theme-color" content="#020403">
-                        < meta name="apple-mobile-web-app-capable" content="yes">
-                            < link rel="manifest" href="manifest.webmanifest">
-                                < link rel="apple-touch-icon" href="icon_192.png">
-                                    < title> Screen Gallery < /title>
-                                            <link rel="preconnect" href="https:/ / fonts.googleapis.com ">
-                                            <link rel="
-preconnect " href="
-https: //fonts.gstatic.com" crossorigin>
-                                            <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-                                            <link rel="stylesheet" href="style.css">
-                                            </head>
+<!doctype html>
+<html lang="th">
 
-                                            <body><canvas id="matrix" aria-label="Animated screensaver"></canvas>
-                                                <main class="hud">
-                                                    <section class="brand"><span class="status-dot"></span><span id="sceneTitle">MATRIX FLOW</span></section>
-                                                    <section class="panel" id="panel">
-                                                        <div class="panel-top"><span>DISPLAY SETTINGS</span><button id="toggle" aria-label="Collapse settings">-’</button></div>
-                                                        <div class="settings" id="settings"><label for="scene">SCREENSAVER</label><select id="scene">
-                                                                <option value="matrix">01 - Matrix Flow</option>
-                                                                <option value="stars">02 - Starfield</option>
-                                                                <option value="fire">03 - Fireplace Ember</option>
-                                                                <option value="rain">04 - Rain on Glass</option>
-                                                                <option value="aurora">05 - Aurora</option>
-                                                                <option value="ink">06 - Fluid Ink</option>
-                                                                <option value="dvd">07 - Retro DVD</option>
-                                                                <option value="clock">08 - Digital Clock</option>
-                                                                <option value="grid">09 - Cyber Grid</option>
-                                                                <option value="network">10 - Particle Network</option>
-                                                                <option value="terminal">11 - Code Terminal</option>
-                                                                <option value="hello">12 - Hello World</option>
-                                                                <option value="fireflies">13 - Fireflies</option>
-                                                                <option value="bubbles">14 - Floating Bubbles</option>
-                                                                <option value="mesh">15 - Low Poly Mesh</option>
-                                                                <option value="sakura">16 - Sakura</option>
-                                                                <option value="snow">17 - Snow</option>
-                                                                <option value="storm">18 - Storm Rain</option>
-                                                                <option value="paint">19 - Paint Splash</option>
-                                                                <option value="plasma">20 - Plasma</option>
-                                                                <option value="smoke">21 - Smoke</option>
-                                                                <option value="confetti">22 - Confetti</option>
-                                                            </select><label for="theme">COLOR THEME</label><select id="theme">
-                                                                <option value="normal">Normal</option>
-                                                                <option value="random">Random presets / 12 sec</option>
-                                                                <option value="neon">Neon</option>
-                                                                <option value="ocean">Ocean</option>
-                                                                <option value="sunset">Sunset</option>
-                                                                <option value="violet">Violet</option>
-                                                                <option value="mono">Mono</option>
-                                                                <option value="ice">Ice</option>
-                                                                <option value="forest">Forest</option>
-                                                                <option value="candy">Candy</option>
-                                                                <option value="gold">Gold</option>
-                                                                <option value="lava">Lava</option>
-                                                                <option value="pastel">Pastel</option>
-                                                            </select><label for="colorPicker">ACCENT COLOR</label>
-                                                            <div class="color-row"><input type="color" id="colorPicker" value="#36f76d"><input id="colorText" maxlength="7" value="#36F76D"></div><label for="speed">ANIMATION SPEED <output id="speedValue">1.0x</output></label><input type="range" id="speed" min="0.25" max="2" step="0.05" value="1"><label for="density">DENSITY <output id="densityValue">Normal</output></label><input type="range" id="density" min="12" max="42" step="1" value="24">
-                                                            <div class="presets"><button class="swatch active" data-color="#36F76D" style="--swatch:#36F76D"></button><button class="swatch" data-color="#35D7FF" style="--swatch:#35D7FF"></button><button class="swatch" data-color="#C77DFF" style="--swatch:#C77DFF"></button><button class="swatch" data-color="#FF4D7D" style="--swatch:#FF4D7D"></button><button class="swatch" data-color="#FFB347" style="--swatch:#FFB347"></button></div>
-                                                        </div>
-                                                    </section>
-                                                    <div class="hint">PRESS <kbd>H</kbd> TO HIDE CONTROLS · <kbd>F</kbd> FOR FULLSCREEN</div>
-                                                </main>
-                                                <script src="script.js"></script>
-                                            </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#020403">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon_192.png">
+    <title> Screen Gallery </title>
+    <link rel="preconnect" href="https:/ / fonts.googleapis.com ">
+    <link rel="preconnect " href="https: //fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
 
-                                            </html>
+<body><canvas id="matrix" aria-label="Animated screensaver"></canvas>
+    <main class="hud">
+        <section class="brand"><span class="status-dot"></span><span id="sceneTitle">MATRIX FLOW</span></section>
+        <section class="panel" id="panel">
+            <div class="panel-top"><span>DISPLAY SETTINGS</span><button id="toggle" aria-label="Collapse settings">-’</button></div>
+            <div class="settings" id="settings"><label for="scene">SCREENSAVER</label><select id="scene">
+                    <option value="matrix">01 - Matrix Flow</option>
+                    <option value="stars">02 - Starfield</option>
+                    <option value="fire">03 - Fireplace Ember</option>
+                    <option value="rain">04 - Rain on Glass</option>
+                    <option value="aurora">05 - Aurora</option>
+                    <option value="ink">06 - Fluid Ink</option>
+                    <option value="dvd">07 - Retro DVD</option>
+                    <option value="clock">08 - Digital Clock</option>
+                    <option value="grid">09 - Cyber Grid</option>
+                    <option value="network">10 - Particle Network</option>
+                    <option value="terminal">11 - Code Terminal</option>
+                    <option value="hello">12 - Hello World</option>
+                    <option value="fireflies">13 - Fireflies</option>
+                    <option value="bubbles">14 - Floating Bubbles</option>
+                    <option value="mesh">15 - Low Poly Mesh</option>
+                    <option value="sakura">16 - Sakura</option>
+                    <option value="snow">17 - Snow</option>
+                    <option value="storm">18 - Storm Rain</option>
+                    <option value="paint">19 - Paint Splash</option>
+                    <option value="plasma">20 - Plasma</option>
+                    <option value="smoke">21 - Smoke</option>
+                    <option value="confetti">22 - Confetti</option>
+                </select><label for="theme">COLOR THEME</label><select id="theme">
+                    <option value="normal">Normal</option>
+                    <option value="random">Random presets / 12 sec</option>
+                    <option value="neon">Neon</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="sunset">Sunset</option>
+                    <option value="violet">Violet</option>
+                    <option value="mono">Mono</option>
+                    <option value="ice">Ice</option>
+                    <option value="forest">Forest</option>
+                    <option value="candy">Candy</option>
+                    <option value="gold">Gold</option>
+                    <option value="lava">Lava</option>
+                    <option value="pastel">Pastel</option>
+                </select><label for="colorPicker">ACCENT COLOR</label>
+                <div class="color-row"><input type="color" id="colorPicker" value="#36f76d"><input id="colorText" maxlength="7" value="#36F76D"></div><label for="speed">ANIMATION SPEED <output id="speedValue">1.0x</output></label><input type="range" id="speed" min="0.25" max="2" step="0.05" value="1"><label for="density">DENSITY <output id="densityValue">Normal</output></label><input type="range" id="density" min="12" max="42" step="1" value="24">
+                <div class="presets"><button class="swatch active" data-color="#36F76D" style="--swatch:#36F76D"></button><button class="swatch" data-color="#35D7FF" style="--swatch:#35D7FF"></button><button class="swatch" data-color="#C77DFF" style="--swatch:#C77DFF"></button><button class="swatch" data-color="#FF4D7D" style="--swatch:#FF4D7D"></button><button class="swatch" data-color="#FFB347" style="--swatch:#FFB347"></button></div>
+            </div>
+        </section>
+        <div class="hint">PRESS <kbd>H</kbd> TO HIDE CONTROLS · <kbd>F</kbd> FOR FULLSCREEN</div>
+    </main>
+    <script src="script.js"></script>
+</body>
+
+</html>
