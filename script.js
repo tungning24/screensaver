@@ -28,11 +28,13 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
     randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava'],
     title = {
         matrix: 'MATRIX FLOW',
+        matrix2: 'AUTHENTIC MATRIX',
         stars: 'STARFIELD',
         fire: 'FIREPLACE EMBER',
         rain: 'RAIN ON GLASS',
         aurora: 'AURORA',
         ink: 'FLUID INK',
+        ink2: 'FLUID INK BUBBLES',
         dvd: 'RETRO DVD',
         clock: 'DIGITAL CLOCK',
         grid: 'CYBER GRID',
@@ -149,12 +151,87 @@ function matrix(k) {
             x.fillStyle = j ? tone() : '#f0fff2';
             x.fillText(chars[Math.random() * chars.length | 0], i * W / S.drop.length + W / S.drop.length / 2, d * fs - j * fs)
         }
-        d += k * (.6 + Math.random());
+        d += k * (.06 + Math.random());
         if (d * fs > H && Math.random() > .975) d = -Math.random() * 20;
         S.drop[i] = d
     });
     x.globalAlpha = 1;
     x.shadowBlur = 0
+}
+
+function matrix2(k) {
+    bg(.25); // Crisp background clear to prevent blurry smudging
+    let fs = +$('density').value;
+    x.font = `500 ${fs}px monospace`;
+    x.textAlign = 'center';
+    let activeTone = tone();
+
+    if (!S.matrix2 || S.matrix2.length !== count(fs)) {
+        let cols = count(fs);
+        S.matrix2 = Array.from({ length: cols }, () => {
+            let len = R(12, 28) | 0;
+            return {
+                y: R(-H / fs, 0),
+                speed: R(0.1, 0.25), //0.25,0.70
+                len: len,
+                chars: Array.from({ length: len }, () => chars[Math.random() * chars.length | 0]),
+                ticks: 0
+            };
+        });
+    }
+
+    S.matrix2.forEach((col, i) => {
+        let colX = i * W / S.matrix2.length + (W / S.matrix2.length) / 2;
+        col.ticks = (col.ticks || 0) + k;
+
+        // Change head character at a comfortable speed (~10 times per sec instead of 60)
+        if (col.ticks >= 6) {
+            col.chars[0] = chars[Math.random() * chars.length | 0];
+            col.ticks = 0;
+        }
+
+        // Subtle random mutation in tail (0.3% chance per frame) to keep text crisp & readable
+        if (Math.random() < 0.003) {
+            let mutIdx = 1 + (Math.random() * (col.len - 1) | 0);
+            col.chars[mutIdx] = chars[Math.random() * chars.length | 0];
+        }
+
+        for (let j = 0; j < col.len; j++) {
+            let charY = (col.y - j) * fs;
+            if (charY < -fs || charY > H + fs) continue;
+
+            if (j === 0) {
+                // Sharp White Head with subtle glow
+                x.shadowColor = '#ffffff';
+                x.shadowBlur = 4;
+                x.fillStyle = '#ffffff';
+                x.globalAlpha = 1;
+            } else {
+                // Clear, readable body characters fading down the tail
+                x.shadowColor = activeTone;
+                x.shadowBlur = j < 2 ? 3 : 0;
+                let fade = 1 - (j / col.len);
+                x.globalAlpha = Math.max(0.12, fade);
+                x.fillStyle = activeTone;
+            }
+
+            x.fillText(col.chars[j] || chars[0], colX, charY);
+        }
+
+        col.y += k * col.speed;
+
+        // Reset drop when tail moves completely off-screen
+        if ((col.y - col.len) * fs > H) {
+            col.y = -Math.random() * 12;
+            col.speed = R(0.1, 0.25);
+            col.len = R(12, 28) | 0;
+            col.chars = Array.from({ length: col.len }, () => chars[Math.random() * chars.length | 0]);
+            col.ticks = 0;
+        }
+    });
+
+    x.globalAlpha = 1;
+    x.shadowBlur = 0;
 }
 
 function stars(k) {
@@ -230,6 +307,31 @@ function blobs(k, ink = false) {
         x.fillRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2)
     });
     x.globalCompositeOperation = 'source-over'
+}
+
+function inkBubbles(k) {
+    bg(.6);
+    S.b.forEach(b => {
+        b.x += b.vx * k * 8;
+        b.y += b.vy * k * 8;
+        if (b.x < 0 || b.x > W) b.vx *= -1;
+        if (b.y < 0 || b.y > H) b.vy *= -1;
+
+        let g = x.createRadialGradient(b.x - b.r * .3, b.y - b.r * .3, 1, b.x, b.y, b.r);
+        g.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        g.addColorStop(.25, `rgba(${rgb(tone(b.c))}, .65)`);
+        g.addColorStop(.75, `rgba(${rgb(tone(b.c))}, .3)`);
+        g.addColorStop(1, 'transparent');
+
+        x.fillStyle = g;
+        x.beginPath();
+        x.arc(b.x, b.y, b.r, 0, TAU);
+        x.fill();
+
+        x.strokeStyle = `rgba(${rgb(tone(b.c))}, .85)`;
+        x.lineWidth = 2;
+        x.stroke();
+    });
 }
 
 function dvd(k) {
@@ -341,7 +443,7 @@ function terminal() {
 }
 
 function hello(k) {
-    bg(.18);
+    bg(.6); //trail .18
     if (Math.random() < k * .025 && S.g.length < 15) {
         let a = ['Hello', 'สวัสดี', 'Hola', 'Bonjour', '你好', 'こんにちは', '안녕하세요', 'Hallo', 'Ciao', 'Olá', 'Привет', 'مرحبا', 'नमस्ते', 'Hej', 'Merhaba', 'Halo', 'Aloha', 'Sawubona', 'שלום', 'Xin chào'];
         S.g.push({
@@ -349,14 +451,14 @@ function hello(k) {
             x: W + 80,
             y: R(50, H - 30),
             v: R(1, 4),
-            z: Math.random() < .08 ? R(62, 108) : R(18, 42),
+            z: Math.random() < .15 ? R(92, 168) : R(32, 62),
             r: R(-.3, .3),
             p: 0,
             c: Math.random() * 3 | 0
         })
     }
     S.g.forEach(g => {
-        g.x -= g.v * k * 15;
+        g.x -= g.v * k * 3; //speed 15
         g.p += k;
         let a = Math.min(1, g.p / 15, (W - g.x) / 80, (g.x + 240) / 100);
         x.save();
@@ -518,11 +620,13 @@ function loop(now) {
     t += k;
     ({
         matrix,
+        matrix2,
         stars,
         fire,
         rain,
         aurora: () => blobs(k),
         ink: () => blobs(k, true),
+        ink2: () => inkBubbles(k),
         dvd,
         clock,
         grid,
