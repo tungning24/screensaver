@@ -8,6 +8,9 @@ let W, H, last = 0,
     scene = localStorage.screenScene || 'matrix',
     S = {},
     theme = localStorage.screenTheme || 'normal';
+const sounds = {rain:'mp3/light-rain.mp3',waves:'mp3/ocean-waves.mp3',birds:'mp3/rainy-with-birds.mp3',mood:'mp3/Rainy-Mood.m4a'}, audio = new Audio();
+audio.loop = true;
+function setSound(v) { localStorage.screenSound = v; audio.pause(); if (!v) return audio.removeAttribute('src'); audio.src = sounds[v]; audio.play().catch(() => {}) }
 const palettes = {
     neon: ['#36F76D', '#35D7FF', '#C77DFF'],
     ocean: ['#32D9FF', '#147DFF', '#A6FFFF'],
@@ -558,6 +561,8 @@ function resize() {
     reset();
     fallSetup()
 }
+$('sound').value = localStorage.screenSound || '';
+$('sound').onchange = e => setSound(e.target.value);
 $('theme').value = theme;
 $('theme').onchange = e => {
     theme = e.target.value;
