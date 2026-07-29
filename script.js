@@ -451,10 +451,7 @@ function fall(k, type) {
             x.lineTo(p.x - p.vx * .2, p.y - p.r * 3);
             x.stroke()
         } else if (type === 'storm2') {
-            x.shadowColor = tone(p.c);
-            x.shadowBlur = 7;
             dot(p.x, p.y, p.r * .35, `rgba(${rgb(tone(p.c))},.8)`);
-            x.shadowBlur = 0
         } else if (type === 'snow2') {
             x.shadowColor = tone(p.c);
             x.shadowBlur = 7;
