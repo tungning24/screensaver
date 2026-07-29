@@ -5,7 +5,7 @@ const c = document.querySelector('canvas'),
 let W, H, last = 0,
     t = 0,
     color = localStorage.screenColor || '#36F76D',
-    scene = localStorage.screenScene || 'matrix',
+    scene = localStorage.screenScene === 'storm2' ? 'snow2' : (localStorage.screenScene || 'matrix'),
     S = {},
     theme = localStorage.screenTheme || 'normal';
 const sounds = {rain:'mp3/light-rain.mp3',waves:'mp3/ocean-waves.mp3',birds:'mp3/rainy-with-birds.mp3',mood:'mp3/Rainy-Mood.m4a'}, audio = new Audio();
@@ -45,6 +45,7 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
         sakura: 'SAKURA',
         snow: 'SNOW',
         storm: 'STORM RAIN',
+        snow2: 'SNOW 2',
         paint: 'PAINT SPLASH',
         plasma: 'PLASMA',
         smoke: 'SMOKE',
@@ -121,7 +122,7 @@ function reset() {
 }
 
 function fallSetup() {
-    if (['sakura', 'snow', 'storm', 'confetti'].includes(scene)) S.p = Array.from({
+    if (['sakura', 'snow', 'snow2', 'storm', 'confetti'].includes(scene)) S.p = Array.from({
         length: Math.min(260, count(+$('density').value) * 7)
     }, () => ({
         x: Math.random() * W,
@@ -448,6 +449,11 @@ function fall(k, type) {
             x.moveTo(p.x, p.y);
             x.lineTo(p.x - p.vx * .2, p.y - p.r * 3);
             x.stroke()
+        } else if (type === 'snow2') {
+            x.shadowColor = tone(p.c);
+            x.shadowBlur = 7;
+            dot(p.x, p.y, p.r * .35, `rgba(${rgb(tone(p.c))},.8)`);
+            x.shadowBlur = 0
         } else if (type === 'snow') {
             x.shadowColor = '#fff';
             x.shadowBlur = 7;
@@ -526,6 +532,7 @@ function loop(now) {
         sakura: () => fall(k, 'sakura'),
         snow: () => fall(k, 'snow'),
         storm: () => fall(k, 'storm'),
+        snow2: () => fall(k, 'snow2'),
         paint: () => blobs(k),
         plasma,
         smoke,
