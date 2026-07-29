@@ -25,6 +25,7 @@ const palettes = {
     pastel: ['#A8E6CF', '#FFD3B6', '#FFAAA5']
 };
 const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
+    randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava'],
     title = {
         matrix: 'MATRIX FLOW',
         stars: 'STARFIELD',
@@ -50,8 +51,9 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
         confetti: 'CONFETTI'
     },
     chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
+let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
 const tone = (i = 0) => {
-        let p = palettes[theme] || [color];
+        let p = palettes[theme === 'randomTheme' ? activeRandomTheme : theme] || [color];
         return p[i % p.length]
     },
     rgb = h => {
@@ -542,6 +544,13 @@ function setColor(v) {
     document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('active', b.dataset.color === color))
 }
 
+function rotateRandomTheme() {
+    const choices = randomThemes.filter(name => name !== activeRandomTheme);
+    activeRandomTheme = choices[choices.length * Math.random() | 0];
+    localStorage.screenActiveRandomTheme = activeRandomTheme;
+    setColor(tone())
+}
+
 function pick(v) {
     scene = v;
     $('scene').value = v;
@@ -567,7 +576,8 @@ $('theme').value = theme;
 $('theme').onchange = e => {
     theme = e.target.value;
     localStorage.screenTheme = theme;
-    if (palettes[theme]) setColor(tone());
+    if (theme === 'randomTheme') rotateRandomTheme();
+    else if (palettes[theme]) setColor(tone());
     reset();
     fallSetup()
 };
@@ -618,7 +628,10 @@ setInterval(() => {
         setColor(a[a.length * Math.random() | 0])
     }
 }, 12000);
-setColor(palettes[theme] ? tone() : color);
+setInterval(() => {
+    if (theme === 'randomTheme') rotateRandomTheme();
+}, 20000);
+setColor(palettes[theme] || theme === 'randomTheme' ? tone() : color);
 if (localStorage.screenControlsHidden === '1') toggleControls();
 pick(scene);
 resize();
