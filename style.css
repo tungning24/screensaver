@@ -163,8 +163,27 @@ select {
     cursor: pointer;
 }
 
-select:focus {
-    border-color: var(--accent);
+optgroup {
+    background: #09100b;
+    color: var(--accent);
+    font-weight: bold;
+    font-style: normal;
+}
+
+option {
+    background: #0d1610;
+    color: #d9e8dd;
+}
+
+:focus-visible,
+select:focus,
+button:focus,
+input:focus,
+.swatch:focus {
+    border-color: var(--accent) !important;
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6) !important;
 }
 
 input[type=range] {

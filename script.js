@@ -27,6 +27,13 @@ const palettes = {
 const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
     randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava'],
     title = {
+        tv_clock: 'TV FLIP CLOCK [60FPS]',
+        tv_stars: 'TV COSMIC STAR WARP [60FPS]',
+        tv_matrix: 'TV OPTIMIZED MATRIX [60FPS]',
+        tv_grid: 'TV CYBERPUNK GRID [60FPS]',
+        tv_grid2: 'TV CYBERPUNK GRID MOTION [60FPS]',
+        tv_blobs: 'TV NEON FLUID BLOBS [60FPS]',
+        tv_dvd: 'TV RETRO DVD DRIFT [60FPS]',
         matrix: 'MATRIX FLOW',
         matrix2: 'AUTHENTIC MATRIX',
         stars: 'STARFIELD',
@@ -77,6 +84,12 @@ const tone = (i = 0) => {
         x.fill()
     },
     count = n => Math.max(20, W / n | 0);
+	
+const darkTone = (hex, p = 20) =>
+    "#" + hex.slice(1).match(/../g)
+        .map(c => Math.max(0, parseInt(c, 16) * (100 - p) / 100 | 0)
+        .toString(16).padStart(2, "0"))
+        .join("");
 
 function reset() {
     let q = count(+$('density').value),
@@ -120,7 +133,34 @@ function reset() {
             vx: 2,
             vy: 1.5
         },
-        g: []
+        g: [],
+        tv_star: Array.from({ length: 250 }, () => ({
+            x: (Math.random() - 0.5) * W * 1.5,
+            y: (Math.random() - 0.5) * H * 1.5,
+            z: Math.random() * W,
+            pz: Math.random() * W
+        })),
+        tv_matrix: Array.from({ length: Math.min(60, count(28)) }, () => ({
+            y: Math.random() * -40,
+            speed: R(0.12, 0.28),
+            len: R(10, 22) | 0,
+            chars: Array.from({ length: 22 }, () => chars[Math.random() * chars.length | 0])
+        })),
+        tv_blobs: Array.from({ length: 6 }, () => ({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            r: R(120, 260),
+            vx: R(-0.5, 0.5),
+            vy: R(-0.5, 0.5),
+            c: Math.random() * 3 | 0
+        })),
+        tv_dvd: {
+            x: W * 0.3,
+            y: H * 0.3,
+            vx: 2.5,
+            vy: 1.8,
+            c: 0
+        }
     }
 }
 
@@ -614,11 +654,369 @@ function smoke(k) {
     })
 }
 
+function tv_clock() {
+    bg(.15);
+    let d = new Date();
+    let shiftX = Math.sin(t * 0.02) * 14;
+    let shiftY = Math.cos(t * 0.015) * 10;
+    
+    x.textAlign = 'center';
+    x.fillStyle = color;
+    x.font = `600 ${Math.min(W * .15, 140)}px "Space Grotesk", sans-serif`;
+    x.fillText(d.toLocaleTimeString(), W / 2 + shiftX, H / 2 + shiftY);
+    
+    x.fillStyle = 'rgba(217, 232, 221, 0.85)';
+    x.font = '500 20px "DM Mono", monospace';
+    let days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    let dateStr = `${days[d.getDay()]} · ${d.toLocaleDateString()}`;
+    x.fillText(dateStr, W / 2 + shiftX, H / 2 + shiftY + 54);
+}
+
+function tv_stars(k) {
+    bg(.25);
+    let activeTone = tone();
+    x.lineWidth = 1.5;
+    if (!S.tv_star) return;
+    S.tv_star.forEach(s => {
+        s.pz = s.z;
+        s.z -= k * 18;
+        if (s.z < 1) {
+            s.z = W;
+            s.pz = W;
+            s.x = (Math.random() - .5) * W * 1.5;
+            s.y = (Math.random() - .5) * H * 1.5;
+        }
+        let X = s.x / s.z * W + W / 2;
+        let Y = s.y / s.z * W + H / 2;
+        let pX = s.x / s.pz * W + W / 2;
+        let pY = s.y / s.pz * W + H / 2;
+        let a = Math.max(0.1, 1 - s.z / W);
+        
+        x.strokeStyle = activeTone;
+        x.globalAlpha = a;
+        x.beginPath();
+        x.moveTo(pX, pY);
+        x.lineTo(X, Y);
+        x.stroke();
+    });
+    x.globalAlpha = 1;
+}
+
+function tv_matrix(k) {
+    bg(.18);
+    let fs = 24;
+    x.font = `500 ${fs}px monospace`;
+    x.textAlign = 'center';
+    if (!S.tv_matrix) return;
+    let cols = S.tv_matrix.length;
+    let colWidth = W / cols;
+
+    S.tv_matrix.forEach((col, i) => {
+        let colX = i * colWidth + colWidth / 2;
+        col.y += k * col.speed;
+        
+        for (let j = 0; j < col.len; j++) {
+            let charY = (col.y - j) * fs;
+            if (charY < -fs || charY > H + fs) continue;
+            
+            if (j === 0) {
+                x.fillStyle = '#ffffff';
+                x.globalAlpha = 1;
+            } else {
+                x.fillStyle = tone();
+                x.globalAlpha = Math.max(0.1, 1 - (j / col.len));
+            }
+            x.fillText(col.chars[j % col.chars.length], colX, charY);
+        }
+
+        if ((col.y - col.len) * fs > H) {
+            col.y = -Math.random() * 10;
+            col.speed = R(0.12, 0.28);
+        }
+    });
+    x.globalAlpha = 1;
+}
+
+function tv_grid(k) {
+    bg(.18);
+    let h = H * 0.52;
+    let activeTone = tone();
+    
+    let sunR = Math.min(W, H) * 0.16;
+    let g = x.createLinearGradient(W / 2, h - sunR, W / 2, h);
+    g.addColorStop(0, '#FFF1A8');
+    g.addColorStop(1, activeTone);
+    x.fillStyle = g;
+    x.beginPath();
+    x.arc(W / 2, h, sunR, 0, TAU);
+    x.fill();
+
+    x.strokeStyle = activeTone;
+    x.lineWidth = 2;
+    x.beginPath();
+    x.moveTo(0, h);
+    x.lineTo(W, h);
+    x.stroke();
+
+    x.lineWidth = 1;
+    for (let i = -16; i <= 16; i++) {
+        x.beginPath();
+        x.moveTo(W / 2 + i * (W * 0.025), h);
+        x.lineTo(W / 2 + i * (W * 0.14), H);
+        x.stroke();
+    }
+
+    let flow = (t * 0.015) % 1;
+    for (let i = 0; i < 10; i++) {
+        let p = ((i / 10) + flow) % 1;
+        let y = h + (H - h) * (p * p);
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+}
+
+/*function tv_grid2(k) {
+    bg(.15);
+    let h = H * 0.5;
+    let activeTone = tone();
+    let flow = (t * 0.015) % 1;
+
+    // Perspective lines (Top & Bottom halves radiating from center horizon)
+    x.strokeStyle = activeTone;
+    x.lineWidth = 1;
+    for (let i = -18; i <= 18; i++) {
+        let topX = W / 2 + i * (W * 0.15);
+        let botX = W / 2 + i * (W * 0.15);
+        let centerX = W / 2 + i * (W * 0.02);
+
+        // Top Grid radiating up
+        x.beginPath();
+        x.moveTo(centerX, h);
+        x.lineTo(topX, 0);
+        x.stroke();
+
+        // Bottom Grid radiating down
+        x.beginPath();
+        x.moveTo(centerX, h);
+        x.lineTo(botX, H);
+        x.stroke();
+    }
+
+    // Moving horizontal grid lines (Bottom half downwards)
+    for (let i = 0; i < 11; i++) {
+        let p = ((i / 11) + flow) % 1;
+        let y = h + (H - h) * (p * p);
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+
+    // Moving horizontal grid lines (Top half upwards from center)
+    for (let i = 0; i < 11; i++) {
+        let p = ((i / 11) + flow) % 1;
+        let y = h - h * (p * p);
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+
+    // Cyberpunk Horizon Shadow & Glow Overlay
+    let shadowG = x.createLinearGradient(0, h - 70, 0, h + 70);
+    shadowG.addColorStop(0, 'rgba(2, 4, 3, 0)');
+    shadowG.addColorStop(0.35, 'rgba(2, 4, 3, 0.75)');
+    shadowG.addColorStop(0.5, 'rgba(2, 4, 3, 0.95)');
+    shadowG.addColorStop(0.65, 'rgba(2, 4, 3, 0.75)');
+    shadowG.addColorStop(1, 'rgba(2, 4, 3, 0)');
+    x.fillStyle = shadowG;
+    x.fillRect(0, h - 70, W, 140);
+
+    // Glowing Neon Center Horizon Line
+    x.strokeStyle = darkTone(activeTone, 85);
+    x.lineWidth = 2.5;
+    x.beginPath();
+    x.moveTo(0, h);
+    x.lineTo(W, h);
+    x.stroke();
+
+    x.strokeStyle = darkTone(activeTone, 80);
+    x.lineWidth = 1;
+    x.beginPath();
+    x.moveTo(0, h - 2);
+    x.lineTo(W, h - 2);
+    x.moveTo(0, h + 2);
+    x.lineTo(W, h + 2);
+    x.stroke();
+}
+*/
+let neonFlicker = 1;
+let neonFlickerTimer = 0;
+function tv_grid2(k) {
+    bg(.15);
+
+    let h = H * 0.5;
+    let activeTone = tone();
+    let flow = (t * 0.015) % 1;
+
+    // ===== Neon Flicker =====
+    if (neonFlickerTimer <= 0) {
+        if (Math.random() < 0.015) {
+            neonFlicker = 0.03 + Math.random() * 0.25;
+            neonFlickerTimer = 1 + Math.floor(Math.random() * 4);
+        } else {
+            neonFlicker = 1;
+        }
+    } else {
+        neonFlickerTimer--;
+    }
+
+    // Grid brightness follows flicker slightly
+    const gridAlpha = 0.7 + neonFlicker * 0.3;
+
+    // ===== Perspective Lines =====
+    x.save();
+    x.globalAlpha = gridAlpha;
+
+    x.strokeStyle = activeTone;
+    x.lineWidth = 1;
+
+    for (let i = -18; i <= 18; i++) {
+        let topX = W / 2 + i * (W * 0.15);
+        let botX = W / 2 + i * (W * 0.15);
+        let centerX = W / 2 + i * (W * 0.02);
+
+        x.beginPath();
+        x.moveTo(centerX, h);
+        x.lineTo(topX, 0);
+        x.stroke();
+
+        x.beginPath();
+        x.moveTo(centerX, h);
+        x.lineTo(botX, H);
+        x.stroke();
+    }
+
+    // ===== Bottom Grid =====
+    for (let i = 0; i < 11; i++) {
+        let p = ((i / 11) + flow) % 1;
+        let y = h + (H - h) * (p * p);
+
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+
+    // ===== Top Grid =====
+    for (let i = 0; i < 11; i++) {
+        let p = ((i / 11) + flow) % 1;
+        let y = h - h * (p * p);
+
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+
+    x.restore();
+
+    // ===== Horizon Shadow =====
+    let shadowG = x.createLinearGradient(0, h - 70, 0, h + 70);
+
+    shadowG.addColorStop(0, 'rgba(2,4,3,0)');
+    shadowG.addColorStop(0.35, 'rgba(2,4,3,0.75)');
+    shadowG.addColorStop(0.5, 'rgba(2,4,3,0.95)');
+    shadowG.addColorStop(0.65, 'rgba(2,4,3,0.75)');
+    shadowG.addColorStop(1, 'rgba(2,4,3,0)');
+
+    x.fillStyle = shadowG;
+    x.fillRect(0, h - 70, W, 140);
+
+    // ===== Flickering Neon Horizon =====
+    x.save();
+
+    x.globalAlpha = neonFlicker;
+
+    // Main Glow
+    x.shadowColor = activeTone;
+    x.shadowBlur = 30 * neonFlicker;
+
+    x.strokeStyle = activeTone;
+    x.lineWidth = 3;
+
+    x.beginPath();
+    x.moveTo(0, h);
+    x.lineTo(W, h);
+    x.stroke();
+
+    // Outer Glow Lines
+    x.shadowBlur = 15 * neonFlicker;
+    x.lineWidth = 1;
+
+    x.beginPath();
+    x.moveTo(0, h - 2);
+    x.lineTo(W, h - 2);
+
+    x.moveTo(0, h + 2);
+    x.lineTo(W, h + 2);
+
+    x.stroke();
+
+    x.restore();
+}
+function tv_blobs(k) {
+    bg(.16);
+    if (!S.tv_blobs) return;
+    S.tv_blobs.forEach(b => {
+        b.x += b.vx * k * 2.5;
+        b.y += b.vy * k * 2.5;
+        if (b.x < 0 || b.x > W) b.vx *= -1;
+        if (b.y < 0 || b.y > H) b.vy *= -1;
+        
+        let g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        g.addColorStop(0, `rgba(${rgb(tone(b.c))}, 0.5)`);
+        g.addColorStop(1, 'transparent');
+        x.fillStyle = g;
+        x.fillRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
+    });
+}
+
+function tv_dvd(k) {
+    bg(.25);
+    if (!S.tv_dvd) return;
+    let d = S.tv_dvd;
+    let boxW = 160, boxH = 70;
+    d.x += d.vx * k * 2;
+    d.y += d.vy * k * 2;
+    let bounced = false;
+    if (d.x < 0 || d.x > W - boxW) { d.vx *= -1; bounced = true; }
+    if (d.y < 0 || d.y > H - boxH) { d.vy *= -1; bounced = true; }
+    if (bounced) { d.c = (d.c + 1) % 5; }
+
+    let curColor = tone(d.c);
+    x.strokeStyle = x.fillStyle = curColor;
+    x.lineWidth = 3;
+    x.strokeRect(d.x, d.y, boxW, boxH);
+    x.font = 'bold 30px "Space Grotesk", sans-serif';
+    x.textAlign = 'center';
+    x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2 + 10);
+}
+
 function loop(now) {
     let k = Math.min(2.5, (now - last || 16) / 16) * +$('speed').value;
     last = now;
     t += k;
     ({
+        tv_clock,
+        tv_stars,
+        tv_matrix,
+        tv_grid,
+        tv_grid2,
+        tv_blobs,
+        tv_dvd,
         matrix,
         matrix2,
         stars,
@@ -645,7 +1043,7 @@ function loop(now) {
         plasma,
         smoke,
         confetti: () => fall(k, 'confetti')
-    } [scene])(k);
+    } [scene] || tv_clock)(k);
     requestAnimationFrame(loop)
 }
 
@@ -669,14 +1067,15 @@ function rotateRandomTheme() {
 function pick(v) {
     scene = v;
     $('scene').value = v;
-    $('sceneTitle').textContent = title[v];
+    $('sceneTitle').textContent = title[v] || v.toUpperCase();
     localStorage.screenScene = v;
     reset();
     fallSetup()
 }
 
 function resize() {
-    let d = Math.min(devicePixelRatio, 2);
+    let isTvScene = scene.startsWith('tv_');
+    let d = isTvScene ? 1 : Math.min(devicePixelRatio, 2);
     W = innerWidth;
     H = innerHeight;
     c.width = W * d;
@@ -733,10 +1132,48 @@ function toggleControls() {
     localStorage.screenControlsHidden = hidden ? '1' : '';
 }
 $('uiVisibilityToggle').onclick = toggleControls;
+
+function getSceneValues() {
+    return Array.from($('scene').options).map(o => o.value).filter(Boolean);
+}
+
+function nextScene(direction) {
+    const list = getSceneValues();
+    const idx = list.indexOf(scene);
+    let newIdx = (idx + direction + list.length) % list.length;
+    pick(list[newIdx]);
+}
+
 document.onkeydown = e => {
-    if (e.key === 'h' || e.key === 'H') toggleControls();
-    if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()
+    const isHidden = document.body.classList.contains('hidden-ui');
+    const isControlKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Select', 'Escape', 'Back'].includes(e.key) || [37,38,39,40,13,23,27,4,661].includes(e.keyCode);
+    
+    if (isHidden && isControlKey) {
+        toggleControls();
+        e.preventDefault();
+        return;
+    }
+
+    if (e.key === 'h' || e.key === 'H') {
+        toggleControls();
+    } else if (e.key === 'f' || e.key === 'F') {
+        document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    } else if (e.key === 'ArrowLeft') {
+        if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
+            nextScene(-1);
+            e.preventDefault();
+        }
+    } else if (e.key === 'ArrowRight') {
+        if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
+            nextScene(1);
+            e.preventDefault();
+        }
+    } else if (e.key === 'Escape' || e.key === 'Back' || e.keyCode === 27 || e.keyCode === 4 || e.keyCode === 661) {
+        toggleControls();
+        e.preventDefault();
+    }
 };
+
 setInterval(() => {
     if (theme === 'random') {
         let a = baseColors.filter(v => v !== color);

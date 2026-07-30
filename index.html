@@ -21,32 +21,43 @@
         <section class="panel" id="panel">
             <div class="panel-top"><span>DISPLAY SETTINGS</span><button id="toggle" aria-label="Collapse settings">-</button></div>
             <div class="settings" id="settings"><label for="scene">SCREENSAVER</label><select id="scene">
-                    <option value="matrix">01 - Matrix Flow</option>
-                    <option value="matrix2">01b - Authentic Matrix Rain</option>
-                    <option value="stars">02 - Starfield</option>
-                    <option value="fire">03 - Fireplace Ember</option>
-                    <option value="rain">04 - Rain on Glass</option>
-                    <option value="aurora">05 - Aurora</option>
-                    <option value="ink">06 - Fluid Ink</option>
-                    <option value="ink2">06b - Fluid Ink Bubbles</option>
-                    <option value="dvd">07 - Retro DVD</option>
-                    <option value="clock">08 - Digital Clock</option>
-                    <option value="grid">09 - Cyber Grid</option>
-                    <option value="network">10 - Particle Network</option>
-                    <option value="terminal">11 - Code Terminal</option>
-                    <option value="hello">12 - Hello World</option>
-                    <option value="fireflies">13 - Fireflies</option>
-                    <option value="bubbles">14 - Floating Bubbles</option>
-                    <option value="mesh">15 - Low Poly Mesh</option>
-                    <option value="sakura">16 - Sakura</option>
-                    <option value="snow">17 - Snow</option>
-                    <option value="snow2">18 - Snow 2</option>
-                    <option value="storm">19 - Storm Rain</option>
-                    <option value="storm2">20 - Storm Rain 2</option>
-                    <option value="paint">21 - Paint Splash</option>
-                    <option value="plasma">22 - Plasma</option>
-                    <option value="smoke">23 - Smoke</option>
-                    <option value="confetti">24 - Confetti</option>
+                    <optgroup label="⚡ TV 60FPS OPTIMIZED">
+                        <option value="tv_clock">📺 01 - TV Flip Clock (60FPS)</option>
+                        <option value="tv_stars">📺 02 - TV Cosmic Star Warp (60FPS)</option>
+                        <option value="tv_matrix">📺 03 - TV Optimized Matrix (60FPS)</option>
+                        <option value="tv_grid">📺 04 - TV Cyberpunk Grid (60FPS)</option>
+                        <option value="tv_grid2">📺 04b - TV Cyberpunk Grid Motion (60FPS)</option>
+                        <option value="tv_blobs">📺 05 - TV Neon Fluid Blobs (60FPS)</option>
+                        <option value="tv_dvd">📺 06 - TV Retro DVD Drift (60FPS)</option>
+                    </optgroup>
+                    <optgroup label="💻 PC / FULL GRAPHICS">
+                        <option value="matrix">01 - Matrix Flow</option>
+                        <option value="matrix2">01b - Authentic Matrix Rain</option>
+                        <option value="stars">02 - Starfield</option>
+                        <option value="fire">03 - Fireplace Ember</option>
+                        <option value="rain">04 - Rain on Glass</option>
+                        <option value="aurora">05 - Aurora</option>
+                        <option value="ink">06 - Fluid Ink</option>
+                        <option value="ink2">06b - Fluid Ink Bubbles</option>
+                        <option value="dvd">07 - Retro DVD</option>
+                        <option value="clock">08 - Digital Clock</option>
+                        <option value="grid">09 - Cyber Grid</option>
+                        <option value="network">10 - Particle Network</option>
+                        <option value="terminal">11 - Code Terminal</option>
+                        <option value="hello">12 - Hello World</option>
+                        <option value="fireflies">13 - Fireflies</option>
+                        <option value="bubbles">14 - Floating Bubbles</option>
+                        <option value="mesh">15 - Low Poly Mesh</option>
+                        <option value="sakura">16 - Sakura</option>
+                        <option value="snow">17 - Snow</option>
+                        <option value="snow2">18 - Snow 2</option>
+                        <option value="storm">19 - Storm Rain</option>
+                        <option value="storm2">20 - Storm Rain 2</option>
+                        <option value="paint">21 - Paint Splash</option>
+                        <option value="plasma">22 - Plasma</option>
+                        <option value="smoke">23 - Smoke</option>
+                        <option value="confetti">24 - Confetti</option>
+                    </optgroup>
                 </select><label for="theme">COLOR THEME</label><select id="theme">
                     <option value="normal">Normal</option>
                     <option value="random">Random presets / 12 sec</option>
@@ -73,7 +84,7 @@
                 <div class="presets"><button class="swatch active" data-color="#36F76D" style="--swatch:#36F76D"></button><button class="swatch" data-color="#35D7FF" style="--swatch:#35D7FF"></button><button class="swatch" data-color="#C77DFF" style="--swatch:#C77DFF"></button><button class="swatch" data-color="#FF4D7D" style="--swatch:#FF4D7D"></button><button class="swatch" data-color="#FFB347" style="--swatch:#FFB347"></button></div>
             </div>
         </section>
-        <div class="hint">PRESS <kbd>H</kbd> TO HIDE CONTROLS · <kbd>F</kbd> FOR FULLSCREEN</div>
+        <div class="hint">PRESS <kbd>H</kbd> TO HIDE CONTROLS · <kbd>F</kbd> FULLSCREEN · <kbd>◄</kbd> <kbd>►</kbd> SWITCH SCENE</div>
     </main>
     <button id="uiVisibilityToggle" class="ui-visibility-toggle" type="button" aria-pressed="false" aria-label="Hide controls">HIDE CONTROLS</button>
     <script src="script.js"></script>
