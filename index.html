@@ -81,10 +81,10 @@
 					<option value="mood">Rainy mood</option>
                 </select><label for="colorPicker">ACCENT COLOR</label>
                 <div class="color-row"><input type="color" id="colorPicker" value="#36f76d"><input id="colorText" maxlength="7" value="#36F76D"></div><label for="speed">ANIMATION SPEED <output id="speedValue">1.0x</output></label><input type="range" id="speed" min="0.25" max="2" step="0.05" value="1"><label for="density">DENSITY <output id="densityValue">Normal</output></label><input type="range" id="density" min="12" max="42" step="1" value="24">
-                <div class="presets"><button class="swatch active" data-color="#36F76D" style="--swatch:#36F76D"></button><button class="swatch" data-color="#35D7FF" style="--swatch:#35D7FF"></button><button class="swatch" data-color="#C77DFF" style="--swatch:#C77DFF"></button><button class="swatch" data-color="#FF4D7D" style="--swatch:#FF4D7D"></button><button class="swatch" data-color="#FFB347" style="--swatch:#FFB347"></button></div>
+                <div class="presets"><button class="swatch active" data-color="#36F76D" style="--swatch:#36F76D" aria-label="Green accent"></button><button class="swatch" data-color="#35D7FF" style="--swatch:#35D7FF" aria-label="Blue accent"></button><button class="swatch" data-color="#C77DFF" style="--swatch:#C77DFF" aria-label="Purple accent"></button><button class="swatch" data-color="#FF4D7D" style="--swatch:#FF4D7D" aria-label="Pink accent"></button><button class="swatch" data-color="#FFB347" style="--swatch:#FFB347" aria-label="Orange accent"></button></div>
             </div>
         </section>
-        <div class="hint">PRESS <kbd>H</kbd> TO HIDE CONTROLS · <kbd>F</kbd> FULLSCREEN · <kbd>◄</kbd> <kbd>►</kbd> SWITCH SCENE</div>
+        <div class="hint">REMOTE: <kbd>↑↓</kbd> SELECT · <kbd>←→</kbd> ADJUST · <kbd>OK</kbd> ACTIVATE · <kbd>BACK</kbd> HIDE</div>
     </main>
     <button id="uiVisibilityToggle" class="ui-visibility-toggle" type="button" aria-pressed="false" aria-label="Hide controls">HIDE CONTROLS</button>
     <script src="script.js"></script>

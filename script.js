@@ -1123,13 +1123,16 @@ $('toggle').onclick = e => {
     p.classList.toggle('collapsed');
     e.target.textContent = p.classList.contains('collapsed') ? '+' : '−'
 };
-function toggleControls() {
-    const hidden = document.body.classList.toggle('hidden-ui');
+function setControlsHidden(hidden) {
+    document.body.classList.toggle('hidden-ui', hidden);
     const button = $('uiVisibilityToggle');
     button.textContent = hidden ? 'SHOW CONTROLS' : 'HIDE CONTROLS';
     button.setAttribute('aria-pressed', String(hidden));
     button.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
     localStorage.screenControlsHidden = hidden ? '1' : '';
+}
+function toggleControls() {
+    setControlsHidden(!document.body.classList.contains('hidden-ui'));
 }
 $('uiVisibilityToggle').onclick = toggleControls;
 
@@ -1144,34 +1147,106 @@ function nextScene(direction) {
     pick(list[newIdx]);
 }
 
+function remoteItems() {
+    const panelCollapsed = $('panel').classList.contains('collapsed');
+    const items = [$('toggle')];
+    if (!panelCollapsed) items.push($('scene'), $('theme'), $('sound'), $('speed'), $('density'), ...document.querySelectorAll('.swatch'));
+    items.push($('uiVisibilityToggle'));
+    return items;
+}
+
+function focusRemoteItem(index) {
+    const items = remoteItems();
+    const item = items[(index + items.length) % items.length];
+    document.querySelectorAll('.remote-focus').forEach(el => el.classList.remove('remote-focus'));
+    item.classList.add('remote-focus');
+    item.focus({ preventScroll: true });
+    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function currentRemoteIndex() {
+    const items = remoteItems();
+    const index = items.indexOf(document.activeElement);
+    return index < 0 ? 0 : index;
+}
+
+function changeSelect(select, direction) {
+    const options = Array.from(select.options).filter(option => !option.disabled);
+    const index = options.findIndex(option => option.value === select.value);
+    select.value = options[(index + direction + options.length) % options.length].value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function changeRange(input, direction) {
+    const step = Number(input.step) || 1;
+    const value = Math.max(Number(input.min), Math.min(Number(input.max), Number(input.value) + step * direction));
+    input.value = String(value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function adjustRemoteItem(direction) {
+    const item = document.activeElement;
+    if (item === $('scene')) nextScene(direction);
+    else if (item === $('theme') || item === $('sound')) changeSelect(item, direction);
+    else if (item === $('speed') || item === $('density')) changeRange(item, direction);
+    else if (item.classList.contains('swatch')) {
+        const swatches = Array.from(document.querySelectorAll('.swatch'));
+        const index = swatches.indexOf(item);
+        const next = swatches[(index + direction + swatches.length) % swatches.length];
+        next.click();
+        focusRemoteItem(remoteItems().indexOf(next));
+    }
+}
+
+function remoteKey(e) {
+    const code = e.keyCode || e.which;
+    if (['ArrowUp', 'Up'].includes(e.key) || code === 38) return 'up';
+    if (['ArrowDown', 'Down'].includes(e.key) || code === 40) return 'down';
+    if (['ArrowLeft', 'Left'].includes(e.key) || code === 37) return 'left';
+    if (['ArrowRight', 'Right'].includes(e.key) || code === 39) return 'right';
+    if (['Enter', 'Select', 'Accept', 'NumpadEnter'].includes(e.key) || [13, 23, 66].includes(code)) return 'ok';
+    if (['Escape', 'Back', 'BrowserBack', 'GoBack', 'XF86Back'].includes(e.key) || [4, 27, 166, 461, 661, 10009].includes(code)) return 'back';
+    return '';
+}
+
 document.onkeydown = e => {
-    const isHidden = document.body.classList.contains('hidden-ui');
-    const isControlKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Select', 'Escape', 'Back'].includes(e.key) || [37,38,39,40,13,23,27,4,661].includes(e.keyCode);
-    
-    if (isHidden && isControlKey) {
+    if (e.key === 'h' || e.key === 'H') {
         toggleControls();
+        return;
+    }
+    if (e.key === 'f' || e.key === 'F') {
+        document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+        return;
+    }
+
+    const key = remoteKey(e);
+    if (!key) return;
+    const hidden = document.body.classList.contains('hidden-ui');
+
+    if (hidden) {
+        if (key !== 'back') {
+            setControlsHidden(false);
+            focusRemoteItem(0);
+        }
         e.preventDefault();
         return;
     }
 
-    if (e.key === 'h' || e.key === 'H') {
-        toggleControls();
-    } else if (e.key === 'f' || e.key === 'F') {
-        document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
-    } else if (e.key === 'ArrowLeft') {
-        if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
-            nextScene(-1);
-            e.preventDefault();
-        }
-    } else if (e.key === 'ArrowRight') {
-        if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
-            nextScene(1);
-            e.preventDefault();
-        }
-    } else if (e.key === 'Escape' || e.key === 'Back' || e.keyCode === 27 || e.keyCode === 4 || e.keyCode === 661) {
-        toggleControls();
-        e.preventDefault();
+    if (key === 'back') {
+        setControlsHidden(true);
+    } else if (key === 'up') {
+        focusRemoteItem(currentRemoteIndex() - 1);
+    } else if (key === 'down') {
+        focusRemoteItem(currentRemoteIndex() + 1);
+    } else if (key === 'left') {
+        adjustRemoteItem(-1);
+    } else if (key === 'right') {
+        adjustRemoteItem(1);
+    } else if (key === 'ok') {
+        const item = document.activeElement;
+        if (item === $('toggle') || item === $('uiVisibilityToggle')) item.click();
     }
+    e.preventDefault();
 };
 
 setInterval(() => {
@@ -1184,7 +1259,7 @@ setInterval(() => {
     if (theme === 'randomTheme') rotateRandomTheme();
 }, 20000);
 setColor(palettes[theme] || theme === 'randomTheme' ? tone() : color);
-if (localStorage.screenControlsHidden === '1') toggleControls();
+if (localStorage.screenControlsHidden === '1') setControlsHidden(true);
 pick(scene);
 resize();
 onresize = resize;
