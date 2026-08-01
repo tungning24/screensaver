@@ -1382,20 +1382,20 @@ function nebulaWebGL(k) {
     
     // ฟังก์ชันย่อยช่วยแปลง Hex/Color String เป็น [r, g, b] ช่วง 0.0 - 1.0
     const hexToRgbNormalized = (colStr) => {
-        if (!colStr) return [0.5, 0.5, 0.5];
-        // สร้าง canvas context จำลองเพื่อแกะค่า RGB ไม่ว่าจะส่งมาเป็น Hex หรือชื่อสี
-        let ctx = document.createElement('canvas').getContext('2d');
-        ctx.fillStyle = colStr;
-        let hex = ctx.fillStyle; // จะได้ฟอร์แมต #rrggbb
-        
-        if (hex.startsWith('#')) {
-            let r = parseInt(hex.slice(1, 3), 16) / 255;
-            let g = parseInt(hex.slice(3, 5), 16) / 255;
-            let b = parseInt(hex.slice(5, 7), 16) / 255;
-            return [r, g, b];
-        }
-        return [0.5, 0.5, 0.5];
-    };
+		if (!colStr) return [0.5, 0.5, 0.5];
+		let ctx = document.createElement('canvas').getContext('2d');
+		ctx.fillStyle = colStr;
+		let hex = ctx.fillStyle;
+		
+		if (hex.startsWith('#')) {
+			// ปรับ Gamma Correction (Math.pow(..., 2.2)) ช่วยให้สีบนจอมือถือไม่โดนเร่งจนสว่างกลืนกัน
+			let r = Math.pow(parseInt(hex.slice(1, 3), 16) / 255, 2.2);
+			let g = Math.pow(parseInt(hex.slice(3, 5), 16) / 255, 2.2);
+			let b = Math.pow(parseInt(hex.slice(5, 7), 16) / 255, 2.2);
+			return [r, g, b];
+		}
+		return [0.5, 0.5, 0.5];
+	};
 
     // ดึงสี 3 สีตาม Theme ปัจจุบันผ่าน tone(0), tone(1), tone(2)
     let c1 = hexToRgbNormalized(tone(0));
@@ -1415,31 +1415,41 @@ function nebulaWebGL(k) {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
-function initNebulaWebGL() {
-    gl = glCanvas.getContext("webgl", {
-        alpha: true,
-        antialias: false,
-        preserveDrawingBuffer: false
-    });
+function initNebulaWebGL(){
+    gl = glCanvas.getContext(
+        "webgl",
+        {
+            alpha: true,
+            antialias: false,
+            preserveDrawingBuffer: false
+        }
+    );
 
-    if (!gl) return;
+    if(!gl) return;
 
     const vs = `
     attribute vec2 a_pos;
+    varying vec2 v_uv; // ส่ง uv ผ่าน varying เพื่อให้การ์ดจอลดความเหลี่ยม
+
     void main(){
+        v_uv = a_pos * 0.5 + 0.5; // แปลงพิกัดเป็น 0.0 ถึง 1.0
         gl_Position = vec4(a_pos, 0.0, 1.0);
     }
     `;
 
     const fs = `
-    precision mediump float;
+    precision highp float; // ใช้ High Precision กันการปัดเศษตัวเลข
 
     uniform vec2 u_res;
     uniform float u_time;
     uniform vec3 colors[3];
+    varying vec2 v_uv;
 
+    // เปลี่ยน hash เป็นสูตรที่เสถียรบนมือถือ (ไม่แตกเป็นเม็ดเหลี่ยม)
     float hash(vec2 p){
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
     }
 
     float noise(vec2 p){
@@ -1451,7 +1461,8 @@ function initNebulaWebGL() {
         float c = hash(i + vec2(0.0, 1.0));
         float d = hash(i + vec2(1.0, 1.0));
 
-        vec2 u = f * f * (3.0 - 2.0 * f);
+        // ใช้ Quintic Curve (smoothstep 5th degree) ช่วยให้รอยต่อเนียนกว่าเดิมมาก
+        vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
 
         return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
     }
@@ -1459,36 +1470,44 @@ function initNebulaWebGL() {
     float fbm(vec2 p){
         float v = 0.0;
         float a = 0.5;
+        // หมุนพิกัดเล็กน้อยในแต่ละ octave เพื่อลบลายตาราง/ขอบเหลี่ยม
+        mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+        
         for(int i = 0; i < 5; i++){
             v += noise(p) * a;
-            p *= 2.0;
+            p = rot * p * 2.0;
             a *= 0.5;
         }
         return v;
     }
 
     void main(){
-        vec2 uv = gl_FragCoord.xy / u_res.xy;
-        vec2 p = uv * 3.0;
+        // ปรับ Aspect Ratio เพื่อไม่ให้ภาพยืดเบี้ยวตามหน้าจอมือถือ
+        vec2 st = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.x, u_res.y);
+        
+        vec2 p = st * 2.5;
         p.x += u_time * 0.015;
 
         float n = fbm(p);
-        float glow = smoothstep(0.0, 1.0, n);
+        
+        // ไล่ระดับสีให้สมูทขึ้น
+        float n_smooth = smoothstep(0.1, 0.9, n);
 
-        // ผสมสีตาม Theme จาก colors[0], colors[1], colors[2]
-        vec3 col = mix(colors[0], colors[1], n);
-        col = mix(col, colors[2], n * n);
+        vec3 col = mix(colors[0], colors[1], n_smooth);
+        col = mix(col, colors[2], pow(n_smooth, 2.0));
 
-        gl_FragColor = vec4(col * (0.5 + glow), 1.0);
+        float glow = smoothstep(0.15, 0.85, n);
+        
+        gl_FragColor = vec4(col * (0.45 + glow * 0.55), 1.0);
     }
     `;
 
-    function shader(type, src) {
+    function shader(type, src){
         let s = gl.createShader(type);
         gl.shaderSource(s, src);
         gl.compileShader(s);
 
-        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
             console.log(gl.getShaderInfoLog(s));
         }
         return s;
@@ -1499,14 +1518,13 @@ function initNebulaWebGL() {
     gl.attachShader(glProgram, shader(gl.FRAGMENT_SHADER, fs));
     gl.linkProgram(glProgram);
 
-    if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+    if(!gl.getProgramParameter(glProgram, gl.LINK_STATUS)){
         console.log(gl.getProgramInfoLog(glProgram));
         return;
     }
 
     gl.useProgram(glProgram);
 
-    // Fullscreen quad
     let buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
@@ -1591,7 +1609,7 @@ function inkBubblesWebGL(k) {
         arr.push(
             b.x / W,
             1 - b.y / H,
-            b.r / 300
+            b.r / 180
         );
     }
 
@@ -1754,7 +1772,7 @@ function initInkWebGL(){
 
             v +=
             r*r /
-            (d*d*80.0);
+            (d*d*40.0);
 
         }
 
