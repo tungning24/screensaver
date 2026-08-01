@@ -249,6 +249,22 @@ input[type=range] {
     background: var(--accent);
 }
 
+#fpsCounter {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 9999;
+
+    font-family: "DM Mono", monospace;
+    font-size: 18px;
+    color: white;
+
+    text-shadow:
+        0 0 5px black,
+        0 0 10px black;
+
+    pointer-events: none;
+}
 .swatch {
     width: 24px;
     height: 24px;

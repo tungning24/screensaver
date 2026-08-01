@@ -2,6 +2,9 @@ const c = document.querySelector('canvas'),
     x = c.getContext('2d'),
     $ = id => document.getElementById(id),
     TAU = Math.PI * 2;
+let fps = 0;
+let fpsFrames = 0;
+let fpsLast = performance.now();
 let W, H, last = 0,
     t = 0,
     color = localStorage.screenColor || '#36F76D',
@@ -34,6 +37,7 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
         tv_grid2: 'TV CYBERPUNK GRID MOTION [60FPS]',
         tv_blobs: 'TV NEON FLUID BLOBS [60FPS]',
         tv_dvd: 'TV RETRO DVD DRIFT [60FPS]',
+		tv_inkBubbles: 'TV FLOATING BUBBLES',
         matrix: 'MATRIX FLOW',
         matrix2: 'AUTHENTIC MATRIX',
         stars: 'STARFIELD',
@@ -614,6 +618,86 @@ function inkBubbles(k) {
     });
 }
 
+function tv_inkBubbles(k) {
+
+    bg(.35);
+
+    x.globalCompositeOperation = "lighter";
+
+    for (let b of S.b) {
+
+        b.x += b.vx * k * 8;
+        b.y += b.vy * k * 8;
+
+        if (b.x < 0 || b.x > W)
+            b.vx *= -1;
+
+        if (b.y < 0 || b.y > H)
+            b.vy *= -1;
+
+
+        let col = tone(b.c);
+
+        // glow วงนอกแบบไม่ใช้ shadowBlur
+        let g = x.createRadialGradient(
+            b.x,
+            b.y,
+            0,
+            b.x,
+            b.y,
+            b.r
+        );
+
+        g.addColorStop(
+            0,
+            `rgba(${rgb(col)},0.5)`
+        );
+
+        g.addColorStop(
+            .5,
+            `rgba(${rgb(col)},0.35)`
+        );
+
+        g.addColorStop(
+            1,
+            "transparent"
+        );
+
+
+        x.fillStyle = g;
+
+        x.beginPath();
+        x.arc(
+            b.x,
+            b.y,
+            b.r,
+            0,
+            TAU
+        );
+        x.fill();
+
+
+        // ขอบ
+        x.strokeStyle =
+            `rgba(${rgb(col)},.8)`;
+
+        x.lineWidth = 2;
+
+        x.beginPath();
+        x.arc(
+            b.x,
+            b.y,
+            b.r,
+            0,
+            TAU
+        );
+        x.stroke();
+    }
+
+
+    x.globalCompositeOperation =
+        "source-over";
+}
 function dvd(k) {
     bg(1);
     let d = S.d;
@@ -1249,6 +1333,18 @@ function loop(now) {
     let k = Math.min(2.5, (now - last || 16) / 16) * +$('speed').value;
     last = now;
     t += k;
+	
+	fpsFrames++;
+	if (now - fpsLast >= 1000) {
+		fps = fpsFrames;
+		fpsFrames = 0;
+		fpsLast = now;
+
+		const fpsBox = $('fpsCounter');
+		if (fpsBox) {
+			fpsBox.textContent = `FPS ${fps}`;
+		}
+	}
     ({
         tv_clock,
         tv_stars,
@@ -1257,6 +1353,7 @@ function loop(now) {
         tv_grid2,
         tv_blobs,
         tv_dvd,
+		tv_inkBubbles,
         matrix,
         matrix2,
         stars,
@@ -1364,12 +1461,28 @@ $('toggle').onclick = e => {
     p.classList.toggle('collapsed');
     e.target.textContent = p.classList.contains('collapsed') ? '+' : '−'
 };
-function setControlsHidden(hidden) {
+/*function setControlsHidden(hidden) {
     document.body.classList.toggle('hidden-ui', hidden);
     const button = $('uiVisibilityToggle');
     button.textContent = hidden ? 'SHOW CONTROLS' : 'HIDE CONTROLS';
     button.setAttribute('aria-pressed', String(hidden));
     button.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
+    localStorage.screenControlsHidden = hidden ? '1' : '';
+}*/
+function setControlsHidden(hidden) {
+    document.body.classList.toggle('hidden-ui', hidden);
+
+    const button = $('uiVisibilityToggle');
+    button.textContent = hidden ? 'SHOW CONTROLS' : 'HIDE CONTROLS';
+    button.setAttribute('aria-pressed', String(hidden));
+    button.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
+
+    // FPS
+    const fpsBox = $('fpsCounter');
+    if (fpsBox) {
+        fpsBox.style.display = hidden ? 'none' : 'block';
+    }
+
     localStorage.screenControlsHidden = hidden ? '1' : '';
 }
 function toggleControls() {
