@@ -2153,26 +2153,28 @@ function initMatrixWebGL() {
         return fract(p.x * p.y);
     }
 
-    void main() {
-        vec2 st = gl_FragCoord.xy / u_res.xy;
-
-        float cols = 65.0;
+    // ฟังก์ชันคำนวณสายฝน Matrix แต่ละ Layer
+    // gridOffset: สับหว่างตำแหน่ง, speedMult: ความเร็วเหลื่อมกัน, scaleMult: ขนาดสเกล
+    vec4 renderMatrixLayer(vec2 st, vec2 gridOffset, float speedMult, float scaleMult, float alphaMult) {
+        float cols = 65.0 * scaleMult;
         vec2 grid = vec2(cols, cols * (u_res.y / u_res.x) * 0.45);
-        vec2 cellID = floor(st * grid);
-        vec2 cellUV = fract(st * grid);
+        
+        // 🎯 ใส่ Offset เพื่อสับหว่างทั้งแนวนอนและแนวตั้ง
+        vec2 layerSt = st + gridOffset;
+        vec2 cellID = floor(layerSt * grid);
+        vec2 cellUV = fract(layerSt * grid);
 
         float colHash = hash(vec2(cellID.x, 31.0));
 
-        // 🎯 1. ชะลอความเร็วลงให้อ่านทัน (ปรับคูณ u_time ให้ช้าลงนุ่มนวล)
-        float speed = 3.5 + colHash * 0.5;
+        // คำนวณความเร็ว
+        float speed = (3.5 + colHash * 0.5) * speedMult;
         float dropOffset = colHash * 999.0;
         float loopLen = 40.0 + colHash * 20.0;
 
-        // คำนวณตำแหน่งสายฝน
         float currentY = cellID.y + (u_time * speed * 8.0) + dropOffset;
         float posInLoop = mod(currentY, loopLen);
 
-        float streamLen = 10.0 + colHash * 10.0; // ความยาวหาง
+        float streamLen = 10.0 + colHash * 10.0;
         float distFromHead = posInLoop;
         
         float inStream = step(0.0, distFromHead) * step(distFromHead, streamLen);
@@ -2180,22 +2182,35 @@ function initMatrixWebGL() {
         float tail = (1.0 - (distFromHead / streamLen)) * inStream;
         tail = pow(clamp(tail, 0.0, 1.0), 1.5);
 
-        // 🎯 2. เทคนิคเปลี่ยนตัวอักษรเฉพาะตอนเกิด Glitch (ไม่สุ่มทุกเฟรม)
-        // ใช้ floor(u_time * 1.5) เพื่อให้ตัวหนังสือ "นิ่ง" ไว้นานขึ้น (ล็อก Seed)
+        // ตัวอักษร
         float glitchTime = floor(u_time * 1.5 + hash(cellID) * 10.0);
-        
-        // สุ่มตัวอักษรประจำเซลล์ (ยึดตาม cellID เป็นหลัก ตัวอักษรเลยไม่วิ่งว่อน)
         float charSeed = hash(cellID + vec2(glitchTime * 0.05, colHash));
         float charIdx = floor(charSeed * 16.0);
 
         vec2 fontUV = vec2((cellUV.x + charIdx) / 16.0, cellUV.y);
         float charTex = texture2D(u_fontTexture, fontUV).a;
 
-        // 🎯 3. การผสมสี: หัวขาวนวล หางเขียวฟุ้ง
         vec3 col = mix(u_colorMain * tail * 1.3, vec3(0.95, 1.0, 0.95), head);
-        float alpha = charTex * (head * 2.2 + tail * 1.0);
+        float alpha = charTex * (head * 2.2 + tail * 1.0) * alphaMult;
 
-        gl_FragColor = vec4(col * alpha, alpha);
+        return vec4(col * alpha, alpha);
+    }
+
+    void main() {
+        vec2 st = gl_FragCoord.xy / u_res.xy;
+
+        // 🎯 Layer 1: ชั้นหน้า (ขนาดปกติ วิ่งเร็ว สีชัด)
+        vec4 layer1 = renderMatrixLayer(st, vec2(0.0, 0.0), 1.0, 1.0, 1.0);
+
+        // 🎯 Layer 2: ชั้นสับหว่าง (เยื้องแนวนอน 0.5, แนวตั้ง 0.5 / ตลับขนาด / ช้ากว่า / จางกว่า)
+        vec2 shiftOffset = vec2(0.0077, 0.015); // เลื่อนตำแหน่งสับหว่าง
+        vec4 layer2 = renderMatrixLayer(st, shiftOffset, 0.65, 1.25, 0.45);
+
+        // รวม 2 ชั้นเข้าด้วยกัน (Screen/Over Blending)
+        vec3 finalCol = layer1.rgb + layer2.rgb * (1.0 - layer1.a * 0.5);
+        float finalAlpha = clamp(layer1.a + layer2.a, 0.0, 1.0);
+
+        gl_FragColor = vec4(finalCol, finalAlpha);
     }
     `;
 
