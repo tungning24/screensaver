@@ -45,11 +45,22 @@ const palettes = {
     toxin:     ['#0B090A', '#161A1D', '#52B788'], // ดำเทา ตัดด้วยสีเขียวสารเคมี/นีออน
     voids:      ['#181823', '#537188', '#CBB279']  // มืดเทาสบายตา สไตล์คอนทราสต์ต่ำ
 };
+// ==========================================
+// 1. เพิ่มหมวดหมู่ธีม (Categories Map)
+// ==========================================
 const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
     randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava','cyberpunk','midnight','deepspace','vampire','synthdark','abyss','toxin','voids'],
+	paletteCategories = {
+		dark: ['cyberpunk', 'midnight', 'deepspace', 'vampire', 'synthdark', 'abyss', 'toxin', 'voids'],
+		light: ['pastel', 'mono', 'ice'],
+		neon: ['neon', 'ocean', 'violet', 'candy'],
+		warm: ['sunset', 'gold', 'lava', 'forest']
+	},
     title = {
-		inkBubblesWebGL: 'INK BUBBLES [WEBGL]',
-		nebulaWebGL: 'COSMIC NEBULA',
+		inkBubblesWebGL: 'INK BUBBLES [WebGL]',
+		nebulaWebGL: 'COSMIC NEBULA[WebGL]',
+		matrixWebGL: 'Matrix [WebGL]',
+		tunnelWebGL: 'Tunnel [WebGL]',
         tv_clock: 'TV FLIP CLOCK [60FPS]',
         tv_stars: 'TV COSMIC STAR WARP [60FPS]',
         tv_matrix: 'TV OPTIMIZED MATRIX [60FPS]',
@@ -88,8 +99,31 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
     },
     chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
 let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
-const tone = (i = 0) => {
+/*const tone = (i = 0) => {
         let p = palettes[theme === 'randomTheme' ? activeRandomTheme : theme] || [color];
+        return p[i % p.length]
+    },
+    rgb = h => {
+        let n = parseInt(h.slice(1), 16);
+        return `${n>>16},${n>>8&255},${n&255}`
+    },
+    R = (a, b) => a + Math.random() * (b - a),
+    bg = a => {
+        x.globalCompositeOperation = 'source-over';
+        x.fillStyle = `rgba(2,4,3,${a})`;
+        x.fillRect(0, 0, W, H)
+    },
+    dot = (a, b, r, f = tone()) => {
+        x.fillStyle = f;
+        x.beginPath();
+        x.arc(a, b, r, 0, TAU);
+        x.fill()
+    },
+    count = n => Math.max(20, W / n | 0);*/
+	const tone = (i = 0) => {
+        // แก้ตรงนี้: ถ้า theme ขึ้นต้นด้วย 'randomTheme' หรือ 'random_' ให้ไปดึง activeRandomTheme มาใช้
+        let isRandomPal = theme === 'randomTheme' || theme.startsWith('random_');
+        let p = palettes[isRandomPal ? activeRandomTheme : theme] || [color];
         return p[i % p.length]
     },
     rgb = h => {
@@ -449,18 +483,44 @@ function matrix(k) {
     x.textAlign = 'center';
     x.shadowColor = tone();
     x.shadowBlur = 8;
+
+    // สร้าง array เก็บตัวอักษรประจำตำแหน่งไว้ ไม่ให้สุ่มใหม่ทุกเฟรม
+    if (!S.gridChars) S.gridChars = [];
+
     S.drop.forEach((d, i) => {
+        if (!S.gridChars[i]) S.gridChars[i] = [];
+
+        let currentRow = Math.floor(d);
+
         for (let j = 0; j < 10; j++) {
+            let rowIdx = currentRow - j;
+
+            // สุ่มเปลี่ยนตัวอักษรแค่ 2% ของเวลาทั้งหมด เพื่อให้ฟีล Glitch นุ่มๆ
+            if (!S.gridChars[i][rowIdx] || Math.random() < 0.02) {
+                S.gridChars[i][rowIdx] = chars[Math.floor(Math.random() * chars.length)];
+            }
+
             x.globalAlpha = 1 - j / 10;
-            x.fillStyle = j ? tone() : '#f0fff2';
-            x.fillText(chars[Math.random() * chars.length | 0], i * W / S.drop.length + W / S.drop.length / 2, d * fs - j * fs)
+            x.fillStyle = j ? tone() : '#f0fff2'; // หัวสีสว่าง หางสีโทนหลัก
+            
+            let charToDraw = S.gridChars[i][rowIdx];
+            x.fillText(charToDraw, i * W / S.drop.length + W / S.drop.length / 2, (currentRow - j) * fs);
         }
-        d += k * (.06 + Math.random());
-        if (d * fs > H && Math.random() > .975) d = -Math.random() * 20;
-        S.drop[i] = d
+
+        // 🎯 1. ปรับลดความเร็วลงตรงนี้ (จาก .06 เหลือ .018)
+        d += k * (.048 + Math.random() * 0.012);
+
+        // เมื่อตกพ้นจอ ให้รีเซ็ตตำแหน่ง
+        if (d * fs > H + 10 * fs && Math.random() > .975) {
+            d = -Math.random() * 20;
+            S.gridChars[i] = []; // ล้างตัวอักษรเดิมเพื่อเริ่มรอบใหม่
+        }
+        
+        S.drop[i] = d;
     });
+
     x.globalAlpha = 1;
-    x.shadowBlur = 0
+    x.shadowBlur = 0;
 }
 
 function matrix2(k) {
@@ -1968,6 +2028,404 @@ function initInkWebGL(){
     glReady = true;
 
 }
+let glProgramMatrix = null;
+let glReadyMatrix = false;
+let fontTexture = null;
+
+function matrixWebGL(k) {
+    x.clearRect(0, 0, W, H);
+
+    if (glScene !== "matrixWebGL") {
+        initMatrixWebGL();
+        glScene = "matrixWebGL";
+    }
+
+    if (!glReadyMatrix) initMatrixWebGL();
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(glProgramMatrix);
+
+    gl.uniform2f(
+        gl.getUniformLocation(glProgramMatrix, "u_res"),
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    // ใช้ u_time ที่บีบช่วงไว้ กันค่าพุ่งจนจอดำ
+    gl.uniform1f(
+        gl.getUniformLocation(glProgramMatrix, "u_time"),
+        (t * 0.001) % 10000.0
+    );
+
+    const hexToRgbNormalized = (colStr) => {
+        if (!colStr) return [0.2, 1.0, 0.4];
+        let ctx = document.createElement('canvas').getContext('2d');
+        ctx.fillStyle = colStr;
+        let hex = ctx.fillStyle;
+        if (hex.startsWith('#')) {
+            return [
+                parseInt(hex.slice(1, 3), 16) / 255,
+                parseInt(hex.slice(3, 5), 16) / 255,
+                parseInt(hex.slice(5, 7), 16) / 255
+            ];
+        }
+        return [0.2, 1.0, 0.4];
+    };
+
+    let c1 = hexToRgbNormalized(tone(0)); 
+    let c2 = hexToRgbNormalized(tone(1) || tone(0));
+
+    gl.uniform3f(gl.getUniformLocation(glProgramMatrix, "u_colorMain"), c1[0], c1[1], c1[2]);
+    gl.uniform3f(gl.getUniformLocation(glProgramMatrix, "u_colorHead"), c2[0], c2[1], c2[2]);
+
+    // ผูก Texture ฟอนต์
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, fontTexture);
+    gl.uniform1i(gl.getUniformLocation(glProgramMatrix, "u_fontTexture"), 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function createFontTexture() {
+    // สร้าง Canvas ชั่วคราวเพื่อวาดลายอักขระ Matrix/Katakana สวยๆ ลงใน Texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#00000000';
+    ctx.fillRect(0, 0, 512, 32);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // อักขระ Matrix 16 ตัว
+    const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
+    for (let i = 0; i < 16; i++) {
+		let ch = chars[Math.floor(Math.random() * chars.length)];
+		ctx.fillText(ch, i * 32 + 16, 16);
+	}
+
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+}
+
+function initMatrixWebGL() {
+    gl = glCanvas.getContext("webgl", {
+        alpha: true,
+        antialias: false,
+        preserveDrawingBuffer: false
+    });
+
+    if (!gl) return;
+
+    fontTexture = createFontTexture();
+
+    const vs = `
+    attribute vec2 a_pos;
+    void main(){
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+    }
+    `;
+
+    const fs = `
+    precision highp float;
+
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorHead;
+    uniform sampler2D u_fontTexture;
+
+    float hash(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+    }
+
+    void main() {
+        vec2 st = gl_FragCoord.xy / u_res.xy;
+
+        float cols = 65.0;
+        vec2 grid = vec2(cols, cols * (u_res.y / u_res.x) * 0.45);
+        vec2 cellID = floor(st * grid);
+        vec2 cellUV = fract(st * grid);
+
+        float colHash = hash(vec2(cellID.x, 31.0));
+
+        // 🎯 1. ชะลอความเร็วลงให้อ่านทัน (ปรับคูณ u_time ให้ช้าลงนุ่มนวล)
+        float speed = 3.5 + colHash * 0.5;
+        float dropOffset = colHash * 999.0;
+        float loopLen = 40.0 + colHash * 20.0;
+
+        // คำนวณตำแหน่งสายฝน
+        float currentY = cellID.y + (u_time * speed * 8.0) + dropOffset;
+        float posInLoop = mod(currentY, loopLen);
+
+        float streamLen = 10.0 + colHash * 10.0; // ความยาวหาง
+        float distFromHead = posInLoop;
+        
+        float inStream = step(0.0, distFromHead) * step(distFromHead, streamLen);
+        float head = step(distFromHead, 1.0) * step(0.0, distFromHead);
+        float tail = (1.0 - (distFromHead / streamLen)) * inStream;
+        tail = pow(clamp(tail, 0.0, 1.0), 1.5);
+
+        // 🎯 2. เทคนิคเปลี่ยนตัวอักษรเฉพาะตอนเกิด Glitch (ไม่สุ่มทุกเฟรม)
+        // ใช้ floor(u_time * 1.5) เพื่อให้ตัวหนังสือ "นิ่ง" ไว้นานขึ้น (ล็อก Seed)
+        float glitchTime = floor(u_time * 1.5 + hash(cellID) * 10.0);
+        
+        // สุ่มตัวอักษรประจำเซลล์ (ยึดตาม cellID เป็นหลัก ตัวอักษรเลยไม่วิ่งว่อน)
+        float charSeed = hash(cellID + vec2(glitchTime * 0.05, colHash));
+        float charIdx = floor(charSeed * 16.0);
+
+        vec2 fontUV = vec2((cellUV.x + charIdx) / 16.0, cellUV.y);
+        float charTex = texture2D(u_fontTexture, fontUV).a;
+
+        // 🎯 3. การผสมสี: หัวขาวนวล หางเขียวฟุ้ง
+        vec3 col = mix(u_colorMain * tail * 1.3, vec3(0.95, 1.0, 0.95), head);
+        float alpha = charTex * (head * 2.2 + tail * 1.0);
+
+        gl_FragColor = vec4(col * alpha, alpha);
+    }
+    `;
+
+    function shader(type, src) {
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.log(gl.getShaderInfoLog(s));
+        }
+        return s;
+    }
+
+    glProgramMatrix = gl.createProgram();
+    gl.attachShader(glProgramMatrix, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramMatrix, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramMatrix);
+
+    if (!gl.getProgramParameter(glProgramMatrix, gl.LINK_STATUS)) {
+        console.log(gl.getProgramInfoLog(glProgramMatrix));
+        return;
+    }
+
+    gl.useProgram(glProgramMatrix);
+
+    let buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+            -1,  1,
+             1, -1,
+             1,  1
+        ]),
+        gl.STATIC_DRAW
+    );
+
+    let loc = gl.getAttribLocation(glProgramMatrix, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    glReadyMatrix = true;
+}
+// Variable สำหรับจัดการ State ของ Tunnel
+let glProgramTunnel = null;
+let glReadyTunnel = false;
+
+function tunnelWebGL(k) {
+    x.clearRect(0, 0, W, H);
+
+    if (glScene !== "tunnelWebGL") {
+        initTunnelWebGL();
+        glScene = "tunnelWebGL";
+    }
+
+    if (!glReadyTunnel) initTunnelWebGL();
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(glProgramTunnel);
+
+    // ส่งค่า Uniforms
+    gl.uniform2f(
+        gl.getUniformLocation(glProgramTunnel, "u_res"),
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    // u_time ป้องกันค่าพุ่งจอดำ
+    gl.uniform1f(
+        gl.getUniformLocation(glProgramTunnel, "u_time"),
+        (t * 0.001) % 10000.0
+    );
+
+    // แปลง HEX จาก tone() เป็น RGB Normalized (0.0 - 1.0)
+    const hexToRgbNormalized = (colStr) => {
+        if (!colStr) return [0.2, 0.8, 1.0];
+        let ctx = document.createElement('canvas').getContext('2d');
+        ctx.fillStyle = colStr;
+        let hex = ctx.fillStyle;
+        if (hex.startsWith('#')) {
+            return [
+                parseInt(hex.slice(1, 3), 16) / 255,
+                parseInt(hex.slice(3, 5), 16) / 255,
+                parseInt(hex.slice(5, 7), 16) / 255
+            ];
+        }
+        return [0.2, 0.8, 1.0];
+    };
+
+    let c1 = hexToRgbNormalized(tone(0)); 
+    let c2 = hexToRgbNormalized(tone(1) || tone(0));
+
+    gl.uniform3f(gl.getUniformLocation(glProgramTunnel, "u_colorMain"), c1[0], c1[1], c1[2]);
+    gl.uniform3f(gl.getUniformLocation(glProgramTunnel, "u_colorAccent"), c2[0], c2[1], c2[2]);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function initTunnelWebGL() {
+    gl = glCanvas.getContext("webgl", {
+        alpha: true,
+        antialias: false,
+        preserveDrawingBuffer: false
+    });
+
+    if (!gl) return;
+
+    const vs = `
+    attribute vec2 a_pos;
+    void main(){
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+    }
+    `;
+
+    // Fragment Shader: สแกนพิกเซลเป็น Polar Coordinates บินเข้าอุโมงค์
+    const fs = `
+    precision highp float;
+
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    void main() {
+        // 1. จัด Center ให้อยู่ตรงกลางหน้าจอ (-1.0 ถึง 1.0)
+        vec2 st = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        // 🎯 2. เพิ่มการเลี้ยวโค้งไปมา (Camera Bending / Tunnel Curves)
+        // สั่งให้จุดศูนย์กลางของอุโมงค์เบี่ยงไปมาตามจังหวะ sin/cos
+        vec2 tunnelOffset = vec2(
+            sin(u_time * 1.2) * 0.85,  // เลี้ยว ซ้าย-ขวา 0.35
+            cos(u_time * 0.9) * 0.45   // ก้ม-เงย ขึ้น-ลง 0.25
+        );
+        
+        // ลบ Offset ออกเพื่อให้มุมมองอุโมงค์บิดเบี้ยวตามระยะลึก (สร้างมิติการเลี้ยว)
+        vec2 shiftedSt = st - tunnelOffset;
+
+        // 3. คำนวณ Polar Coordinates จากจุดศูนย์กลางใหม่
+        float r = length(shiftedSt);             
+        float a = atan(shiftedSt.y, shiftedSt.x); 
+
+        r = max(r, 0.0001);
+
+        // 🎯 4. เพิ่มหมุนวนนิดๆ (Swirl Effect) ตอนพุ่ง
+        // แอบบวกหมุน (a + ...) ตามความลึก ให้รู้สึกเหมือนบินควงสว่านเบาๆ
+        a += sin(0.2 / r + u_time * 2.0) * 0.15;
+
+        // Map พิกัด UV สำหรับอุโมงค์
+        vec2 uv = vec2(1.0 / r + u_time * 2.2, a / 3.14159265);
+
+        // สร้างลวดลายแผ่นบล็อกอุโมงค์ (Grid Blocks)
+        vec2 grid = fract(uv * vec2(3.0, 8.0)); 
+        vec2 check = step(vec2(0.12), grid) * step(grid, vec2(0.88));
+        float pattern = check.x * check.y;
+
+        // แยกจังหวะแถบสีสลับ
+        float colorSwitch = step(0.5, fract(uv.y * 4.0));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSwitch);
+
+        // เอฟเฟกต์ Glow ขอบท่อ
+        float edgeGlow = smoothstep(0.0, 0.15, grid.x) * smoothstep(1.0, 0.85, grid.x) *
+                         smoothstep(0.0, 0.15, grid.y) * smoothstep(1.0, 0.85, grid.y);
+
+        // เอฟเฟกต์หมอก/ความลึก
+        float depthFade = smoothstep(0.0, 0.45, r); 
+
+        // ผสมสี
+        vec3 finalColor = mix(baseColor * 1.8, u_colorAccent, 1.0 - edgeGlow) * pattern;
+        finalColor *= depthFade;
+
+        // แสงสว่างจี้ตรงปลายทางอุโมงค์ (Follows the Curve)
+        float coreLight = pow(clamp(0.04 / r, 0.0, 1.0), 2.0);
+        finalColor += u_colorAccent * coreLight;
+
+        gl_FragColor = vec4(finalColor, depthFade);
+    }
+    `;
+
+    function shader(type, src) {
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.log(gl.getShaderInfoLog(s));
+        }
+        return s;
+    }
+
+    glProgramTunnel = gl.createProgram();
+    gl.attachShader(glProgramTunnel, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramTunnel, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramTunnel);
+
+    if (!gl.getProgramParameter(glProgramTunnel, gl.LINK_STATUS)) {
+        console.log(gl.getProgramInfoLog(glProgramTunnel));
+        return;
+    }
+
+    gl.useProgram(glProgramTunnel);
+
+    // Setup Quad Buffer (สี่เหลี่ยมเต็มหน้าจอ)
+    let buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+            -1,  1,
+             1, -1,
+             1,  1
+        ]),
+        gl.STATIC_DRAW
+    );
+
+    let loc = gl.getAttribLocation(glProgramTunnel, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    glReadyTunnel = true;
+}
 function loop(now) {
     let k = Math.min(2.5, (now - last || 16) / 16) * +$('speed').value;
     last = now;
@@ -1987,6 +2445,8 @@ function loop(now) {
     ({
 		inkBubblesWebGL: () => inkBubblesWebGL(k),
 		nebulaWebGL: () => nebulaWebGL(k),
+		matrixWebGL: () => matrixWebGL(k),
+		tunnelWebGL: () => tunnelWebGL(k),
         tv_clock,
         tv_stars,
         tv_matrix,
@@ -2036,11 +2496,36 @@ function setColor(v) {
     document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('active', b.dataset.color === color))
 }
 
-function rotateRandomTheme() {
+/*function rotateRandomTheme() {
     const choices = randomThemes.filter(name => name !== activeRandomTheme);
     activeRandomTheme = choices[choices.length * Math.random() | 0];
     localStorage.screenActiveRandomTheme = activeRandomTheme;
     setColor(tone())
+}*/
+// ==========================================
+// 2. ปรับปรุงฟังก์ชัน rotateRandomTheme() ให้สุ่มแยกหมวดได้
+// ==========================================
+function rotateRandomTheme() {
+    let pool = [];
+
+    // เช็คว่า theme ปัจจุบันเป็นหมวดหมู่เฉพาะ เช่น 'random_dark' หรือไม่
+    if (theme.startsWith('random_')) {
+        const catName = theme.replace('random_', ''); // ดึงคำว่า 'dark', 'light', ฯลฯ
+        pool = paletteCategories[catName] || [];
+    }
+
+    // ถ้าไม่เจอ หรือถ้าเป็น 'randomTheme' (สุ่มทั้งหมด) ให้ใช้ randomThemes ทั้งหมด
+    if (pool.length === 0) {
+        pool = randomThemes;
+    }
+
+    // กรองเอาธีมปัจจุบันออก เพื่อไม่ให้สุ่มได้สีเดิมซ้ำสองรอบติด
+    const choices = pool.filter(name => name !== activeRandomTheme);
+    const selectedPool = choices.length > 0 ? choices : pool;
+
+    activeRandomTheme = selectedPool[selectedPool.length * Math.random() | 0];
+    localStorage.screenActiveRandomTheme = activeRandomTheme;
+    setColor(tone());
 }
 
 function pick(v) {
@@ -2128,6 +2613,78 @@ function pick(v) {
 
 
 	}
+	else if (v === "matrixWebGL") {
+
+		glCanvas.style.display = "block";
+
+		if (glScene !== "matrixWebGL") {
+
+			glReady = false;
+			initMatrixWebGL();
+			glScene = "matrixWebGL";
+
+		}
+
+
+		if (gl) {
+
+			gl.viewport(
+				0,
+				0,
+				glCanvas.width,
+				glCanvas.height
+			);
+
+			gl.clearColor(
+				0,
+				0,
+				0,
+				0
+			);
+
+			gl.clear(
+				gl.COLOR_BUFFER_BIT
+			);
+		}
+
+
+	}
+	else if (v === "tunnelWebGL") {
+
+		glCanvas.style.display = "block";
+
+		if (glScene !== "tunnelWebGL") {
+
+			glReady = false;
+			initTunnelWebGL();
+			glScene = "tunnelWebGL";
+
+		}
+
+
+		if (gl) {
+
+			gl.viewport(
+				0,
+				0,
+				glCanvas.width,
+				glCanvas.height
+			);
+
+			gl.clearColor(
+				0,
+				0,
+				0,
+				0
+			);
+
+			gl.clear(
+				gl.COLOR_BUFFER_BIT
+			);
+		}
+
+
+	}
 	else {
 
 		if (gl) {
@@ -2146,7 +2703,7 @@ function pick(v) {
 
 		glCanvas.style.display = "none";
 	}
-	if (!["inkBubblesWebGL", "nebulaWebGL"].includes(v)) {
+	if (!["inkBubblesWebGL", "nebulaWebGL","matrixWebGL","tunnelWebGL"].includes(v)) {
 
     glCanvas.style.display = "none";
 /*
@@ -2180,7 +2737,7 @@ function resize() {
 }
 $('sound').value = localStorage.screenSound || '';
 $('sound').onchange = e => setSound(e.target.value);
-$('theme').value = theme;
+/*$('theme').value = theme;
 $('theme').onchange = e => {
     theme = e.target.value;
     localStorage.screenTheme = theme;
@@ -2188,6 +2745,23 @@ $('theme').onchange = e => {
     else if (palettes[theme]) setColor(tone());
     reset();
     fallSetup()
+};*/
+// ==========================================
+// 3. ปรับปรุง Event Listener ของ Theme Select ($('theme').onchange)
+// ==========================================
+$('theme').value = theme;
+$('theme').onchange = e => {
+    theme = e.target.value;
+    localStorage.screenTheme = theme;
+
+    // ถ้าเริ่มด้วยคำว่า 'random' (เช่น randomTheme, random_dark, random_light)
+    if (theme.startsWith('random')) {
+        rotateRandomTheme();
+    } else if (palettes[theme]) {
+        setColor(tone());
+    }
+    reset();
+    fallSetup();
 };
 $('colorPicker').oninput = e => {
     theme = 'normal';
@@ -2359,14 +2933,19 @@ document.onkeydown = e => {
     e.preventDefault();
 };
 
+// 1. สุ่มสีเดี่ยวจาก baseColors (จะทำงานเมื่อเลือก 'random')
 setInterval(() => {
     if (theme === 'random') {
         let a = baseColors.filter(v => v !== color);
-        setColor(a[a.length * Math.random() | 0])
+        setColor(a[a.length * Math.random() | 0]);
     }
 }, 12000);
+
+// 2. สุ่มธีมพาเลท 3 สี (จะทำงานเมื่อเลือก 'randomTheme' หรือ 'random_xxxx')
 setInterval(() => {
-    if (theme === 'randomTheme') rotateRandomTheme();
+    if (theme.startsWith('randomTheme') || theme.startsWith('random_')) {
+        rotateRandomTheme();
+    }
 }, 20000);
 setColor(palettes[theme] || theme === 'randomTheme' ? tone() : color);
 if (localStorage.screenControlsHidden === '1') setControlsHidden(true);
