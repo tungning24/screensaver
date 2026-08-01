@@ -15,12 +15,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body><canvas id="matrix" aria-label="Animated screensaver"></canvas>
+<body><canvas id="matrix" aria-label="Animated screensaver"></canvas><canvas id="webglLayer"></canvas>
     <main class="hud">
         <section class="brand"><span class="status-dot"></span><span id="sceneTitle">MATRIX FLOW</span></section>
         <section class="panel" id="panel">
             <div class="panel-top"><span>DISPLAY SETTINGS</span><button id="toggle" aria-label="Collapse settings">-</button></div>
             <div class="settings" id="settings"><label for="scene">SCREENSAVER</label><select id="scene">
+					<optgroup label="🧊 WEBGL OPTIMIZED">
+                        <option value="inkBubblesWebGL">🧊 01 - INK BUBBLES (WebGL)</option>
+						<option value="nebulaWebGL">🧊 02 - Cosmic Nebula (WebGL)</option>
+                    </optgroup>
                     <optgroup label="⚡ TV 60FPS OPTIMIZED">
                         <option value="tv_clock">📺 01 - TV Flip Clock (60FPS)</option>
                         <option value="tv_stars">📺 02 - TV Cosmic Star Warp (60FPS)</option>
@@ -75,6 +79,14 @@
                     <option value="gold">Gold</option>
                     <option value="lava">Lava</option>
                     <option value="pastel">Pastel</option>
+					<option value="cyberpunk">cyberpunk</option>
+					<option value="midnight">midnight</option>
+					<option value="deepspace">deepspace</option>
+					<option value="vampire">vampire</option>
+					<option value="synthdark">synthdark</option>
+					<option value="abyss">abyss</option>
+					<option value="toxin">toxin</option>
+					<option value="voids">voids</option>
                 </select><label for="sound">AMBIENT SOUND</label><select id="sound">
                     <option value="">No sound</option>
                     <option value="rain">Light rain</option>

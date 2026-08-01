@@ -2,9 +2,19 @@ const c = document.querySelector('canvas'),
     x = c.getContext('2d'),
     $ = id => document.getElementById(id),
     TAU = Math.PI * 2;
+const glCanvas = document.getElementById('webglLayer');
+let glMode = "";
+let gl = null;
+let glProgram = null;
+let glReady = false;
+let glScene = "";
 let fps = 0;
 let fpsFrames = 0;
 let fpsLast = performance.now();
+let locRes;
+let locTime;
+let locBlobs;
+let locColors;
 let W, H, last = 0,
     t = 0,
     color = localStorage.screenColor || '#36F76D',
@@ -25,11 +35,21 @@ const palettes = {
     candy: ['#FF7EB6', '#FFB86B', '#8F7CFF'],
     gold: ['#FFF1A8', '#FFC14D', '#D88416'],
     lava: ['#FFDD57', '#FF6B35', '#C1121F'],
-    pastel: ['#A8E6CF', '#FFD3B6', '#FFAAA5']
+    pastel: ['#A8E6CF', '#FFD3B6', '#FFAAA5'],
+	cyberpunk: ['#FF0055', '#7B2CBF', '#00F5FF'], // มืดนีออนจัดจ้าน สไตล์ไซเบอร์พังก์
+    midnight:  ['#001219', '#005F73', '#0A9396'], // น้ำเงินเข้มหม่นๆ ลึกเหมือนมหาสมุทรตอนกลางคืน
+    deepspace: ['#1A1A2E', '#16213E', '#0F3460'], // อวกาศลึก โทนมืดขรึม เรียบหรู
+    vampire:   ['#0D0D0D', '#800020', '#E63946'], // มืดสนิท ตัดแดงเลือดหมูและแดงสด
+    synthdark: ['#2B0B3F', '#521262', '#FF007F'], // สีม่วงนีออนมืด สไตล์ Synthwave สดใสบนพื้นมืด
+    abyss:     ['#081C15', '#1B4332', '#40916C'], // เขียวเข้มใต้ทะเลลึก/ป่าลึกลับยามค่ำคืน
+    toxin:     ['#0B090A', '#161A1D', '#52B788'], // ดำเทา ตัดด้วยสีเขียวสารเคมี/นีออน
+    voids:      ['#181823', '#537188', '#CBB279']  // มืดเทาสบายตา สไตล์คอนทราสต์ต่ำ
 };
 const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
-    randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava'],
+    randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava','cyberpunk','midnight','deepspace','vampire','synthdark','abyss','toxin','voids'],
     title = {
+		inkBubblesWebGL: 'INK BUBBLES [WEBGL]',
+		nebulaWebGL: 'COSMIC NEBULA',
         tv_clock: 'TV FLIP CLOCK [60FPS]',
         tv_stars: 'TV COSMIC STAR WARP [60FPS]',
         tv_matrix: 'TV OPTIMIZED MATRIX [60FPS]',
@@ -1328,7 +1348,608 @@ function tv_dvd(k) {
     x.textAlign = 'center';
     x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2 + 10);
 }
+function nebulaWebGL(k) {
+    x.clearRect(0, 0, W, H);
 
+    if (glScene !== "nebulaWebGL") {
+        initNebulaWebGL();
+        glScene = "nebulaWebGL";
+    }
+
+    if (!glReady) initNebulaWebGL();
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(glProgram);
+
+    // 1. ส่งขนาด Canvas และ เวลา
+    gl.uniform2f(
+        gl.getUniformLocation(glProgram, "u_res"),
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(glProgram, "u_time"),
+        t
+    );
+
+    // ==========================================
+    // 2. [ส่วนที่แก้ไข] ดึงสีตาม Theme และแปลงเป็น RGB (0.0 - 1.0)
+    // ==========================================
+    
+    // ฟังก์ชันย่อยช่วยแปลง Hex/Color String เป็น [r, g, b] ช่วง 0.0 - 1.0
+    const hexToRgbNormalized = (colStr) => {
+        if (!colStr) return [0.5, 0.5, 0.5];
+        // สร้าง canvas context จำลองเพื่อแกะค่า RGB ไม่ว่าจะส่งมาเป็น Hex หรือชื่อสี
+        let ctx = document.createElement('canvas').getContext('2d');
+        ctx.fillStyle = colStr;
+        let hex = ctx.fillStyle; // จะได้ฟอร์แมต #rrggbb
+        
+        if (hex.startsWith('#')) {
+            let r = parseInt(hex.slice(1, 3), 16) / 255;
+            let g = parseInt(hex.slice(3, 5), 16) / 255;
+            let b = parseInt(hex.slice(5, 7), 16) / 255;
+            return [r, g, b];
+        }
+        return [0.5, 0.5, 0.5];
+    };
+
+    // ดึงสี 3 สีตาม Theme ปัจจุบันผ่าน tone(0), tone(1), tone(2)
+    let c1 = hexToRgbNormalized(tone(0));
+    let c2 = hexToRgbNormalized(tone(1));
+    let c3 = hexToRgbNormalized(tone(2));
+
+    // รวมเป็น Array 9 ค่า [r1,g1,b1, r2,g2,b2, r3,g3,b3]
+    let cols = [...c1, ...c2, ...c3];
+
+    // ส่ง Uniform Array สีทั้ง 3 เข้าไปใน WebGL Shader
+    gl.uniform3fv(
+        gl.getUniformLocation(glProgram, "colors[0]"),
+        new Float32Array(cols)
+    );
+
+    // 3. วาดภาพ
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function initNebulaWebGL() {
+    gl = glCanvas.getContext("webgl", {
+        alpha: true,
+        antialias: false,
+        preserveDrawingBuffer: false
+    });
+
+    if (!gl) return;
+
+    const vs = `
+    attribute vec2 a_pos;
+    void main(){
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+    }
+    `;
+
+    const fs = `
+    precision mediump float;
+
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 colors[3];
+
+    float hash(vec2 p){
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    }
+
+    float noise(vec2 p){
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+
+        float a = hash(i);
+        float b = hash(i + vec2(1.0, 0.0));
+        float c = hash(i + vec2(0.0, 1.0));
+        float d = hash(i + vec2(1.0, 1.0));
+
+        vec2 u = f * f * (3.0 - 2.0 * f);
+
+        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+    }
+
+    float fbm(vec2 p){
+        float v = 0.0;
+        float a = 0.5;
+        for(int i = 0; i < 5; i++){
+            v += noise(p) * a;
+            p *= 2.0;
+            a *= 0.5;
+        }
+        return v;
+    }
+
+    void main(){
+        vec2 uv = gl_FragCoord.xy / u_res.xy;
+        vec2 p = uv * 3.0;
+        p.x += u_time * 0.015;
+
+        float n = fbm(p);
+        float glow = smoothstep(0.0, 1.0, n);
+
+        // ผสมสีตาม Theme จาก colors[0], colors[1], colors[2]
+        vec3 col = mix(colors[0], colors[1], n);
+        col = mix(col, colors[2], n * n);
+
+        gl_FragColor = vec4(col * (0.5 + glow), 1.0);
+    }
+    `;
+
+    function shader(type, src) {
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.log(gl.getShaderInfoLog(s));
+        }
+        return s;
+    }
+
+    glProgram = gl.createProgram();
+    gl.attachShader(glProgram, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgram, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgram);
+
+    if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+        console.log(gl.getProgramInfoLog(glProgram));
+        return;
+    }
+
+    gl.useProgram(glProgram);
+
+    // Fullscreen quad
+    let buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+            -1,  1,
+             1, -1,
+             1,  1
+        ]),
+        gl.STATIC_DRAW
+    );
+
+    let loc = gl.getAttribLocation(glProgram, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    glReady = true;
+}
+
+function inkBubblesWebGL(k) {
+
+    // ล้าง canvas 2D เดิม
+    x.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+	if(glScene !== "ink"){
+
+        initInkWebGL();
+        glScene = "ink";
+
+    }
+    if (!glReady)
+        initInkWebGL();
+
+
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+
+    gl.clearColor(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    gl.clear(
+        gl.COLOR_BUFFER_BIT
+    );
+
+
+    let arr = [];
+
+
+    // update bubbles
+    for (let b of S.b) {
+
+        b.x += b.vx * k * 8;
+        b.y += b.vy * k * 8;
+
+
+        if (b.x < 0 || b.x > W)
+            b.vx *= -1;
+
+
+        if (b.y < 0 || b.y > H)
+            b.vy *= -1;
+
+
+        arr.push(
+            b.x / W,
+            1 - b.y / H,
+            b.r / 300
+        );
+    }
+
+
+    // shader รองรับ 8 blobs
+    while (arr.length < 24)
+        arr.push(0);
+
+
+
+    gl.useProgram(
+        glProgram
+    );
+
+
+    // resolution
+    gl.uniform2f(
+        locRes,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+
+    // animation time
+    gl.uniform1f(
+        locTime,
+        t
+    );
+
+
+    // blobs
+    gl.uniform3fv(
+        locBlobs,
+        new Float32Array(arr)
+    );
+
+
+
+    // ===== Theme Colors =====
+
+    const hexToRgb01 = h => {
+
+        let n = parseInt(
+            h.slice(1),
+            16
+        );
+
+        return [
+            ((n >> 16) & 255) / 255,
+            ((n >> 8) & 255) / 255,
+            (n & 255) / 255
+        ];
+    };
+
+
+    const cols = [
+
+        ...hexToRgb01(tone(0)),
+        ...hexToRgb01(tone(1)),
+        ...hexToRgb01(tone(2))
+
+    ];
+
+
+    gl.uniform3fv(
+        locColors,
+        new Float32Array(cols)
+    );
+
+
+
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
+}
+
+
+
+
+
+function initInkWebGL(){
+
+    gl = glCanvas.getContext(
+        "webgl",
+        {
+            alpha:true,
+            antialias:false,
+            preserveDrawingBuffer:false
+        }
+    );
+
+
+    if(!gl)
+        return;
+
+
+
+    const vs = `
+
+    attribute vec2 a_pos;
+
+    void main(){
+
+        gl_Position =
+        vec4(a_pos,0.0,1.0);
+
+    }
+
+    `;
+
+
+
+    const fs = `
+
+    precision mediump float;
+
+
+    uniform vec2 u_res;
+    uniform float u_time;
+
+
+    uniform vec3 blobs[8];
+    uniform vec3 colors[3];
+
+
+
+    void main(){
+
+
+        vec2 uv =
+        gl_FragCoord.xy / u_res.xy;
+
+
+
+        float v = 0.0;
+
+
+
+        for(int i=0;i<8;i++){
+
+
+            vec2 p =
+            blobs[i].xy;
+
+
+            float r =
+            blobs[i].z;
+
+
+
+            float d =
+            distance(
+                uv,
+                p
+            );
+
+
+
+            v +=
+            r*r /
+            (d*d*80.0);
+
+        }
+
+
+
+        vec3 col =
+        mix(
+            colors[0],
+            colors[1],
+            clamp(v * 0.5,0.0,1.0)
+        );
+
+
+
+        col =
+        mix(
+            col,
+            colors[2],
+            clamp(v * 0.25,0.0,1.0)
+        );
+
+
+
+        float glow =
+        smoothstep(
+            .8,
+            1.4,
+            v
+        );
+
+
+
+        gl_FragColor =
+        vec4(
+            col * glow,
+            glow
+        );
+
+    }
+
+    `;
+
+
+
+    function shader(type,src){
+
+        let s =
+        gl.createShader(type);
+
+
+        gl.shaderSource(
+            s,
+            src
+        );
+
+
+        gl.compileShader(
+            s
+        );
+
+
+        return s;
+
+    }
+
+
+
+
+    glProgram =
+    gl.createProgram();
+
+
+
+    gl.attachShader(
+        glProgram,
+        shader(
+            gl.VERTEX_SHADER,
+            vs
+        )
+    );
+
+
+
+    gl.attachShader(
+        glProgram,
+        shader(
+            gl.FRAGMENT_SHADER,
+            fs
+        )
+    );
+
+
+
+    gl.linkProgram(
+        glProgram
+    );
+
+
+
+    gl.useProgram(
+        glProgram
+    );
+
+
+
+    // ===== Cache Uniform Location =====
+
+    locRes =
+    gl.getUniformLocation(
+        glProgram,
+        "u_res"
+    );
+
+
+    locTime =
+    gl.getUniformLocation(
+        glProgram,
+        "u_time"
+    );
+
+
+    locBlobs =
+    gl.getUniformLocation(
+        glProgram,
+        "blobs[0]"
+    );
+
+
+    locColors =
+    gl.getUniformLocation(
+        glProgram,
+        "colors[0]"
+    );
+
+
+
+
+    let buffer =
+    gl.createBuffer();
+
+
+
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        buffer
+    );
+
+
+
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+
+            -1,-1,
+             1,-1,
+            -1, 1,
+
+            -1, 1,
+             1,-1,
+             1, 1
+
+        ]),
+        gl.STATIC_DRAW
+    );
+
+
+
+    let loc =
+    gl.getAttribLocation(
+        glProgram,
+        "a_pos"
+    );
+
+
+
+    gl.enableVertexAttribArray(
+        loc
+    );
+
+
+
+    gl.vertexAttribPointer(
+        loc,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
+
+
+
+    glReady = true;
+
+}
 function loop(now) {
     let k = Math.min(2.5, (now - last || 16) / 16) * +$('speed').value;
     last = now;
@@ -1346,6 +1967,8 @@ function loop(now) {
 		}
 	}
     ({
+		inkBubblesWebGL: () => inkBubblesWebGL(k),
+		nebulaWebGL: () => nebulaWebGL(k),
         tv_clock,
         tv_stars,
         tv_matrix,
@@ -1403,12 +2026,125 @@ function rotateRandomTheme() {
 }
 
 function pick(v) {
+
     scene = v;
+
     $('scene').value = v;
-    $('sceneTitle').textContent = title[v] || v.toUpperCase();
+
+    $('sceneTitle').textContent =
+        title[v] || v.toUpperCase();
+
     localStorage.screenScene = v;
+
+
+    // ===== WebGL Layer Control =====
+	if (v === "inkBubblesWebGL") {
+
+		glCanvas.style.display = "block";
+
+		if (glScene !== "ink") {
+
+			glReady = false;
+			initInkWebGL();
+			glScene = "ink";
+
+		}
+
+
+		if (gl) {
+
+			gl.viewport(
+				0,
+				0,
+				glCanvas.width,
+				glCanvas.height
+			);
+
+			gl.clearColor(
+				0,
+				0,
+				0,
+				0
+			);
+
+			gl.clear(
+				gl.COLOR_BUFFER_BIT
+			);
+		}
+
+
+	}
+	else if (v === "nebulaWebGL") {
+
+		glCanvas.style.display = "block";
+
+		if (glScene !== "nebulaWebGL") {
+
+			glReady = false;
+			initNebulaWebGL();
+			glScene = "nebulaWebGL";
+
+		}
+
+
+		if (gl) {
+
+			gl.viewport(
+				0,
+				0,
+				glCanvas.width,
+				glCanvas.height
+			);
+
+			gl.clearColor(
+				0,
+				0,
+				0,
+				0
+			);
+
+			gl.clear(
+				gl.COLOR_BUFFER_BIT
+			);
+		}
+
+
+	}
+	else {
+
+		if (gl) {
+
+			gl.clearColor(
+				0,
+				0,
+				0,
+				0
+			);
+
+			gl.clear(
+				gl.COLOR_BUFFER_BIT
+			);
+		}
+
+		glCanvas.style.display = "none";
+	}
+	if (!["inkBubblesWebGL", "nebulaWebGL"].includes(v)) {
+
+    glCanvas.style.display = "none";
+/*
+    x.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+*/
+}
+
+
     reset();
-    fallSetup()
+
+    fallSetup();
 }
 
 function resize() {
@@ -1416,6 +2152,8 @@ function resize() {
     let d = isTvScene ? 1 : Math.min(devicePixelRatio, 2);
     W = innerWidth;
     H = innerHeight;
+	glCanvas.width  = (W * 0.5) | 0;
+	glCanvas.height = (H * 0.5) | 0;
     c.width = W * d;
     c.height = H * d;
     x.setTransform(d, 0, 0, d, 0, 0);
