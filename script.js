@@ -59,7 +59,8 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
         paint: 'PAINT SPLASH',
         plasma: 'PLASMA',
         smoke: 'SMOKE',
-        confetti: 'CONFETTI'
+        confetti: 'CONFETTI',
+		synthwave: 'RETRO SYNTHWAVE'
     },
     chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
 let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
@@ -176,6 +177,245 @@ function fallSetup() {
         p: R(0, TAU),
         c: Math.random() * 3 | 0
     }))
+}
+function synthwave(k) {
+    bg(.12);
+
+    const c1 = tone(0);
+    const c2 = tone(1);
+    const c3 = tone(2);
+
+    const horizon = H * 0.45;
+    const centerX = W * 0.5;
+
+    // ===== Stars =====
+    for (let i = 0; i < S.tv_star.length; i++) {
+        let s = S.tv_star[i];
+
+        let sx = s.x + W * 0.5;
+        let sy = s.y + H * 0.25;
+
+        if (sx < 0 || sx > W || sy < 0 || sy > horizon) continue;
+
+        let a = 0.4 + Math.sin(t * 0.03 + i) * 0.3;
+
+        x.fillStyle = `rgba(${rgb(c3)},${a})`;
+        x.fillRect(sx, sy, 2, 2);
+    }
+
+    // ===== Light Beams =====
+    for (let i = -8; i <= 8; i++) {
+
+        let bx = centerX + i * 80;
+
+        let beam = x.createLinearGradient(
+            bx,
+            0,
+            centerX,
+            horizon
+        );
+
+        beam.addColorStop(0, "transparent");
+        beam.addColorStop(.7, `rgba(${rgb(c2)},.06)`);
+        beam.addColorStop(1, `rgba(${rgb(c1)},.22)`);
+
+        x.strokeStyle = beam;
+        x.lineWidth = 2;
+
+        x.beginPath();
+        x.moveTo(bx, 0);
+        x.lineTo(centerX, horizon);
+        x.stroke();
+    }
+
+    // ===== Sun Glow =====
+    let sunR = Math.min(W, H) * 0.14;
+
+    let g = x.createRadialGradient(
+        centerX,
+        horizon - 40,
+        20,
+        centerX,
+        horizon - 40,
+        sunR * 2.2
+    );
+
+    g.addColorStop(0, c3);
+    g.addColorStop(.5, c2);
+    g.addColorStop(.9, c1);
+    g.addColorStop(1, "transparent");
+
+    x.fillStyle = g;
+    x.beginPath();
+    x.arc(
+        centerX,
+        horizon - 40,
+        sunR * 2.2,
+        0,
+        TAU
+    );
+    x.fill();
+
+    // ===== Sun =====
+    x.fillStyle = c3;
+
+    x.beginPath();
+    x.arc(
+        centerX,
+        horizon - 40,
+        sunR,
+        0,
+        TAU
+    );
+    x.fill();
+
+    // ===== Sun Stripes =====
+    x.save();
+
+    x.beginPath();
+    x.arc(
+        centerX,
+        horizon - 40,
+        sunR,
+        0,
+        TAU
+    );
+    x.clip();
+
+    x.strokeStyle = `rgba(${rgb(c2)},.5)`;
+
+    for (let i = 0; i < 12; i++) {
+
+        let yy =
+            horizon -
+            40 -
+            sunR +
+            i * 14;
+
+        x.beginPath();
+        x.moveTo(centerX - sunR, yy);
+        x.lineTo(centerX + sunR, yy);
+        x.stroke();
+    }
+
+    x.restore();
+
+    // ===== Horizon =====
+    x.strokeStyle = c2;
+    x.lineWidth = 3;
+
+    x.beginPath();
+    x.moveTo(0, horizon);
+    x.lineTo(W, horizon);
+    x.stroke();
+
+    // ===== Moving Grid =====
+    let flow = (t * 0.02) % 1;
+
+    x.strokeStyle = `rgba(${rgb(c1)},.75)`;
+    x.lineWidth = 1;
+
+    for (let i = 1; i < 24; i++) {
+
+        let p =
+            ((i / 24 + flow) % 1);
+
+        let y =
+            horizon +
+            Math.pow(p, 2.2) *
+            (H - horizon);
+
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+
+    // ===== Perspective Lines =====
+    for (let i = -20; i <= 20; i++) {
+
+        let px =
+            centerX +
+            i * 60;
+
+        x.beginPath();
+        x.moveTo(px, H);
+        x.lineTo(centerX, horizon);
+        x.stroke();
+    }
+
+    // ===== Mountains =====
+    x.fillStyle = darkTone(c1, 80);
+
+    x.beginPath();
+    x.moveTo(0, horizon);
+
+    for (let i = 0; i <= W; i += 40) {
+
+        let h =
+            Math.sin(i * 0.01) * 40 +
+            Math.sin(i * 0.03) * 20;
+
+        x.lineTo(
+            i,
+            horizon - 40 - h
+        );
+    }
+
+    x.lineTo(W, horizon);
+    x.closePath();
+    x.fill();
+
+    // ===== CRT Scanlines =====
+    x.strokeStyle = "rgba(255,255,255,.02)";
+    x.lineWidth = 1;
+
+    for (let y = 0; y < H; y += 4) {
+        x.beginPath();
+        x.moveTo(0, y);
+        x.lineTo(W, y);
+        x.stroke();
+    }
+	
+	// ===== FULL SCREEN MOVING GLOW =====
+    let glowY =
+        ((t * 4) % (H + 800))
+        - 400;
+
+    let skyGlow = x.createLinearGradient(
+        0,
+        glowY - 250,
+        0,
+        glowY + 250
+    );
+
+    skyGlow.addColorStop(0, "transparent");
+    skyGlow.addColorStop(.5, `rgba(${rgb(c2)},.18)`);
+    skyGlow.addColorStop(1, "transparent");
+
+    x.fillStyle = skyGlow;
+    x.fillRect(
+        0,
+        glowY - 250,
+        W,
+        500
+    );
+
+    // ===== Vignette =====
+    let vg = x.createRadialGradient(
+        W / 2,
+        H / 2,
+        H * 0.1,
+        W / 2,
+        H / 2,
+        H * 0.9
+    );
+
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,.45)");
+
+    x.fillStyle = vg;
+    x.fillRect(0, 0, W, H);
 }
 
 function matrix(k) {
@@ -1042,7 +1282,8 @@ function loop(now) {
         paint: () => blobs(k),
         plasma,
         smoke,
-        confetti: () => fall(k, 'confetti')
+        confetti: () => fall(k, 'confetti'),
+		synthwave
     } [scene] || tv_clock)(k);
     requestAnimationFrame(loop)
 }
