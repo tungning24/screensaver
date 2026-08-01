@@ -650,12 +650,12 @@ function tv_inkBubbles(k) {
 
         g.addColorStop(
             0,
-            `rgba(${rgb(col)},0.5)`
+            `rgba(${rgb(col)},0.45)`
         );
 
         g.addColorStop(
             .5,
-            `rgba(${rgb(col)},0.35)`
+            `rgba(${rgb(col)},0.25)`
         );
 
         g.addColorStop(
