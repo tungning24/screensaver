@@ -18,7 +18,7 @@ let locColors;
 let W, H, last = 0,
     t = 0,
     color = localStorage.screenColor || '#36F76D',
-    scene = localStorage.screenScene || 'matrix',
+    scene = localStorage.screenScene || 'inkBubblesWebGL',
     S = {},
     theme = localStorage.screenTheme || 'normal';
 const sounds = {rain:'mp3/light-rain.mp3',waves:'mp3/ocean-waves.mp3',birds:'mp3/rainy-with-birds.mp3',mood:'mp3/Rainy-Mood.m4a'}, audio = new Audio();
