@@ -1546,7 +1546,7 @@ function initNebulaWebGL(){
         vec2 st = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.x, u_res.y);
         
         vec2 p = st * 2.5;
-        p.x += u_time * 0.015;
+		p.x += mod(u_time * 0.015, 300.0);
 
         float n = fbm(p);
         
