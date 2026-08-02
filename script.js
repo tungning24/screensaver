@@ -2749,6 +2749,8 @@ function resize() {
     x.setTransform(d, 0, 0, d, 0, 0);
     reset();
     fallSetup()
+	document.getElementById('sceneTitle').textContent +=
+    innerWidth + " x " + innerHeight;
 }
 $('sound').value = localStorage.screenSound || '';
 $('sound').onchange = e => setSound(e.target.value);
