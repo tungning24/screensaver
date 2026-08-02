@@ -32,7 +32,12 @@ body {
 
 .hud {
     position: fixed;
-    inset: 0;
+    /*inset: 0;*/
+	top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+	outline: 3px solid red;
     pointer-events: none;
     padding: 30px;
     display: flex;
@@ -60,7 +65,6 @@ body {
 }
 
 .panel {
-	position: fixed;
     pointer-events: auto;
     width: 280px;
     align-self: flex-end;
@@ -290,7 +294,6 @@ input[type=range] {
 }
 
 .hint {
-	position: fixed;
     align-self: center;
     margin-top: auto;
     color: #7d8a80;
