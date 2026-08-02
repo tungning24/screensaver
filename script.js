@@ -1408,7 +1408,16 @@ function tv_dvd(k) {
     x.textAlign = 'center';
     x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2 + 10);
 }
+
+let glEventsAdded = false;
 function nebulaWebGL(k) {
+	if (!gl || gl.isContextLost()) {
+        console.log("WebGL context lost - restart");
+        glReady = false;
+        glScene = "";
+        initNebulaWebGL();
+        return;
+    }
     x.clearRect(0, 0, W, H);
 
     if (glScene !== "nebulaWebGL") {
@@ -1482,10 +1491,28 @@ function initNebulaWebGL(){
             alpha: true,
             antialias: false,
             preserveDrawingBuffer: false
+			powerPreference: "high-performance"
         }
     );
 
     if(!gl) return;
+	
+	if (!glEventsAdded) {
+
+		glCanvas.addEventListener("webglcontextlost", e => {
+			e.preventDefault();
+			console.log("context lost");
+			glReady = false;
+			gl = null;
+		});
+
+		glCanvas.addEventListener("webglcontextrestored", () => {
+			console.log("context restored");
+			initNebulaWebGL();
+		});
+
+		glEventsAdded = true;
+	}
 
     const vs = `
     attribute vec2 a_pos;
