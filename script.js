@@ -1490,7 +1490,7 @@ function initNebulaWebGL(){
         {
             alpha: true,
             antialias: false,
-            preserveDrawingBuffer: false
+            preserveDrawingBuffer: false,
 			powerPreference: "high-performance"
         }
     );
