@@ -176,7 +176,7 @@ function reset() {
         })),
         p: particles,
         b: Array.from({
-            length: 18
+            length: 9
         }, () => ({
             x: Math.random() * W,
             y: Math.random() * H,
