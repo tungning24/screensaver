@@ -60,6 +60,7 @@ body {
 }
 
 .panel {
+	position: fixed;
     pointer-events: auto;
     width: 280px;
     align-self: flex-end;
@@ -289,6 +290,7 @@ input[type=range] {
 }
 
 .hint {
+	position: fixed;
     align-self: center;
     margin-top: auto;
     color: #7d8a80;
