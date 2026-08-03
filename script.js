@@ -34,18 +34,16 @@ const palettes = {
     gold: ['#FFF1A8', '#FFC14D', '#D88416'],
     lava: ['#FFDD57', '#FF6B35', '#C1121F'],
     pastel: ['#A8E6CF', '#FFD3B6', '#FFAAA5'],
-	cyberpunk: ['#FF0055', '#7B2CBF', '#00F5FF'], // มืดนีออนจัดจ้าน สไตล์ไซเบอร์พังก์
-    midnight:  ['#001219', '#005F73', '#0A9396'], // น้ำเงินเข้มหม่นๆ ลึกเหมือนมหาสมุทรตอนกลางคืน
-    deepspace: ['#1A1A2E', '#16213E', '#0F3460'], // อวกาศลึก โทนมืดขรึม เรียบหรู
-    vampire:   ['#0D0D0D', '#800020', '#E63946'], // มืดสนิท ตัดแดงเลือดหมูและแดงสด
-    synthdark: ['#2B0B3F', '#521262', '#FF007F'], // สีม่วงนีออนมืด สไตล์ Synthwave สดใสบนพื้นมืด
-    abyss:     ['#081C15', '#1B4332', '#40916C'], // เขียวเข้มใต้ทะเลลึก/ป่าลึกลับยามค่ำคืน
-    toxin:     ['#0B090A', '#161A1D', '#52B788'], // ดำเทา ตัดด้วยสีเขียวสารเคมี/นีออน
-    voids:      ['#181823', '#537188', '#CBB279']  // มืดเทาสบายตา สไตล์คอนทราสต์ต่ำ
+	cyberpunk: ['#FF0055', '#7B2CBF', '#00F5FF'],
+    midnight:  ['#001219', '#005F73', '#0A9396'],
+    deepspace: ['#1A1A2E', '#16213E', '#0F3460'],
+    vampire:   ['#0D0D0D', '#800020', '#E63946'],
+    synthdark: ['#2B0B3F', '#521262', '#FF007F'],
+    abyss:     ['#081C15', '#1B4332', '#40916C'],
+    toxin:     ['#0B090A', '#161A1D', '#52B788'],
+    voids:      ['#181823', '#537188', '#CBB279']
 };
-// ==========================================
-// 1. เพิ่มหมวดหมู่ธีม (Categories Map)
-// ==========================================
+
 const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
     randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava','cyberpunk','midnight','deepspace','vampire','synthdark','abyss','toxin','voids'],
 	paletteCategories = {
@@ -54,72 +52,10 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
 		neon: ['neon', 'ocean', 'violet', 'candy'],
 		warm: ['sunset', 'gold', 'lava', 'forest']
 	},
-    title = {
-		inkBubblesWebGL: 'INK BUBBLES [WebGL]',
-		nebulaWebGL: 'COSMIC NEBULA[WebGL]',
-		matrixWebGL: 'Matrix [WebGL]',
-		tunnelWebGL: 'Tunnel [WebGL]',
-        tv_clock: 'TV FLIP CLOCK [60FPS]',
-        tv_stars: 'TV COSMIC STAR WARP [60FPS]',
-        tv_matrix: 'TV OPTIMIZED MATRIX [60FPS]',
-        tv_grid: 'TV CYBERPUNK GRID [60FPS]',
-        tv_grid2: 'TV CYBERPUNK GRID MOTION [60FPS]',
-        tv_blobs: 'TV NEON FLUID BLOBS [60FPS]',
-        tv_dvd: 'TV RETRO DVD DRIFT [60FPS]',
-		tv_inkBubbles: 'TV FLOATING BUBBLES',
-        matrix: 'MATRIX FLOW',
-        matrix2: 'AUTHENTIC MATRIX',
-        stars: 'STARFIELD',
-        fire: 'FIREPLACE EMBER',
-        rain: 'RAIN ON GLASS',
-        aurora: 'AURORA',
-        ink: 'FLUID INK',
-        ink2: 'FLUID INK BUBBLES',
-        dvd: 'RETRO DVD',
-        clock: 'DIGITAL CLOCK',
-        grid: 'CYBER GRID',
-        network: 'PARTICLE NETWORK',
-        terminal: 'CODE TERMINAL',
-        hello: 'HELLO WORLD',
-        fireflies: 'FIREFLIES',
-        bubbles: 'FLOATING BUBBLES',
-        mesh: 'LOW POLY MESH',
-        sakura: 'SAKURA',
-        snow: 'SNOW',
-        storm: 'STORM RAIN',
-        snow2: 'SNOW 2',
-        storm2: 'STORM RAIN 2',
-        paint: 'PAINT SPLASH',
-        plasma: 'PLASMA',
-        smoke: 'SMOKE',
-        confetti: 'CONFETTI',
-		synthwave: 'RETRO SYNTHWAVE'
-    },
     chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
 let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
-/*const tone = (i = 0) => {
-        let p = palettes[theme === 'randomTheme' ? activeRandomTheme : theme] || [color];
-        return p[i % p.length]
-    },
-    rgb = h => {
-        let n = parseInt(h.slice(1), 16);
-        return `${n>>16},${n>>8&255},${n&255}`
-    },
-    R = (a, b) => a + Math.random() * (b - a),
-    bg = a => {
-        x.globalCompositeOperation = 'source-over';
-        x.fillStyle = `rgba(2,4,3,${a})`;
-        x.fillRect(0, 0, W, H)
-    },
-    dot = (a, b, r, f = tone()) => {
-        x.fillStyle = f;
-        x.beginPath();
-        x.arc(a, b, r, 0, TAU);
-        x.fill()
-    },
-    count = n => Math.max(20, W / n | 0);*/
-	const tone = (i = 0) => {
-        // แก้ตรงนี้: ถ้า theme ขึ้นต้นด้วย 'randomTheme' หรือ 'random_' ให้ไปดึง activeRandomTheme มาใช้
+
+const tone = (i = 0) => {
         let isRandomPal = theme === 'randomTheme' || theme.startsWith('random_');
         let p = palettes[isRandomPal ? activeRandomTheme : theme] || [color];
         return p[i % p.length]
@@ -222,6 +158,13 @@ function reset() {
 }
 
 function fallSetup() {
+	const newStyleScenes = ['sakura2', 'snow2', 'confetti2'];
+
+    // ถ้าเป็นฉากในกลุ่มระบบใหม่
+    if (newStyleScenes.includes(scene)) {
+        fallSetup2();
+        return;
+    }
     if (['sakura', 'snow', 'snow2', 'storm', 'storm2', 'confetti'].includes(scene)) S.p = Array.from({
         length: Math.min(260, count(+$('density').value) * 7)
     }, () => ({
@@ -234,242 +177,151 @@ function fallSetup() {
         c: Math.random() * 3 | 0
     }))
 }
+function fallSetup2() {
+    const width = W || (x ? x.canvas.width : 0);
+    const height = H || (x ? x.canvas.height : 0);
+
+    const itemAmount = typeof count === 'function' && $('density') 
+        ? Math.min(260, count(+$('density').value) * 1.1) 
+        : 50;
+
+    S.items2 = Array.from({ length: itemAmount }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 10 + 5,
+        speedY: Math.random() * 2 + 1,
+        speedX: Math.random() * 2 - 1,
+        rot: Math.random() * Math.PI * 2,
+        vRot: (Math.random() * 2 - 1) * 0.02,
+        colorIndex: Math.floor(Math.random() * 3) // สุ่มดึงสี Theme
+    }));
+}
+
+// ==========================================
+// SCENE DRAWING FUNCTIONS (Canvas 2D & WebGL)
+// ==========================================
+
 function synthwave(k) {
     bg(.12);
-
     const c1 = tone(0);
     const c2 = tone(1);
     const c3 = tone(2);
-
     const horizon = H * 0.45;
     const centerX = W * 0.5;
 
-    // ===== Stars =====
     for (let i = 0; i < S.tv_star.length; i++) {
         let s = S.tv_star[i];
-
         let sx = s.x + W * 0.5;
         let sy = s.y + H * 0.25;
-
         if (sx < 0 || sx > W || sy < 0 || sy > horizon) continue;
-
         let a = 0.4 + Math.sin(t * 0.03 + i) * 0.3;
-
         x.fillStyle = `rgba(${rgb(c3)},${a})`;
         x.fillRect(sx, sy, 2, 2);
     }
 
-    // ===== Light Beams =====
     for (let i = -8; i <= 8; i++) {
-
         let bx = centerX + i * 80;
-
-        let beam = x.createLinearGradient(
-            bx,
-            0,
-            centerX,
-            horizon
-        );
-
+        let beam = x.createLinearGradient(bx, 0, centerX, horizon);
         beam.addColorStop(0, "transparent");
         beam.addColorStop(.7, `rgba(${rgb(c2)},.06)`);
         beam.addColorStop(1, `rgba(${rgb(c1)},.22)`);
-
         x.strokeStyle = beam;
         x.lineWidth = 2;
-
         x.beginPath();
         x.moveTo(bx, 0);
         x.lineTo(centerX, horizon);
         x.stroke();
     }
 
-    // ===== Sun Glow =====
     let sunR = Math.min(W, H) * 0.14;
-
-    let g = x.createRadialGradient(
-        centerX,
-        horizon - 40,
-        20,
-        centerX,
-        horizon - 40,
-        sunR * 2.2
-    );
-
+    let g = x.createRadialGradient(centerX, horizon - 40, 20, centerX, horizon - 40, sunR * 2.2);
     g.addColorStop(0, c3);
     g.addColorStop(.5, c2);
     g.addColorStop(.9, c1);
     g.addColorStop(1, "transparent");
-
     x.fillStyle = g;
     x.beginPath();
-    x.arc(
-        centerX,
-        horizon - 40,
-        sunR * 2.2,
-        0,
-        TAU
-    );
+    x.arc(centerX, horizon - 40, sunR * 2.2, 0, TAU);
     x.fill();
 
-    // ===== Sun =====
     x.fillStyle = c3;
-
     x.beginPath();
-    x.arc(
-        centerX,
-        horizon - 40,
-        sunR,
-        0,
-        TAU
-    );
+    x.arc(centerX, horizon - 40, sunR, 0, TAU);
     x.fill();
 
-    // ===== Sun Stripes =====
     x.save();
-
     x.beginPath();
-    x.arc(
-        centerX,
-        horizon - 40,
-        sunR,
-        0,
-        TAU
-    );
+    x.arc(centerX, horizon - 40, sunR, 0, TAU);
     x.clip();
-
     x.strokeStyle = `rgba(${rgb(c2)},.5)`;
-
     for (let i = 0; i < 12; i++) {
-
-        let yy =
-            horizon -
-            40 -
-            sunR +
-            i * 14;
-
+        let yy = horizon - 40 - sunR + i * 14;
         x.beginPath();
         x.moveTo(centerX - sunR, yy);
         x.lineTo(centerX + sunR, yy);
         x.stroke();
     }
-
     x.restore();
 
-    // ===== Horizon =====
     x.strokeStyle = c2;
     x.lineWidth = 3;
-
     x.beginPath();
     x.moveTo(0, horizon);
     x.lineTo(W, horizon);
     x.stroke();
 
-    // ===== Moving Grid =====
     let flow = (t * 0.02) % 1;
-
     x.strokeStyle = `rgba(${rgb(c1)},.75)`;
     x.lineWidth = 1;
 
     for (let i = 1; i < 24; i++) {
-
-        let p =
-            ((i / 24 + flow) % 1);
-
-        let y =
-            horizon +
-            Math.pow(p, 2.2) *
-            (H - horizon);
-
+        let p = ((i / 24 + flow) % 1);
+        let y = horizon + Math.pow(p, 2.2) * (H - horizon);
         x.beginPath();
         x.moveTo(0, y);
         x.lineTo(W, y);
         x.stroke();
     }
 
-    // ===== Perspective Lines =====
     for (let i = -20; i <= 20; i++) {
-
-        let px =
-            centerX +
-            i * 60;
-
+        let px = centerX + i * 60;
         x.beginPath();
         x.moveTo(px, H);
         x.lineTo(centerX, horizon);
         x.stroke();
     }
 
-    // ===== Mountains =====
     x.fillStyle = darkTone(c1, 80);
-
     x.beginPath();
     x.moveTo(0, horizon);
-
     for (let i = 0; i <= W; i += 40) {
-
-        let h =
-            Math.sin(i * 0.01) * 40 +
-            Math.sin(i * 0.03) * 20;
-
-        x.lineTo(
-            i,
-            horizon - 40 - h
-        );
+        let h = Math.sin(i * 0.01) * 40 + Math.sin(i * 0.03) * 20;
+        x.lineTo(i, horizon - 40 - h);
     }
-
     x.lineTo(W, horizon);
     x.closePath();
     x.fill();
 
-    // ===== CRT Scanlines =====
     x.strokeStyle = "rgba(255,255,255,.02)";
     x.lineWidth = 1;
-
     for (let y = 0; y < H; y += 4) {
         x.beginPath();
         x.moveTo(0, y);
         x.lineTo(W, y);
         x.stroke();
     }
-	
-	// ===== FULL SCREEN MOVING GLOW =====
-    let glowY =
-        ((t * 4) % (H + 800))
-        - 400;
 
-    let skyGlow = x.createLinearGradient(
-        0,
-        glowY - 250,
-        0,
-        glowY + 250
-    );
-
+    let glowY = ((t * 4) % (H + 800)) - 400;
+    let skyGlow = x.createLinearGradient(0, glowY - 250, 0, glowY + 250);
     skyGlow.addColorStop(0, "transparent");
     skyGlow.addColorStop(.5, `rgba(${rgb(c2)},.18)`);
     skyGlow.addColorStop(1, "transparent");
-
     x.fillStyle = skyGlow;
-    x.fillRect(
-        0,
-        glowY - 250,
-        W,
-        500
-    );
+    x.fillRect(0, glowY - 250, W, 500);
 
-    // ===== Vignette =====
-    let vg = x.createRadialGradient(
-        W / 2,
-        H / 2,
-        H * 0.1,
-        W / 2,
-        H / 2,
-        H * 0.9
-    );
-
+    let vg = x.createRadialGradient(W / 2, H / 2, H * 0.1, W / 2, H / 2, H * 0.9);
     vg.addColorStop(0, "rgba(0,0,0,0)");
     vg.addColorStop(1, "rgba(0,0,0,.45)");
-
     x.fillStyle = vg;
     x.fillRect(0, 0, W, H);
 }
@@ -482,36 +334,28 @@ function matrix(k) {
     x.shadowColor = tone();
     x.shadowBlur = 8;
 
-    // สร้าง array เก็บตัวอักษรประจำตำแหน่งไว้ ไม่ให้สุ่มใหม่ทุกเฟรม
     if (!S.gridChars) S.gridChars = [];
 
     S.drop.forEach((d, i) => {
         if (!S.gridChars[i]) S.gridChars[i] = [];
-
         let currentRow = Math.floor(d);
 
         for (let j = 0; j < 10; j++) {
             let rowIdx = currentRow - j;
-
-            // สุ่มเปลี่ยนตัวอักษรแค่ 2% ของเวลาทั้งหมด เพื่อให้ฟีล Glitch นุ่มๆ
             if (!S.gridChars[i][rowIdx] || Math.random() < 0.02) {
                 S.gridChars[i][rowIdx] = chars[Math.floor(Math.random() * chars.length)];
             }
-
             x.globalAlpha = 1 - j / 10;
-            x.fillStyle = j ? tone() : '#f0fff2'; // หัวสีสว่าง หางสีโทนหลัก
-            
+            x.fillStyle = j ? tone() : '#f0fff2';
             let charToDraw = S.gridChars[i][rowIdx];
             x.fillText(charToDraw, i * W / S.drop.length + W / S.drop.length / 2, (currentRow - j) * fs);
         }
 
-        // 🎯 1. ปรับลดความเร็วลงตรงนี้ (จาก .06 เหลือ .018)
         d += k * (.048 + Math.random() * 0.012);
 
-        // เมื่อตกพ้นจอ ให้รีเซ็ตตำแหน่ง
         if (d * fs > H + 10 * fs && Math.random() > .975) {
             d = -Math.random() * 20;
-            S.gridChars[i] = []; // ล้างตัวอักษรเดิมเพื่อเริ่มรอบใหม่
+            S.gridChars[i] = [];
         }
         
         S.drop[i] = d;
@@ -522,7 +366,7 @@ function matrix(k) {
 }
 
 function matrix2(k) {
-    bg(.25); // Crisp background clear to prevent blurry smudging
+    bg(.25);
     let fs = +$('density').value;
     x.font = `500 ${fs}px monospace`;
     x.textAlign = 'center';
@@ -534,7 +378,7 @@ function matrix2(k) {
             let len = R(12, 28) | 0;
             return {
                 y: R(-H / fs, 0),
-                speed: R(0.1, 0.25), //0.25,0.70
+                speed: R(0.1, 0.25),
                 len: len,
                 chars: Array.from({ length: len }, () => chars[Math.random() * chars.length | 0]),
                 ticks: 0
@@ -546,13 +390,11 @@ function matrix2(k) {
         let colX = i * W / S.matrix2.length + (W / S.matrix2.length) / 2;
         col.ticks = (col.ticks || 0) + k;
 
-        // Change head character at a comfortable speed (~10 times per sec instead of 60)
         if (col.ticks >= 6) {
             col.chars[0] = chars[Math.random() * chars.length | 0];
             col.ticks = 0;
         }
 
-        // Subtle random mutation in tail (0.3% chance per frame) to keep text crisp & readable
         if (Math.random() < 0.003) {
             let mutIdx = 1 + (Math.random() * (col.len - 1) | 0);
             col.chars[mutIdx] = chars[Math.random() * chars.length | 0];
@@ -563,13 +405,11 @@ function matrix2(k) {
             if (charY < -fs || charY > H + fs) continue;
 
             if (j === 0) {
-                // Sharp White Head with subtle glow
                 x.shadowColor = '#ffffff';
                 x.shadowBlur = 4;
                 x.fillStyle = '#ffffff';
                 x.globalAlpha = 1;
             } else {
-                // Clear, readable body characters fading down the tail
                 x.shadowColor = activeTone;
                 x.shadowBlur = j < 2 ? 3 : 0;
                 let fade = 1 - (j / col.len);
@@ -582,7 +422,6 @@ function matrix2(k) {
 
         col.y += k * col.speed;
 
-        // Reset drop when tail moves completely off-screen
         if ((col.y - col.len) * fs > H) {
             col.y = -Math.random() * 12;
             col.speed = R(0.1, 0.25);
@@ -594,6 +433,105 @@ function matrix2(k) {
 
     x.globalAlpha = 1;
     x.shadowBlur = 0;
+}
+function tv_matrix2() {
+    if (!x) return;
+
+    // 1. เช็คว่า W และ H มีขนาดจริงหรือไม่ ถ้ายังไม่มีให้ดึงค่าจาก Canvas
+    const width = W || (x.canvas ? x.canvas.width : 0);
+    const height = H || (x.canvas ? x.canvas.height : 0);
+
+    if (width === 0 || height === 0) return; // กันการทำงานถ้าจอยังไม่พร้อม
+
+    const cols = Math.floor(width / 20) || 1;
+
+    // 2. ถ้า drops ยังไม่มี หรือจำนวนคอลัมน์เปลี่ยน ให้สุ่มตำแหน่ง Y กระจายทั่วจอทันที (ไม่เริ่มที่ 0 ทั้งหมด)
+    if (typeof drops === 'undefined' || !Array.isArray(drops) || drops.length !== cols) {
+        window.drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -100)); 
+    }
+
+    // 3. วาดพื้นหลังดำจางๆ
+    x.fillStyle = "rgba(0, 0, 0, 0.05)";
+    x.fillRect(0, 0, width, height);
+
+    // 4. ตั้งค่าตัวอักษร
+    x.fillStyle = tone();
+    x.font = "18px monospace";
+    x.textBaseline = "top"; // ช่วยให้พิกัด Y คำนวณง่ายขึ้น ไม่จมขอบบน
+
+    // 5. วาดตัวอักษร
+    drops.forEach((y, i) => {
+        const text = String.fromCharCode(0x30a0 + Math.floor(Math.random() * 96));
+        
+        // วาดเฉพาะตัวที่ลงมาจากขอบบนแล้ว
+        if (y > 0) {
+            x.fillText(text, i * 20, y);
+        }
+
+        // เช็คขอบล่างเพื่อรีเซ็ตกลับไปข้างบน
+        if (y > height && Math.random() > 0.975) {
+            drops[i] = 0;
+        } else {
+            drops[i] = y + 20;
+        }
+    });
+}
+
+function fireworks(k) {
+    if (!x) return;
+
+    const width = W || (x.canvas ? x.canvas.width : 0);
+    const height = H || (x.canvas ? x.canvas.height : 0);
+
+    if (width === 0 || height === 0) return;
+
+    // เคลียร์พื้นหลังแบบสร้าง Trail จางๆ
+    x.fillStyle = "rgba(0, 0, 0, 0.1)";
+    x.fillRect(0, 0, width, height);
+
+    // กำหนด Array สำหรับเก็บชิ้นส่วนพลุใน S (ถ้ายังไม่มี)
+    if (!S.fireworkList) S.fireworkList = [];
+
+    // สุ่มจุดพลุใหม่ (โอกาส 5% ต่อเฟรม)
+    if (Math.random() < 0.10) {
+        const cx = Math.random() * width;
+        //const cy = (Math.random() * height) / 2; // จุดพลุเฉพาะช่วงครึ่งบนของจอ
+		const cy = Math.random() * height; // ✅ สุ่มตำแหน่ง Y ตั้งแต่ขอบบนสุดถึงขอบล่างสุด
+        
+        // ใช้สีสุ่ม หรือเปลี่ยนเป็น tone() ถ้าอยากให้ใช้สี Theme
+        const color = typeof tone === 'function' ? tone(Math.floor(Math.random() * 3)) : `hsl(${Math.random() * 360}, 100%, 50%)`;
+
+        for (let i = 0; i < 30; i++) {
+            const angle = (Math.PI * 2 / 30) * i;
+            const spd = Math.random() * 5 + 2;
+            S.fireworkList.push({
+                x: cx, 
+                y: cy,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd,
+                life: 1, 
+                color: color
+            });
+        }
+    }
+
+    // อัปเดตตำแหน่ง วาด และคัดแยกชิ้นส่วนที่ยังไม่หมดอายุ (ลบตัวที่ life <= 0 ออกแบบปลอดภัย)
+    S.fireworkList = S.fireworkList.filter(p => {
+        p.x += p.vx * k;
+        p.y += p.vy * k;
+        p.life -= 0.02 * k;
+
+        if (p.life > 0) {
+            x.fillStyle = p.color;
+            x.globalAlpha = Math.max(0, p.life);
+            x.beginPath();
+            x.arc(p.x, p.y, 2, 0, Math.PI * 2);
+            x.fill();
+            x.globalAlpha = 1;
+            return true; // เก็บไว้ต่อ
+        }
+        return false; // ตัวที่หมดอายุจะถูกกรองออก
+    });
 }
 
 function stars(k) {
@@ -697,85 +635,36 @@ function inkBubbles(k) {
 }
 
 function tv_inkBubbles(k) {
-
     bg(.35);
-
     x.globalCompositeOperation = "lighter";
 
     for (let b of S.b) {
-
         b.x += b.vx * k * 8;
         b.y += b.vy * k * 8;
-
-        if (b.x < 0 || b.x > W)
-            b.vx *= -1;
-
-        if (b.y < 0 || b.y > H)
-            b.vy *= -1;
-
+        if (b.x < 0 || b.x > W) b.vx *= -1;
+        if (b.y < 0 || b.y > H) b.vy *= -1;
 
         let col = tone(b.c);
-
-        // glow วงนอกแบบไม่ใช้ shadowBlur
-        let g = x.createRadialGradient(
-            b.x,
-            b.y,
-            0,
-            b.x,
-            b.y,
-            b.r
-        );
-
-        g.addColorStop(
-            0,
-            `rgba(${rgb(col)},0.45)`
-        );
-
-        g.addColorStop(
-            .5,
-            `rgba(${rgb(col)},0.25)`
-        );
-
-        g.addColorStop(
-            1,
-            "transparent"
-        );
-
+        let g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        g.addColorStop(0, `rgba(${rgb(col)},0.45)`);
+        g.addColorStop(.5, `rgba(${rgb(col)},0.25)`);
+        g.addColorStop(1, "transparent");
 
         x.fillStyle = g;
-
         x.beginPath();
-        x.arc(
-            b.x,
-            b.y,
-            b.r,
-            0,
-            TAU
-        );
+        x.arc(b.x, b.y, b.r, 0, TAU);
         x.fill();
 
-
-        // ขอบ
-        x.strokeStyle =
-            `rgba(${rgb(col)},.8)`;
-
+        x.strokeStyle = `rgba(${rgb(col)},.8)`;
         x.lineWidth = 2;
-
         x.beginPath();
-        x.arc(
-            b.x,
-            b.y,
-            b.r,
-            0,
-            TAU
-        );
+        x.arc(b.x, b.y, b.r, 0, TAU);
         x.stroke();
     }
 
-
-    x.globalCompositeOperation =
-        "source-over";
+    x.globalCompositeOperation = "source-over";
 }
+
 function dvd(k) {
     bg(1);
     let d = S.d;
@@ -885,7 +774,7 @@ function terminal() {
 }
 
 function hello(k) {
-    bg(.6); //trail .18
+    bg(.6);
     if (Math.random() < k * .025 && S.g.length < 15) {
         let a = ['Hello', 'สวัสดี', 'Hola', 'Bonjour', '你好', 'こんにちは', '안녕하세요', 'Hallo', 'Ciao', 'Olá', 'Привет', 'مرحبا', 'नमस्ते', 'Hej', 'Merhaba', 'Halo', 'Aloha', 'Sawubona', 'שלום', 'Xin chào'];
         S.g.push({
@@ -900,7 +789,7 @@ function hello(k) {
         })
     }
     S.g.forEach(g => {
-        g.x -= g.v * k * 3; //speed 15
+        g.x -= g.v * k * 3;
         g.p += k;
         let a = Math.min(1, g.p / 15, (W - g.x) / 80, (g.x + 240) / 100);
         x.save();
@@ -1024,6 +913,52 @@ function fall(k, type) {
             x.restore()
         }
     })
+}
+function fall2(k) {
+    bg(1);
+    if (!S.items2) return;
+
+    S.items2.forEach(item => {
+        // อัปเดตตำแหน่งและการหมุน
+        item.y += item.speedY * k * 0.8;
+        item.x += item.speedX * k * 1.5;
+        item.rot += item.vRot * k;
+
+        // เมื่อตกเลยขอบล่างให้วนกลับไปข้างบน
+        if (item.y > H + item.size) {
+            item.y = -item.size;
+            item.x = Math.random() * W;
+        }
+
+        x.save();
+        x.translate(item.x, item.y);
+        x.rotate(item.rot);
+
+        // 🎨 แยกวาดตามประเภทฉาก (scene)
+        if (scene === 'sakura2') {
+            // 🌸 กลีบดอกไม้ (ซากุระ)
+            x.fillStyle = '#ffb7c5';
+            x.beginPath();
+            x.ellipse(0, 0, item.size, item.size / 2, 0, 0, Math.PI * 2);
+            x.fill();
+
+        } else if (scene === 'snow2') {
+            // ❄️ หิมะ (วงกลมเรืองแสง)
+            x.shadowColor = '#fff';
+            x.shadowBlur = 6;
+            x.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            x.beginPath();
+            x.arc(0, 0, item.size * 0.4, 0, Math.PI * 2);
+            x.fill();
+
+        } else if (scene === 'confetti2') {
+            // 🎉 สายรุ้ง/กระดาษโปรย (สี่เหลี่ยมใช้สีตาม Theme)
+            x.fillStyle = typeof tone === 'function' ? tone(item.colorIndex) : '#f00';
+            x.fillRect(-item.size / 2, -item.size / 4, item.size, item.size / 2);
+        }
+
+        x.restore();
+    });
 }
 
 function plasma() {
@@ -1179,91 +1114,14 @@ function tv_grid(k) {
     }
 }
 
-/*function tv_grid2(k) {
-    bg(.15);
-    let h = H * 0.5;
-    let activeTone = tone();
-    let flow = (t * 0.015) % 1;
-
-    // Perspective lines (Top & Bottom halves radiating from center horizon)
-    x.strokeStyle = activeTone;
-    x.lineWidth = 1;
-    for (let i = -18; i <= 18; i++) {
-        let topX = W / 2 + i * (W * 0.15);
-        let botX = W / 2 + i * (W * 0.15);
-        let centerX = W / 2 + i * (W * 0.02);
-
-        // Top Grid radiating up
-        x.beginPath();
-        x.moveTo(centerX, h);
-        x.lineTo(topX, 0);
-        x.stroke();
-
-        // Bottom Grid radiating down
-        x.beginPath();
-        x.moveTo(centerX, h);
-        x.lineTo(botX, H);
-        x.stroke();
-    }
-
-    // Moving horizontal grid lines (Bottom half downwards)
-    for (let i = 0; i < 11; i++) {
-        let p = ((i / 11) + flow) % 1;
-        let y = h + (H - h) * (p * p);
-        x.beginPath();
-        x.moveTo(0, y);
-        x.lineTo(W, y);
-        x.stroke();
-    }
-
-    // Moving horizontal grid lines (Top half upwards from center)
-    for (let i = 0; i < 11; i++) {
-        let p = ((i / 11) + flow) % 1;
-        let y = h - h * (p * p);
-        x.beginPath();
-        x.moveTo(0, y);
-        x.lineTo(W, y);
-        x.stroke();
-    }
-
-    // Cyberpunk Horizon Shadow & Glow Overlay
-    let shadowG = x.createLinearGradient(0, h - 70, 0, h + 70);
-    shadowG.addColorStop(0, 'rgba(2, 4, 3, 0)');
-    shadowG.addColorStop(0.35, 'rgba(2, 4, 3, 0.75)');
-    shadowG.addColorStop(0.5, 'rgba(2, 4, 3, 0.95)');
-    shadowG.addColorStop(0.65, 'rgba(2, 4, 3, 0.75)');
-    shadowG.addColorStop(1, 'rgba(2, 4, 3, 0)');
-    x.fillStyle = shadowG;
-    x.fillRect(0, h - 70, W, 140);
-
-    // Glowing Neon Center Horizon Line
-    x.strokeStyle = darkTone(activeTone, 85);
-    x.lineWidth = 2.5;
-    x.beginPath();
-    x.moveTo(0, h);
-    x.lineTo(W, h);
-    x.stroke();
-
-    x.strokeStyle = darkTone(activeTone, 80);
-    x.lineWidth = 1;
-    x.beginPath();
-    x.moveTo(0, h - 2);
-    x.lineTo(W, h - 2);
-    x.moveTo(0, h + 2);
-    x.lineTo(W, h + 2);
-    x.stroke();
-}
-*/
 let neonFlicker = 1;
 let neonFlickerTimer = 0;
 function tv_grid2(k) {
     bg(.15);
-
     let h = H * 0.5;
     let activeTone = tone();
     let flow = (t * 0.015) % 1;
 
-    // ===== Neon Flicker =====
     if (neonFlickerTimer <= 0) {
         if (Math.random() < 0.015) {
             neonFlicker = 0.03 + Math.random() * 0.25;
@@ -1275,13 +1133,10 @@ function tv_grid2(k) {
         neonFlickerTimer--;
     }
 
-    // Grid brightness follows flicker slightly
     const gridAlpha = 0.7 + neonFlicker * 0.3;
 
-    // ===== Perspective Lines =====
     x.save();
     x.globalAlpha = gridAlpha;
-
     x.strokeStyle = activeTone;
     x.lineWidth = 1;
 
@@ -1301,22 +1156,18 @@ function tv_grid2(k) {
         x.stroke();
     }
 
-    // ===== Bottom Grid =====
     for (let i = 0; i < 11; i++) {
         let p = ((i / 11) + flow) % 1;
         let y = h + (H - h) * (p * p);
-
         x.beginPath();
         x.moveTo(0, y);
         x.lineTo(W, y);
         x.stroke();
     }
 
-    // ===== Top Grid =====
     for (let i = 0; i < 11; i++) {
         let p = ((i / 11) + flow) % 1;
         let y = h - h * (p * p);
-
         x.beginPath();
         x.moveTo(0, y);
         x.lineTo(W, y);
@@ -1325,9 +1176,7 @@ function tv_grid2(k) {
 
     x.restore();
 
-    // ===== Horizon Shadow =====
     let shadowG = x.createLinearGradient(0, h - 70, 0, h + 70);
-
     shadowG.addColorStop(0, 'rgba(2,4,3,0)');
     shadowG.addColorStop(0.35, 'rgba(2,4,3,0.75)');
     shadowG.addColorStop(0.5, 'rgba(2,4,3,0.95)');
@@ -1337,12 +1186,8 @@ function tv_grid2(k) {
     x.fillStyle = shadowG;
     x.fillRect(0, h - 70, W, 140);
 
-    // ===== Flickering Neon Horizon =====
     x.save();
-
     x.globalAlpha = neonFlicker;
-
-    // Main Glow
     x.shadowColor = activeTone;
     x.shadowBlur = 30 * neonFlicker;
 
@@ -1354,21 +1199,19 @@ function tv_grid2(k) {
     x.lineTo(W, h);
     x.stroke();
 
-    // Outer Glow Lines
     x.shadowBlur = 15 * neonFlicker;
     x.lineWidth = 1;
 
     x.beginPath();
     x.moveTo(0, h - 2);
     x.lineTo(W, h - 2);
-
     x.moveTo(0, h + 2);
     x.lineTo(W, h + 2);
-
     x.stroke();
 
     x.restore();
 }
+
 function tv_blobs(k) {
     bg(.16);
     if (!S.tv_blobs) return;
@@ -1407,15 +1250,14 @@ function tv_dvd(k) {
     x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2 + 10);
 }
 
+// ==========================================
+// WebGL Init & Render Logic
+// ==========================================
+
 let glProgramNebula = null;
 let glReadyNebula = false;
 function nebulaWebGL(k) {
     x.clearRect(0, 0, W, H);
-
-    if (glScene !== "nebulaWebGL") {
-        initNebulaWebGL();
-        glScene = "nebulaWebGL";
-    }
 
     if (!glReadyNebula) initNebulaWebGL();
 
@@ -1425,7 +1267,6 @@ function nebulaWebGL(k) {
 
     gl.useProgram(glProgramNebula);
 
-    // 1. ส่งขนาด Canvas และ เวลา
     gl.uniform2f(
         gl.getUniformLocation(glProgramNebula, "u_res"),
         glCanvas.width,
@@ -1437,11 +1278,6 @@ function nebulaWebGL(k) {
         t
     );
 
-    // ==========================================
-    // 2. [ส่วนที่แก้ไข] ดึงสีตาม Theme และแปลงเป็น RGB (0.0 - 1.0)
-    // ==========================================
-    
-    // ฟังก์ชันย่อยช่วยแปลง Hex/Color String เป็น [r, g, b] ช่วง 0.0 - 1.0
     const hexToRgbNormalized = (colStr) => {
 		if (!colStr) return [0.5, 0.5, 0.5];
 		let ctx = document.createElement('canvas').getContext('2d');
@@ -1449,7 +1285,6 @@ function nebulaWebGL(k) {
 		let hex = ctx.fillStyle;
 		
 		if (hex.startsWith('#')) {
-			// ปรับ Gamma Correction (Math.pow(..., 2.2)) ช่วยให้สีบนจอมือถือไม่โดนเร่งจนสว่างกลืนกัน
 			let r = Math.pow(parseInt(hex.slice(1, 3), 16) / 255, 2.2);
 			let g = Math.pow(parseInt(hex.slice(3, 5), 16) / 255, 2.2);
 			let b = Math.pow(parseInt(hex.slice(5, 7), 16) / 255, 2.2);
@@ -1458,22 +1293,16 @@ function nebulaWebGL(k) {
 		return [0.5, 0.5, 0.5];
 	};
 
-    // ดึงสี 3 สีตาม Theme ปัจจุบันผ่าน tone(0), tone(1), tone(2)
     let c1 = hexToRgbNormalized(tone(0));
     let c2 = hexToRgbNormalized(tone(1));
     let c3 = hexToRgbNormalized(tone(2));
-
-    // รวมเป็น Array 9 ค่า [r1,g1,b1, r2,g2,b2, r3,g3,b3]
     let cols = [...c1, ...c2, ...c3];
 
-    // ส่ง Uniform Array สีทั้ง 3 เข้าไปใน WebGL Shader
     gl.uniform3fv(
         gl.getUniformLocation(glProgramNebula, "colors[0]"),
         new Float32Array(cols)
     );
 
-
-    // 3. วาดภาพ
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
@@ -1492,23 +1321,22 @@ function initNebulaWebGL(){
 
     const vs = `
     attribute vec2 a_pos;
-    varying vec2 v_uv; // ส่ง uv ผ่าน varying เพื่อให้การ์ดจอลดความเหลี่ยม
+    varying vec2 v_uv;
 
     void main(){
-        v_uv = a_pos * 0.5 + 0.5; // แปลงพิกัดเป็น 0.0 ถึง 1.0
+        v_uv = a_pos * 0.5 + 0.5;
         gl_Position = vec4(a_pos, 0.0, 1.0);
     }
     `;
 
     const fs = `
-    precision highp float; // ใช้ High Precision กันการปัดเศษตัวเลข
+    precision highp float;
 
     uniform vec2 u_res;
     uniform float u_time;
     uniform vec3 colors[3];
     varying vec2 v_uv;
 
-    // เปลี่ยน hash เป็นสูตรที่เสถียรบนมือถือ (ไม่แตกเป็นเม็ดเหลี่ยม)
     float hash(vec2 p){
         p = fract(p * vec2(123.34, 456.21));
         p += dot(p, p + 45.32);
@@ -1524,7 +1352,6 @@ function initNebulaWebGL(){
         float c = hash(i + vec2(0.0, 1.0));
         float d = hash(i + vec2(1.0, 1.0));
 
-        // ใช้ Quintic Curve (smoothstep 5th degree) ช่วยให้รอยต่อเนียนกว่าเดิมมาก
         vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
 
         return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
@@ -1533,7 +1360,6 @@ function initNebulaWebGL(){
     float fbm(vec2 p){
         float v = 0.0;
         float a = 0.5;
-        // หมุนพิกัดเล็กน้อยในแต่ละ octave เพื่อลบลายตาราง/ขอบเหลี่ยม
         mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
         
         for(int i = 0; i < 5; i++){
@@ -1545,15 +1371,12 @@ function initNebulaWebGL(){
     }
 
     void main(){
-        // ปรับ Aspect Ratio เพื่อไม่ให้ภาพยืดเบี้ยวตามหน้าจอมือถือ
         vec2 st = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.x, u_res.y);
         
         vec2 p = st * 2.5;
 		p.x += mod(u_time * 0.015, 300.0);
 
         float n = fbm(p);
-        
-        // ไล่ระดับสีให้สมูทขึ้น
         float n_smooth = smoothstep(0.1, 0.9, n);
 
         vec3 col = mix(colors[0], colors[1], n_smooth);
@@ -1613,63 +1436,22 @@ function initNebulaWebGL(){
 let glProgramInkBubbles = null;
 let glReadyInkBubbles = false;
 function inkBubblesWebGL(k) {
+    x.clearRect(0, 0, W, H);
 
-    // ล้าง canvas 2D เดิม
-    x.clearRect(
-        0,
-        0,
-        W,
-        H
-    );
+    if (!glReadyInkBubbles) initInkWebGL();
 
-	if(glScene !== "ink"){
-
-        initInkWebGL();
-        glScene = "ink";
-
-    }
-    if (!glReadyInkBubbles)
-        initInkWebGL();
-
-
-    gl.viewport(
-        0,
-        0,
-        glCanvas.width,
-        glCanvas.height
-    );
-
-
-    gl.clearColor(
-        0,
-        0,
-        0,
-        0
-    );
-
-
-    gl.clear(
-        gl.COLOR_BUFFER_BIT
-    );
-
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     let arr = [];
 
-
-    // update bubbles
     for (let b of S.b) {
-
         b.x += b.vx * k * 8;
         b.y += b.vy * k * 8;
 
-
-        if (b.x < 0 || b.x > W)
-            b.vx *= -1;
-
-
-        if (b.y < 0 || b.y > H)
-            b.vy *= -1;
-
+        if (b.x < 0 || b.x > W) b.vx *= -1;
+        if (b.y < 0 || b.y > H) b.vy *= -1;
 
         arr.push(
             b.x / W,
@@ -1678,50 +1460,16 @@ function inkBubblesWebGL(k) {
         );
     }
 
+    while (arr.length < 24) arr.push(0);
 
-    // shader รองรับ 8 blobs
-    while (arr.length < 24)
-        arr.push(0);
+    gl.useProgram(glProgramInkBubbles);
 
-
-
-    gl.useProgram(
-        glProgramInkBubbles
-    );
-
-
-    // resolution
-    gl.uniform2f(
-        locRes,
-        glCanvas.width,
-        glCanvas.height
-    );
-
-
-    // animation time
-    gl.uniform1f(
-        locTime,
-        t
-    );
-
-
-    // blobs
-    gl.uniform3fv(
-        locBlobs,
-        new Float32Array(arr)
-    );
-
-
-
-    // ===== Theme Colors =====
+    gl.uniform2f(locRes, glCanvas.width, glCanvas.height);
+    gl.uniform1f(locTime, t);
+    gl.uniform3fv(locBlobs, new Float32Array(arr));
 
     const hexToRgb01 = h => {
-
-        let n = parseInt(
-            h.slice(1),
-            16
-        );
-
+        let n = parseInt(h.slice(1), 16);
         return [
             ((n >> 16) & 255) / 255,
             ((n >> 8) & 255) / 255,
@@ -1729,32 +1477,18 @@ function inkBubblesWebGL(k) {
         ];
     };
 
-
     const cols = [
-
         ...hexToRgb01(tone(0)),
         ...hexToRgb01(tone(1)),
         ...hexToRgb01(tone(2))
-
     ];
 
+    gl.uniform3fv(locColors, new Float32Array(cols));
 
-    gl.uniform3fv(
-        locColors,
-        new Float32Array(cols)
-    );
-
-
-
-    gl.drawArrays(
-        gl.TRIANGLES,
-        0,
-        6
-    );
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 function initInkWebGL(){
-
     if (glReadyInkBubbles) return;
 
     if (!gl) {
@@ -1767,278 +1501,87 @@ function initInkWebGL(){
 
     if (!gl) return;
 
-
-
     const vs = `
-
     attribute vec2 a_pos;
-
     void main(){
-
-        gl_Position =
-        vec4(a_pos,0.0,1.0);
-
+        gl_Position = vec4(a_pos,0.0,1.0);
     }
-
     `;
 
-
-
     const fs = `
-
     precision mediump float;
-
 
     uniform vec2 u_res;
     uniform float u_time;
-
-
     uniform vec3 blobs[8];
     uniform vec3 colors[3];
 
-
-
     void main(){
-
-
-        vec2 uv =
-        gl_FragCoord.xy / u_res.xy;
-
-
-
+        vec2 uv = gl_FragCoord.xy / u_res.xy;
         float v = 0.0;
 
-
-
         for(int i=0;i<8;i++){
-
-
-            vec2 p =
-            blobs[i].xy;
-
-
-            float r =
-            blobs[i].z;
-
-
-
-            float d =
-            distance(
-                uv,
-                p
-            );
-
-
-
-            v +=
-            r*r /
-            (d*d*40.0);
-
+            vec2 p = blobs[i].xy;
+            float r = blobs[i].z;
+            float d = distance(uv, p);
+            v += r*r / (d*d*40.0);
         }
 
+        vec3 col = mix(colors[0], colors[1], clamp(v * 0.5,0.0,1.0));
+        col = mix(col, colors[2], clamp(v * 0.25,0.0,1.0));
 
+        float glow = smoothstep(.8, 1.4, v);
 
-        vec3 col =
-        mix(
-            colors[0],
-            colors[1],
-            clamp(v * 0.5,0.0,1.0)
-        );
-
-
-
-        col =
-        mix(
-            col,
-            colors[2],
-            clamp(v * 0.25,0.0,1.0)
-        );
-
-
-
-        float glow =
-        smoothstep(
-            .8,
-            1.4,
-            v
-        );
-
-
-
-        gl_FragColor =
-        vec4(
-            col * glow,
-            glow
-        );
-
+        gl_FragColor = vec4(col * glow, glow);
     }
-
     `;
 
-
-
     function shader(type,src){
-
-        let s =
-        gl.createShader(type);
-
-
-        gl.shaderSource(
-            s,
-            src
-        );
-
-
-        gl.compileShader(
-            s
-        );
-
-
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
         return s;
-
     }
 
+    glProgramInkBubbles = gl.createProgram();
+    gl.attachShader(glProgramInkBubbles, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramInkBubbles, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramInkBubbles);
+    gl.useProgram(glProgramInkBubbles);
 
+    locRes = gl.getUniformLocation(glProgramInkBubbles, "u_res");
+    locTime = gl.getUniformLocation(glProgramInkBubbles, "u_time");
+    locBlobs = gl.getUniformLocation(glProgramInkBubbles, "blobs[0]");
+    locColors = gl.getUniformLocation(glProgramInkBubbles, "colors[0]");
 
-
-    glProgramInkBubbles =
-    gl.createProgram();
-
-
-
-    gl.attachShader(
-        glProgramInkBubbles,
-        shader(
-            gl.VERTEX_SHADER,
-            vs
-        )
-    );
-
-
-
-    gl.attachShader(
-        glProgramInkBubbles,
-        shader(
-            gl.FRAGMENT_SHADER,
-            fs
-        )
-    );
-
-
-
-    gl.linkProgram(
-        glProgramInkBubbles
-    );
-
-
-
-    gl.useProgram(
-        glProgramInkBubbles
-    );
-
-
-
-    // ===== Cache Uniform Location =====
-
-    locRes =
-    gl.getUniformLocation(
-        glProgramInkBubbles,
-        "u_res"
-    );
-
-
-    locTime =
-    gl.getUniformLocation(
-        glProgramInkBubbles,
-        "u_time"
-    );
-
-
-    locBlobs =
-    gl.getUniformLocation(
-        glProgramInkBubbles,
-        "blobs[0]"
-    );
-
-
-    locColors =
-    gl.getUniformLocation(
-        glProgramInkBubbles,
-        "colors[0]"
-    );
-
-
-
-
-    let buffer =
-    gl.createBuffer();
-
-
-
-    gl.bindBuffer(
-        gl.ARRAY_BUFFER,
-        buffer
-    );
-
-
-
+    let buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([
-
             -1,-1,
              1,-1,
             -1, 1,
-
             -1, 1,
              1,-1,
              1, 1
-
         ]),
         gl.STATIC_DRAW
     );
 
-
-
-    let loc =
-    gl.getAttribLocation(
-        glProgramInkBubbles,
-        "a_pos"
-    );
-
-
-
-    gl.enableVertexAttribArray(
-        loc
-    );
-
-
-
-    gl.vertexAttribPointer(
-        loc,
-        2,
-        gl.FLOAT,
-        false,
-        0,
-        0
-    );
-
-
+    let loc = gl.getAttribLocation(glProgramInkBubbles, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
     glReadyInkBubbles = true;
-
 }
+
 let glProgramMatrix = null;
 let glReadyMatrix = false;
 let fontTexture = null;
 
 function matrixWebGL(k) {
     x.clearRect(0, 0, W, H);
-
-    if (glScene !== "matrixWebGL") {
-        initMatrixWebGL();
-        glScene = "matrixWebGL";
-    }
 
     if (!glReadyMatrix) initMatrixWebGL();
 
@@ -2054,7 +1597,6 @@ function matrixWebGL(k) {
         glCanvas.height
     );
 
-    // ใช้ u_time ที่บีบช่วงไว้ กันค่าพุ่งจนจอดำ
     gl.uniform1f(
         gl.getUniformLocation(glProgramMatrix, "u_time"),
         (t * 0.001) % 10000.0
@@ -2081,7 +1623,6 @@ function matrixWebGL(k) {
     gl.uniform3f(gl.getUniformLocation(glProgramMatrix, "u_colorMain"), c1[0], c1[1], c1[2]);
     gl.uniform3f(gl.getUniformLocation(glProgramMatrix, "u_colorHead"), c2[0], c2[1], c2[2]);
 
-    // ผูก Texture ฟอนต์
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, fontTexture);
     gl.uniform1i(gl.getUniformLocation(glProgramMatrix, "u_fontTexture"), 0);
@@ -2090,7 +1631,6 @@ function matrixWebGL(k) {
 }
 
 function createFontTexture() {
-    // สร้าง Canvas ชั่วคราวเพื่อวาดลายอักขระ Matrix/Katakana สวยๆ ลงใน Texture
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 32;
@@ -2103,7 +1643,6 @@ function createFontTexture() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // อักขระ Matrix 16 ตัว
     const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
     for (let i = 0; i < 16; i++) {
 		let ch = chars[Math.floor(Math.random() * chars.length)];
@@ -2157,20 +1696,16 @@ function initMatrixWebGL() {
         return fract(p.x * p.y);
     }
 
-    // ฟังก์ชันคำนวณสายฝน Matrix แต่ละ Layer
-    // gridOffset: สับหว่างตำแหน่ง, speedMult: ความเร็วเหลื่อมกัน, scaleMult: ขนาดสเกล
     vec4 renderMatrixLayer(vec2 st, vec2 gridOffset, float speedMult, float scaleMult, float alphaMult) {
         float cols = 65.0 * scaleMult;
         vec2 grid = vec2(cols, cols * (u_res.y / u_res.x) * 0.45);
         
-        // 🎯 ใส่ Offset เพื่อสับหว่างทั้งแนวนอนและแนวตั้ง
         vec2 layerSt = st + gridOffset;
         vec2 cellID = floor(layerSt * grid);
         vec2 cellUV = fract(layerSt * grid);
 
         float colHash = hash(vec2(cellID.x, 31.0));
 
-        // คำนวณความเร็ว
         float speed = (3.5 + colHash * 0.5) * speedMult;
         float dropOffset = colHash * 999.0;
         float loopLen = 40.0 + colHash * 20.0;
@@ -2186,7 +1721,6 @@ function initMatrixWebGL() {
         float tail = (1.0 - (distFromHead / streamLen)) * inStream;
         tail = pow(clamp(tail, 0.0, 1.0), 1.5);
 
-        // ตัวอักษร
         float glitchTime = floor(u_time * 1.5 + hash(cellID) * 10.0);
         float charSeed = hash(cellID + vec2(glitchTime * 0.05, colHash));
         float charIdx = floor(charSeed * 16.0);
@@ -2203,14 +1737,10 @@ function initMatrixWebGL() {
     void main() {
         vec2 st = gl_FragCoord.xy / u_res.xy;
 
-        // 🎯 Layer 1: ชั้นหน้า (ขนาดปกติ วิ่งเร็ว สีชัด)
         vec4 layer1 = renderMatrixLayer(st, vec2(0.0, 0.0), 1.0, 1.0, 1.0);
-
-        // 🎯 Layer 2: ชั้นสับหว่าง (เยื้องแนวนอน 0.5, แนวตั้ง 0.5 / ตลับขนาด / ช้ากว่า / จางกว่า)
-        vec2 shiftOffset = vec2(0.0077, 0.015); // เลื่อนตำแหน่งสับหว่าง
+        vec2 shiftOffset = vec2(0.0077, 0.015);
         vec4 layer2 = renderMatrixLayer(st, shiftOffset, 0.65, 1.25, 0.45);
 
-        // รวม 2 ชั้นเข้าด้วยกัน (Screen/Over Blending)
         vec3 finalCol = layer1.rgb + layer2.rgb * (1.0 - layer1.a * 0.5);
         float finalAlpha = clamp(layer1.a + layer2.a, 0.0, 1.0);
 
@@ -2262,17 +1792,12 @@ function initMatrixWebGL() {
 
     glReadyMatrix = true;
 }
-// Variable สำหรับจัดการ State ของ Tunnel
+
 let glProgramTunnel = null;
 let glReadyTunnel = false;
 
 function tunnelWebGL(k) {
     x.clearRect(0, 0, W, H);
-
-    if (glScene !== "tunnelWebGL") {
-        initTunnelWebGL();
-        glScene = "tunnelWebGL";
-    }
 
     if (!glReadyTunnel) initTunnelWebGL();
 
@@ -2282,20 +1807,17 @@ function tunnelWebGL(k) {
 
     gl.useProgram(glProgramTunnel);
 
-    // ส่งค่า Uniforms
     gl.uniform2f(
         gl.getUniformLocation(glProgramTunnel, "u_res"),
         glCanvas.width,
         glCanvas.height
     );
 
-    // u_time ป้องกันค่าพุ่งจอดำ
     gl.uniform1f(
         gl.getUniformLocation(glProgramTunnel, "u_time"),
         (t * 0.001) % 10000.0
     );
 
-    // แปลง HEX จาก tone() เป็น RGB Normalized (0.0 - 1.0)
     const hexToRgbNormalized = (colStr) => {
         if (!colStr) return [0.2, 0.8, 1.0];
         let ctx = document.createElement('canvas').getContext('2d');
@@ -2340,7 +1862,6 @@ function initTunnelWebGL() {
     }
     `;
 
-    // Fragment Shader: สแกนพิกเซลเป็น Polar Coordinates บินเข้าอุโมงค์
     const fs = `
     precision highp float;
 
@@ -2350,53 +1871,39 @@ function initTunnelWebGL() {
     uniform vec3 u_colorAccent;
 
     void main() {
-        // 1. จัด Center ให้อยู่ตรงกลางหน้าจอ (-1.0 ถึง 1.0)
         vec2 st = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
 
-        // 🎯 2. เพิ่มการเลี้ยวโค้งไปมา (Camera Bending / Tunnel Curves)
-        // สั่งให้จุดศูนย์กลางของอุโมงค์เบี่ยงไปมาตามจังหวะ sin/cos
         vec2 tunnelOffset = vec2(
-            sin(u_time * 1.2) * 0.85,  // เลี้ยว ซ้าย-ขวา 0.35
-            cos(u_time * 0.9) * 0.45   // ก้ม-เงย ขึ้น-ลง 0.25
+            sin(u_time * 1.2) * 0.85,
+            cos(u_time * 0.9) * 0.45
         );
         
-        // ลบ Offset ออกเพื่อให้มุมมองอุโมงค์บิดเบี้ยวตามระยะลึก (สร้างมิติการเลี้ยว)
         vec2 shiftedSt = st - tunnelOffset;
 
-        // 3. คำนวณ Polar Coordinates จากจุดศูนย์กลางใหม่
         float r = length(shiftedSt);             
         float a = atan(shiftedSt.y, shiftedSt.x); 
 
         r = max(r, 0.0001);
 
-        // 🎯 4. เพิ่มหมุนวนนิดๆ (Swirl Effect) ตอนพุ่ง
-        // แอบบวกหมุน (a + ...) ตามความลึก ให้รู้สึกเหมือนบินควงสว่านเบาๆ
         a += sin(0.2 / r + u_time * 2.0) * 0.15;
 
-        // Map พิกัด UV สำหรับอุโมงค์
         vec2 uv = vec2(1.0 / r + u_time * 2.2, a / 3.14159265);
 
-        // สร้างลวดลายแผ่นบล็อกอุโมงค์ (Grid Blocks)
         vec2 grid = fract(uv * vec2(3.0, 8.0)); 
         vec2 check = step(vec2(0.12), grid) * step(grid, vec2(0.88));
         float pattern = check.x * check.y;
 
-        // แยกจังหวะแถบสีสลับ
         float colorSwitch = step(0.5, fract(uv.y * 4.0));
         vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSwitch);
 
-        // เอฟเฟกต์ Glow ขอบท่อ
         float edgeGlow = smoothstep(0.0, 0.15, grid.x) * smoothstep(1.0, 0.85, grid.x) *
                          smoothstep(0.0, 0.15, grid.y) * smoothstep(1.0, 0.85, grid.y);
 
-        // เอฟเฟกต์หมอก/ความลึก
         float depthFade = smoothstep(0.0, 0.45, r); 
 
-        // ผสมสี
         vec3 finalColor = mix(baseColor * 1.8, u_colorAccent, 1.0 - edgeGlow) * pattern;
         finalColor *= depthFade;
 
-        // แสงสว่างจี้ตรงปลายทางอุโมงค์ (Follows the Curve)
         float coreLight = pow(clamp(0.04 / r, 0.0, 1.0), 2.0);
         finalColor += u_colorAccent * coreLight;
 
@@ -2427,7 +1934,6 @@ function initTunnelWebGL() {
 
     gl.useProgram(glProgramTunnel);
 
-    // Setup Quad Buffer (สี่เหลี่ยมเต็มหน้าจอ)
     let buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
@@ -2449,6 +1955,103 @@ function initTunnelWebGL() {
 
     glReadyTunnel = true;
 }
+
+// ==========================================
+// CENTRALIZED SCENE REGISTRY
+// ==========================================
+
+const scenes = { 
+    // --- 🧊 WebGL Optimized Scenes --- 
+    inkBubblesWebGL: { type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "ink", render: (k) => inkBubblesWebGL(k) }, 
+    nebulaWebGL:     { type: "webgl", title: "COSMIC NEBULA[WebGL]", init: initNebulaWebGL, glSceneName: "nebulaWebGL", render: (k) => nebulaWebGL(k) }, 
+    matrixWebGL:     { type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
+    tunnelWebGL:     { type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
+
+    // --- 📺 TV 60FPS Optimized Scenes --- 
+    tv_clock:      { type: "canvas", title: "TV FLIP CLOCK [60FPS]", render: () => tv_clock() }, 
+    tv_stars:      { type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
+    tv_matrix:     { type: "canvas", title: "TV OPTIMIZED MATRIX [60FPS]", render: (k) => tv_matrix(k) }, 
+	tv_matrix2:    { type: "canvas", title: "TV OPTIMIZED MATRIX 2 [60FPS]", render: (k) => tv_matrix2() },
+    tv_grid:       { type: "canvas", title: "TV CYBERPUNK GRID [60FPS]", render: (k) => tv_grid(k) }, 
+    tv_grid2:      { type: "canvas", title: "TV CYBERPUNK GRID MOTION [60FPS]", render: (k) => tv_grid2(k) }, 
+    tv_blobs:      { type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
+    tv_dvd:        { type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
+    tv_inkBubbles: { type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
+
+    // --- 💻 PC / Full Graphics Scenes --- 
+    matrix:    { type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
+    matrix2:   { type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
+    stars:     { type: "canvas", title: "STARFIELD", render: (k) => stars(k) }, 
+    fire:      { type: "canvas", title: "FIREPLACE EMBER", render: (k) => fire(k) }, 
+    rain:      { type: "canvas", title: "RAIN ON GLASS", render: (k) => rain(k) }, 
+    aurora:    { type: "canvas", title: "AURORA", render: (k) => blobs(k) }, 
+    ink:       { type: "canvas", title: "FLUID INK", render: (k) => blobs(k, true) }, 
+    ink2:      { type: "canvas", title: "FLUID INK BUBBLES", render: (k) => inkBubbles(k) }, 
+    dvd:       { type: "canvas", title: "RETRO DVD", render: (k) => dvd(k) }, 
+    clock:     { type: "canvas", title: "DIGITAL CLOCK", render: () => clock() }, 
+    grid:      { type: "canvas", title: "CYBER GRID", render: () => grid() }, 
+    network:   { type: "canvas", title: "PARTICLE NETWORK", render: (k) => network(k) }, 
+    terminal:  { type: "canvas", title: "CODE TERMINAL", render: () => terminal() }, 
+    hello:     { type: "canvas", title: "HELLO WORLD", render: (k) => hello(k) }, 
+    fireflies: { type: "canvas", title: "FIREFLIES", render: (k) => fireflies(k) }, 
+    bubbles:   { type: "canvas", title: "FLOATING BUBBLES", render: (k) => bubbles(k) }, 
+    mesh:      { type: "canvas", title: "LOW POLY MESH", render: (k) => mesh(k) }, 
+    sakura:    { type: "canvas", title: "SAKURA", render: (k) => fall(k, 'sakura') }, 
+	sakura2:   { type: "canvas", title: "SAKURA 2", render: (k) => fall2(k) },
+    snow:      { type: "canvas", title: "SNOW", render: (k) => fall(k, 'snow') },  
+    snow2:     { type: "canvas", title: "SNOW 2", render: (k) => fall2(k) },
+	storm:     { type: "canvas", title: "STORM RAIN", render: (k) => fall(k, 'storm') },	
+    storm2:    { type: "canvas", title: "STORM RAIN 2", render: (k) => fall(k, 'storm2') }, 
+    fireworks: { type: "canvas", title: "Fireworks", render: (k) => fireworks(k) }, 
+    plasma:    { type: "canvas", title: "PLASMA", render: () => plasma() }, 
+    smoke:     { type: "canvas", title: "SMOKE", render: (k) => smoke(k) }, 
+    confetti:  { type: "canvas", title: "CONFETTI", render: (k) => fall(k, 'confetti') }, 
+	confetti2: { type: "canvas", title: "CONFETTI 2", render: (k) => fall2(k) },
+    synthwave: { type: "canvas", title: "RETRO SYNTHWAVE", render: (k) => synthwave(k) } 
+};
+
+// ==========================================
+// REFACTORED CORE FUNCTIONS
+// ==========================================
+
+function pick(v) {
+    const sc = scenes[v] ? v : 'tv_clock';
+    scene = sc;
+
+    const currentSceneObj = scenes[sc];
+
+    $('scene').value = sc;
+    $('sceneTitle').textContent = currentSceneObj?.title || sc.toUpperCase();
+    localStorage.screenScene = sc;
+
+    if (currentSceneObj && currentSceneObj.type === "webgl") {
+        glCanvas.classList.add("active");
+
+        const targetGlScene = sc;
+        if (glScene !== targetGlScene) {
+            if (typeof currentSceneObj.init === 'function') {
+                currentSceneObj.init();
+            }
+            glScene = targetGlScene;
+        }
+
+        if (gl) {
+            gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+    } else {
+        if (gl) {
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+        glCanvas.classList.remove("active");
+    }
+
+    reset();
+    fallSetup();
+}
+
 function loop(now) {
     let k = Math.min(2.5, (now - last || 16) / 16) * +$('speed').value;
     last = now;
@@ -2465,49 +2068,18 @@ function loop(now) {
 			fpsBox.textContent = `FPS ${fps}`;
 		}
 	}
-    ({
-		inkBubblesWebGL: () => inkBubblesWebGL(k),
-		nebulaWebGL: () => nebulaWebGL(k),
-		matrixWebGL: () => matrixWebGL(k),
-		tunnelWebGL: () => tunnelWebGL(k),
-        tv_clock,
-        tv_stars,
-        tv_matrix,
-        tv_grid,
-        tv_grid2,
-        tv_blobs,
-        tv_dvd,
-		tv_inkBubbles,
-        matrix,
-        matrix2,
-        stars,
-        fire,
-        rain,
-        aurora: () => blobs(k),
-        ink: () => blobs(k, true),
-        ink2: () => inkBubbles(k),
-        dvd,
-        clock,
-        grid,
-        network,
-        terminal,
-        hello,
-        fireflies,
-        bubbles,
-        mesh,
-        sakura: () => fall(k, 'sakura'),
-        snow: () => fall(k, 'snow'),
-        storm: () => fall(k, 'storm'),
-        storm2: () => fall(k, 'storm2'),
-        snow2: () => fall(k, 'snow2'),
-        paint: () => blobs(k),
-        plasma,
-        smoke,
-        confetti: () => fall(k, 'confetti'),
-		synthwave
-    } [scene] || tv_clock)(k);
-    requestAnimationFrame(loop)
+
+    const currentScene = scenes[scene] || scenes['tv_clock'];
+    if (currentScene && typeof currentScene.render === 'function') {
+        currentScene.render(k);
+    }
+
+    requestAnimationFrame(loop);
 }
+
+// ==========================================
+// CONTROL & EVENT LISTENERS
+// ==========================================
 
 function setColor(v) {
     if (!/^#[\da-f]{6}$/i.test(v)) return;
@@ -2519,245 +2091,24 @@ function setColor(v) {
     document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('active', b.dataset.color === color))
 }
 
-/*function rotateRandomTheme() {
-    const choices = randomThemes.filter(name => name !== activeRandomTheme);
-    activeRandomTheme = choices[choices.length * Math.random() | 0];
-    localStorage.screenActiveRandomTheme = activeRandomTheme;
-    setColor(tone())
-}*/
-// ==========================================
-// 2. ปรับปรุงฟังก์ชัน rotateRandomTheme() ให้สุ่มแยกหมวดได้
-// ==========================================
 function rotateRandomTheme() {
     let pool = [];
 
-    // เช็คว่า theme ปัจจุบันเป็นหมวดหมู่เฉพาะ เช่น 'random_dark' หรือไม่
     if (theme.startsWith('random_')) {
-        const catName = theme.replace('random_', ''); // ดึงคำว่า 'dark', 'light', ฯลฯ
+        const catName = theme.replace('random_', '');
         pool = paletteCategories[catName] || [];
     }
 
-    // ถ้าไม่เจอ หรือถ้าเป็น 'randomTheme' (สุ่มทั้งหมด) ให้ใช้ randomThemes ทั้งหมด
     if (pool.length === 0) {
         pool = randomThemes;
     }
 
-    // กรองเอาธีมปัจจุบันออก เพื่อไม่ให้สุ่มได้สีเดิมซ้ำสองรอบติด
     const choices = pool.filter(name => name !== activeRandomTheme);
     const selectedPool = choices.length > 0 ? choices : pool;
 
     activeRandomTheme = selectedPool[selectedPool.length * Math.random() | 0];
     localStorage.screenActiveRandomTheme = activeRandomTheme;
     setColor(tone());
-}
-
-function pick(v) {
-
-    scene = v;
-
-    $('scene').value = v;
-
-    $('sceneTitle').textContent =
-        title[v] || v.toUpperCase();
-
-    localStorage.screenScene = v;
-
-
-    // ===== WebGL Layer Control =====
-	if (v === "inkBubblesWebGL") {
-
-		glCanvas.classList.add("active");
-
-		/*if (glScene !== "ink") {
-
-			glReadyInkBubbles = false;
-			initInkWebGL();
-			glScene = "ink";
-		}*/
-		if (!glReadyInkBubbles) {
-			initInkWebGL();
-		}
-		glScene = "ink";
-
-
-		if (gl) {
-
-			gl.viewport(
-				0,
-				0,
-				glCanvas.width,
-				glCanvas.height
-			);
-
-			gl.clearColor(
-				0,
-				0,
-				0,
-				0
-			);
-
-			gl.clear(
-				gl.COLOR_BUFFER_BIT
-			);
-		}
-
-
-	}
-	else if (v === "nebulaWebGL") {
-
-		glCanvas.classList.add("active");
-
-		/*if (glScene !== "nebulaWebGL") {
-
-			glReadyNebula = false;
-			initNebulaWebGL();
-			glScene = "nebulaWebGL";
-
-		}*/
-		if (!glReadyNebula) {
-			initNebulaWebGL();
-		}
-		glScene = "nebulaWebGL";
-
-
-		if (gl) {
-
-			gl.viewport(
-				0,
-				0,
-				glCanvas.width,
-				glCanvas.height
-			);
-
-			gl.clearColor(
-				0,
-				0,
-				0,
-				0
-			);
-
-			gl.clear(
-				gl.COLOR_BUFFER_BIT
-			);
-		}
-
-
-	}
-	else if (v === "matrixWebGL") {
-
-		glCanvas.classList.add("active");
-
-		/*if (glScene !== "matrixWebGL") {
-
-			glReadyMatrix = false;
-			initMatrixWebGL();
-			glScene = "matrixWebGL";
-
-		}*/
-		if (!glReadyMatrix) {
-			initMatrixWebGL();
-		}
-		glScene = "matrixWebGL";
-
-
-		if (gl) {
-
-			gl.viewport(
-				0,
-				0,
-				glCanvas.width,
-				glCanvas.height
-			);
-
-			gl.clearColor(
-				0,
-				0,
-				0,
-				0
-			);
-
-			gl.clear(
-				gl.COLOR_BUFFER_BIT
-			);
-		}
-
-
-	}
-	else if (v === "tunnelWebGL") {
-
-		glCanvas.classList.add("active");
-
-		/*if (glScene !== "tunnelWebGL") {
-
-			glReadyTunnel = false;
-			initTunnelWebGL();
-			glScene = "tunnelWebGL";
-		}*/
-		if (!glReadyTunnel) {
-			initTunnelWebGL();
-		}
-		glScene = "tunnelWebGL";
-
-
-
-		if (gl) {
-
-			gl.viewport(
-				0,
-				0,
-				glCanvas.width,
-				glCanvas.height
-			);
-
-			gl.clearColor(
-				0,
-				0,
-				0,
-				0
-			);
-
-			gl.clear(
-				gl.COLOR_BUFFER_BIT
-			);
-		}
-
-
-	}
-	else {
-
-		if (gl) {
-
-			gl.clearColor(
-				0,
-				0,
-				0,
-				0
-			);
-
-			gl.clear(
-				gl.COLOR_BUFFER_BIT
-			);
-		}
-
-		glCanvas.classList.remove("active");
-	}
-/*	if (!["inkBubblesWebGL", "nebulaWebGL","matrixWebGL","tunnelWebGL"].includes(v)) {
-
-    glCanvas.classList.remove("active");
-
-    x.clearRect(
-        0,
-        0,
-        W,
-        H
-    );
-
-}*/
-
-
-    reset();
-
-    fallSetup();
 }
 
 function resize() {
@@ -2773,26 +2124,15 @@ function resize() {
     reset();
     fallSetup()
 }
+
 $('sound').value = localStorage.screenSound || '';
 $('sound').onchange = e => setSound(e.target.value);
-/*$('theme').value = theme;
-$('theme').onchange = e => {
-    theme = e.target.value;
-    localStorage.screenTheme = theme;
-    if (theme === 'randomTheme') rotateRandomTheme();
-    else if (palettes[theme]) setColor(tone());
-    reset();
-    fallSetup()
-};*/
-// ==========================================
-// 3. ปรับปรุง Event Listener ของ Theme Select ($('theme').onchange)
-// ==========================================
+
 $('theme').value = theme;
 $('theme').onchange = e => {
     theme = e.target.value;
     localStorage.screenTheme = theme;
 
-    // ถ้าเริ่มด้วยคำว่า 'random' (เช่น randomTheme, random_dark, random_light)
     if (theme.startsWith('random')) {
         rotateRandomTheme();
     } else if (palettes[theme]) {
@@ -2801,6 +2141,7 @@ $('theme').onchange = e => {
     reset();
     fallSetup();
 };
+
 $('colorPicker').oninput = e => {
     theme = 'normal';
     $('theme').value = theme;
@@ -2829,14 +2170,7 @@ $('toggle').onclick = e => {
     p.classList.toggle('collapsed');
     e.target.textContent = p.classList.contains('collapsed') ? '+' : '−'
 };
-/*function setControlsHidden(hidden) {
-    document.body.classList.toggle('hidden-ui', hidden);
-    const button = $('uiVisibilityToggle');
-    button.textContent = hidden ? 'SHOW CONTROLS' : 'HIDE CONTROLS';
-    button.setAttribute('aria-pressed', String(hidden));
-    button.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
-    localStorage.screenControlsHidden = hidden ? '1' : '';
-}*/
+
 function setControlsHidden(hidden) {
     document.body.classList.toggle('hidden-ui', hidden);
 
@@ -2845,7 +2179,6 @@ function setControlsHidden(hidden) {
     button.setAttribute('aria-pressed', String(hidden));
     button.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
 
-    // FPS
     const fpsBox = $('fpsCounter');
     if (fpsBox) {
         fpsBox.style.display = hidden ? 'none' : 'block';
@@ -2971,7 +2304,6 @@ document.onkeydown = e => {
     e.preventDefault();
 };
 
-// 1. สุ่มสีเดี่ยวจาก baseColors (จะทำงานเมื่อเลือก 'random')
 setInterval(() => {
     if (theme === 'random') {
         let a = baseColors.filter(v => v !== color);
@@ -2979,12 +2311,12 @@ setInterval(() => {
     }
 }, 12000);
 
-// 2. สุ่มธีมพาเลท 3 สี (จะทำงานเมื่อเลือก 'randomTheme' หรือ 'random_xxxx')
 setInterval(() => {
     if (theme.startsWith('randomTheme') || theme.startsWith('random_')) {
         rotateRandomTheme();
     }
 }, 20000);
+
 setColor(palettes[theme] || theme === 'randomTheme' ? tone() : color);
 if (localStorage.screenControlsHidden === '1') setControlsHidden(true);
 pick(scene);
