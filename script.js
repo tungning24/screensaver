@@ -1175,7 +1175,7 @@ function tv_matrix(k) {
     x.globalAlpha = 1;
 }
 
-function tv_grid(k) {
+/*function tv_grid(k) {
     bg(.18);
     let h = H * 0.52;
     let activeTone = tone();
@@ -1212,6 +1212,163 @@ function tv_grid(k) {
         x.moveTo(0, y);
         x.lineTo(W, y);
         x.stroke();
+    }
+}*/
+function tv_grid(k) {
+    bg(0.2);
+
+    // 1. ปรับขนาดตารางให้ขยายเต็มชิดขอบทั้ง 4 ด้าน
+    const targetSize = Math.min(W, H) > 600 ? 50 : 35;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols;
+    const cellH = H / rows;
+    const totalCells = cols * rows;
+
+    // Initial Setup
+    if (!S.tv_grid2 || S.tv_grid2.cols !== cols || S.tv_grid2.rows !== rows) {
+        S.tv_grid2 = {
+            cols, rows,
+            state: 'FILL', // 'FILL', 'HOLD', 'FLASH', 'CLEAR', 'WAIT'
+            cells: Array.from({ length: totalCells }, () => ({
+                active: false,
+                flickering: false,
+                flickerTimer: 0,
+                opacity: 0,
+                colorIndex: Math.floor(Math.random() * 3)
+            })),
+            timer: 0,
+            flashTimer: 0
+        };
+    }
+
+    let g = S.tv_grid2;
+
+    // --------------------------------------------------
+    // 2. Logic ควบคุมการ ติด / กระพริบทั้งจอ / ดับ (State Machine)
+    // --------------------------------------------------
+    g.timer += k;
+
+    if (g.state === 'FILL') {
+        if (g.timer > 3) {
+            g.timer = 0;
+            let inactiveIndices = g.cells
+                .map((c, i) => (!c.active && !c.flickering ? i : -1))
+                .filter(i => i !== -1);
+
+            if (inactiveIndices.length > 0) {
+                let pickIndex = inactiveIndices[Math.floor(Math.random() * inactiveIndices.length)];
+                g.cells[pickIndex].flickering = true;
+                g.cells[pickIndex].flickerTimer = 0;
+            } else {
+                let stillFlickering = g.cells.some(c => c.flickering);
+                if (!stillFlickering) {
+                    g.state = 'HOLD';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'HOLD') {
+        if (g.timer > 240) { 
+            g.state = 'FLASH';
+            g.timer = 0;
+            g.flashTimer = 0;
+        }
+    } else if (g.state === 'FLASH') {
+        g.flashTimer += k;
+        if (g.flashTimer > 25) {
+            g.state = 'CLEAR';
+            g.timer = 0;
+        }
+    } else if (g.state === 'CLEAR') {
+        if (g.timer > 1.5) {
+            g.timer = 0;
+            let activeIndices = g.cells
+                .map((c, i) => (c.active ? i : -1))
+                .filter(i => i !== -1);
+
+            if (activeIndices.length > 0) {
+                let closeCount = Math.min(activeIndices.length, Math.floor(Math.random() * 2) + 1);
+                for (let i = 0; i < closeCount; i++) {
+                    if (activeIndices.length === 0) break;
+                    let randIdx = Math.floor(Math.random() * activeIndices.length);
+                    let targetIndex = activeIndices[randIdx];
+                    activeIndices.splice(randIdx, 1);
+
+                    g.cells[targetIndex].active = false;
+                    g.cells[targetIndex].flickering = true;
+                    g.cells[targetIndex].flickerTimer = 0;
+                }
+            } else {
+                let anyFlickering = g.cells.some(c => c.flickering);
+                if (!anyFlickering) {
+                    g.state = 'WAIT';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'WAIT') {
+        if (g.timer > 40) {
+            g.cells.forEach(c => c.colorIndex = Math.floor(Math.random() * 3));
+            g.state = 'FILL';
+            g.timer = 0;
+        }
+    }
+
+    // --------------------------------------------------
+    // 3. วาดกล่องไฟสุ่ม 3 สี (ไม่มีเส้นตาราง)
+    // --------------------------------------------------
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let idx = r * cols + c;
+            let cell = g.cells[idx];
+            
+            // 💡 เว้นระยะช่องละ 1.5px เพื่อให้พอเห็นรอยต่อระหว่างกล่องนีออนเวลามันติดสว่างพร้อมกัน
+            let gap = 1.5; 
+            let cellX = c * cellW + gap;
+            let cellY = r * cellH + gap;
+            let drawW = cellW - gap * 2;
+            let drawH = cellH - gap * 2;
+
+            let cellColor = tone(cell.colorIndex);
+
+            // คำนวณความสว่างตามสถานะ
+            if (g.state === 'FLASH') {
+                cell.opacity = Math.random() < 0.35 ? (Math.random() * 0.9 + 0.1) : 0.05;
+            } else if (cell.flickering) {
+                cell.flickerTimer += k;
+
+                if (g.state === 'FILL') {
+                    cell.opacity = Math.random() < 0.35 ? (Math.random() * 0.9 + 0.1) : 0.05;
+                    if (cell.flickerTimer > 25) {
+                        cell.flickering = false;
+                        cell.active = true;
+                        cell.opacity = 1;
+                    }
+                } else {
+                    cell.opacity = Math.random() < 0.5 ? 0.8 : 0.1;
+                    if (cell.flickerTimer > 25) {
+                        cell.flickering = false;
+                        cell.opacity = 0;
+                    }
+                }
+            } else if (cell.active) {
+                cell.opacity = 0.85 + Math.random() * 0.15;
+            } else {
+                cell.opacity = 0;
+            }
+
+            // วาดบล็อกไฟ
+            if (cell.opacity > 0.05) {
+                x.save();
+                x.fillStyle = `rgba(${rgb(cellColor)}, ${cell.opacity * 0.85})`;
+                x.shadowColor = cellColor;
+                x.shadowBlur = cell.opacity * 12;
+
+                x.fillRect(cellX, cellY, drawW, drawH);
+                x.restore();
+            }
+        }
     }
 }
 /*
