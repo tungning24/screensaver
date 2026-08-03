@@ -5,8 +5,6 @@ const c = document.querySelector('canvas'),
 const glCanvas = document.getElementById('webglLayer');
 let glMode = "";
 let gl = null;
-let glProgram = null;
-let glReady = false;
 let glScene = "";
 let fps = 0;
 let fpsFrames = 0;
@@ -1409,15 +1407,9 @@ function tv_dvd(k) {
     x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2 + 10);
 }
 
-let glEventsAdded = false;
+let glProgramNebula = null;
+let glReadyNebula = false;
 function nebulaWebGL(k) {
-	if (!gl || gl.isContextLost()) {
-        console.log("WebGL context lost - restart");
-        glReady = false;
-        glScene = "";
-        initNebulaWebGL();
-        return;
-    }
     x.clearRect(0, 0, W, H);
 
     if (glScene !== "nebulaWebGL") {
@@ -1425,23 +1417,23 @@ function nebulaWebGL(k) {
         glScene = "nebulaWebGL";
     }
 
-    if (!glReady) initNebulaWebGL();
+    if (!glReadyNebula) initNebulaWebGL();
 
     gl.viewport(0, 0, glCanvas.width, glCanvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.useProgram(glProgram);
+    gl.useProgram(glProgramNebula);
 
     // 1. ส่งขนาด Canvas และ เวลา
     gl.uniform2f(
-        gl.getUniformLocation(glProgram, "u_res"),
+        gl.getUniformLocation(glProgramNebula, "u_res"),
         glCanvas.width,
         glCanvas.height
     );
 
     gl.uniform1f(
-        gl.getUniformLocation(glProgram, "u_time"),
+        gl.getUniformLocation(glProgramNebula, "u_time"),
         t
     );
 
@@ -1476,43 +1468,27 @@ function nebulaWebGL(k) {
 
     // ส่ง Uniform Array สีทั้ง 3 เข้าไปใน WebGL Shader
     gl.uniform3fv(
-        gl.getUniformLocation(glProgram, "colors[0]"),
+        gl.getUniformLocation(glProgramNebula, "colors[0]"),
         new Float32Array(cols)
     );
+
 
     // 3. วาดภาพ
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 function initNebulaWebGL(){
-    gl = glCanvas.getContext(
-        "webgl",
-        {
+    if (glReadyNebula) return;
+
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", {
             alpha: true,
             antialias: false,
-            preserveDrawingBuffer: false,
-			powerPreference: "high-performance"
-        }
-    );
+            preserveDrawingBuffer: false
+        });
+    }
 
-    if(!gl) return;
-	
-	if (!glEventsAdded) {
-
-		glCanvas.addEventListener("webglcontextlost", e => {
-			e.preventDefault();
-			console.log("context lost");
-			glReady = false;
-			gl = null;
-		});
-
-		glCanvas.addEventListener("webglcontextrestored", () => {
-			console.log("context restored");
-			initNebulaWebGL();
-		});
-
-		glEventsAdded = true;
-	}
+    if (!gl) return;
 
     const vs = `
     attribute vec2 a_pos;
@@ -1600,17 +1576,17 @@ function initNebulaWebGL(){
         return s;
     }
 
-    glProgram = gl.createProgram();
-    gl.attachShader(glProgram, shader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(glProgram, shader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(glProgram);
+    glProgramNebula = gl.createProgram();
+    gl.attachShader(glProgramNebula, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramNebula, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramNebula);
 
-    if(!gl.getProgramParameter(glProgram, gl.LINK_STATUS)){
-        console.log(gl.getProgramInfoLog(glProgram));
+    if(!gl.getProgramParameter(glProgramNebula, gl.LINK_STATUS)){
+        console.log(gl.getProgramInfoLog(glProgramNebula));
         return;
     }
 
-    gl.useProgram(glProgram);
+    gl.useProgram(glProgramNebula);
 
     let buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -1627,13 +1603,15 @@ function initNebulaWebGL(){
         gl.STATIC_DRAW
     );
 
-    let loc = gl.getAttribLocation(glProgram, "a_pos");
+    let loc = gl.getAttribLocation(glProgramNebula, "a_pos");
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
-    glReady = true;
+    glReadyNebula = true;
 }
 
+let glProgramInkBubbles = null;
+let glReadyInkBubbles = false;
 function inkBubblesWebGL(k) {
 
     // ล้าง canvas 2D เดิม
@@ -1650,7 +1628,7 @@ function inkBubblesWebGL(k) {
         glScene = "ink";
 
     }
-    if (!glReady)
+    if (!glReadyInkBubbles)
         initInkWebGL();
 
 
@@ -1708,7 +1686,7 @@ function inkBubblesWebGL(k) {
 
 
     gl.useProgram(
-        glProgram
+        glProgramInkBubbles
     );
 
 
@@ -1775,24 +1753,19 @@ function inkBubblesWebGL(k) {
     );
 }
 
-
-
-
-
 function initInkWebGL(){
 
-    gl = glCanvas.getContext(
-        "webgl",
-        {
-            alpha:true,
-            antialias:false,
-            preserveDrawingBuffer:false
-        }
-    );
+    if (glReadyInkBubbles) return;
 
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", {
+            alpha: true,
+            antialias: false,
+            preserveDrawingBuffer: false
+        });
+    }
 
-    if(!gl)
-        return;
+    if (!gl) return;
 
 
 
@@ -1928,13 +1901,13 @@ function initInkWebGL(){
 
 
 
-    glProgram =
+    glProgramInkBubbles =
     gl.createProgram();
 
 
 
     gl.attachShader(
-        glProgram,
+        glProgramInkBubbles,
         shader(
             gl.VERTEX_SHADER,
             vs
@@ -1944,7 +1917,7 @@ function initInkWebGL(){
 
 
     gl.attachShader(
-        glProgram,
+        glProgramInkBubbles,
         shader(
             gl.FRAGMENT_SHADER,
             fs
@@ -1954,13 +1927,13 @@ function initInkWebGL(){
 
 
     gl.linkProgram(
-        glProgram
+        glProgramInkBubbles
     );
 
 
 
     gl.useProgram(
-        glProgram
+        glProgramInkBubbles
     );
 
 
@@ -1969,28 +1942,28 @@ function initInkWebGL(){
 
     locRes =
     gl.getUniformLocation(
-        glProgram,
+        glProgramInkBubbles,
         "u_res"
     );
 
 
     locTime =
     gl.getUniformLocation(
-        glProgram,
+        glProgramInkBubbles,
         "u_time"
     );
 
 
     locBlobs =
     gl.getUniformLocation(
-        glProgram,
+        glProgramInkBubbles,
         "blobs[0]"
     );
 
 
     locColors =
     gl.getUniformLocation(
-        glProgram,
+        glProgramInkBubbles,
         "colors[0]"
     );
 
@@ -2029,7 +2002,7 @@ function initInkWebGL(){
 
     let loc =
     gl.getAttribLocation(
-        glProgram,
+        glProgramInkBubbles,
         "a_pos"
     );
 
@@ -2052,7 +2025,7 @@ function initInkWebGL(){
 
 
 
-    glReady = true;
+    glReadyInkBubbles = true;
 
 }
 let glProgramMatrix = null;
@@ -2148,11 +2121,15 @@ function createFontTexture() {
 }
 
 function initMatrixWebGL() {
-    gl = glCanvas.getContext("webgl", {
-        alpha: true,
-        antialias: false,
-        preserveDrawingBuffer: false
-    });
+    if (glReadyMatrix) return;
+
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", {
+            alpha: true,
+            antialias: false,
+            preserveDrawingBuffer: false
+        });
+    }
 
     if (!gl) return;
 
@@ -2344,11 +2321,15 @@ function tunnelWebGL(k) {
 }
 
 function initTunnelWebGL() {
-    gl = glCanvas.getContext("webgl", {
-        alpha: true,
-        antialias: false,
-        preserveDrawingBuffer: false
-    });
+    if (glReadyTunnel) return;
+
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", {
+            alpha: true,
+            antialias: false,
+            preserveDrawingBuffer: false
+        });
+    }
 
     if (!gl) return;
 
@@ -2585,15 +2566,18 @@ function pick(v) {
     // ===== WebGL Layer Control =====
 	if (v === "inkBubblesWebGL") {
 
-		glCanvas.style.display = "block";
+		glCanvas.classList.add("active");
 
-		if (glScene !== "ink") {
+		/*if (glScene !== "ink") {
 
-			glReady = false;
+			glReadyInkBubbles = false;
 			initInkWebGL();
 			glScene = "ink";
-
+		}*/
+		if (!glReadyInkBubbles) {
+			initInkWebGL();
 		}
+		glScene = "ink";
 
 
 		if (gl) {
@@ -2621,15 +2605,19 @@ function pick(v) {
 	}
 	else if (v === "nebulaWebGL") {
 
-		glCanvas.style.display = "block";
+		glCanvas.classList.add("active");
 
-		if (glScene !== "nebulaWebGL") {
+		/*if (glScene !== "nebulaWebGL") {
 
-			glReady = false;
+			glReadyNebula = false;
 			initNebulaWebGL();
 			glScene = "nebulaWebGL";
 
+		}*/
+		if (!glReadyNebula) {
+			initNebulaWebGL();
 		}
+		glScene = "nebulaWebGL";
 
 
 		if (gl) {
@@ -2657,15 +2645,19 @@ function pick(v) {
 	}
 	else if (v === "matrixWebGL") {
 
-		glCanvas.style.display = "block";
+		glCanvas.classList.add("active");
 
-		if (glScene !== "matrixWebGL") {
+		/*if (glScene !== "matrixWebGL") {
 
-			glReady = false;
+			glReadyMatrix = false;
 			initMatrixWebGL();
 			glScene = "matrixWebGL";
 
+		}*/
+		if (!glReadyMatrix) {
+			initMatrixWebGL();
 		}
+		glScene = "matrixWebGL";
 
 
 		if (gl) {
@@ -2693,15 +2685,19 @@ function pick(v) {
 	}
 	else if (v === "tunnelWebGL") {
 
-		glCanvas.style.display = "block";
+		glCanvas.classList.add("active");
 
-		if (glScene !== "tunnelWebGL") {
+		/*if (glScene !== "tunnelWebGL") {
 
-			glReady = false;
+			glReadyTunnel = false;
 			initTunnelWebGL();
 			glScene = "tunnelWebGL";
-
+		}*/
+		if (!glReadyTunnel) {
+			initTunnelWebGL();
 		}
+		glScene = "tunnelWebGL";
+
 
 
 		if (gl) {
@@ -2743,20 +2739,20 @@ function pick(v) {
 			);
 		}
 
-		glCanvas.style.display = "none";
+		glCanvas.classList.remove("active");
 	}
-	if (!["inkBubblesWebGL", "nebulaWebGL","matrixWebGL","tunnelWebGL"].includes(v)) {
+/*	if (!["inkBubblesWebGL", "nebulaWebGL","matrixWebGL","tunnelWebGL"].includes(v)) {
 
-    glCanvas.style.display = "none";
-/*
+    glCanvas.classList.remove("active");
+
     x.clearRect(
         0,
         0,
         W,
         H
     );
-*/
-}
+
+}*/
 
 
     reset();

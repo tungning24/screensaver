@@ -28,6 +28,14 @@ body {
 #webglLayer {
     pointer-events: none;
     display: none;
+	pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+}
+#webglLayer.active {
+	display: block;
+    opacity: 1;
+    visibility: visible;
 }
 
 .hud {
