@@ -668,33 +668,42 @@ function tv_inkBubbles(k) {
 function dvd(k) {
     bg(1);
     let d = S.d;
+    if (!d) return;
     d.x += d.vx * k * 2;
     d.y += d.vy * k * 2;
     if (d.x < 0 || d.x > W - 145) d.vx *= -1;
     if (d.y < 0 || d.y > H - 60) d.vy *= -1;
+    
     x.strokeStyle = x.fillStyle = color;
     x.lineWidth = 3;
     x.strokeRect(d.x, d.y, 145, 60);
+    
+    // 🎯 ล็อกจุดอ้างอิงตัวอักษรให้อยู่กึ่งกลางแนวตั้ง
     x.font = 'bold 28px sans-serif';
     x.textAlign = 'center';
-    x.fillText('DVD', d.x + 72, d.y + 39)
+    x.textBaseline = 'middle'; 
+    x.fillText('DVD', d.x + 145 / 2, d.y + 60 / 2); // ให้อยู่กึ่งกลางกล่องพอดี (y + 30)
 }
 
 function clock() {
     bg(.15);
     let d = new Date();
+    
     x.textAlign = 'center';
+    x.textBaseline = 'alphabetic'; // 🎯 รีเซ็ต Baseline แนวตั้งให้ชัวร์
     x.fillStyle = color;
     x.shadowColor = color;
     x.shadowBlur = 20;
-    x.font = `${Math.min(W*.16,155)}px monospace`;
+    
+    x.font = `${Math.min(W * .16, 155)}px monospace`;
     x.fillText(d.toLocaleTimeString(), W / 2, H / 2);
-    x.shadowBlur = 0;
+    
+    x.shadowBlur = 0; // ล้างค่าเงา
     x.fillStyle = '#aab6ac';
     x.font = '15px monospace';
-    x.fillText(d.toDateString(), W / 2, H / 2 + 48)
+    x.fillText(d.toDateString(), W / 2, H / 2 + 48);
 }
-
+/*
 function grid() {
     bg(.18);
     let h = H * .5,
@@ -739,8 +748,99 @@ function grid() {
     x.arc(W / 2, h, Math.min(W, H) * .12, 0, TAU);
     x.fill();
     x.shadowBlur = 0
-}
+}*/
+function grid() {
+    bg(.18);
+    let cx = W / 2,      // จุดศูนย์กลางแนว X (กลางจอ)
+        cy = H / 2,      // จุดศูนย์กลางแนว Y (กลางจอ)
+        a = tone(),
+        r = Math.hypot(W, H); // รัศมีครอบคลุมจนพ้นขอบจอ
 
+    // ☀️ วาด Sunburst (รัศมีหมุน) เต็ม 360 องศา
+    for (let i = 0; i < 16; i++) {
+        if (i % 2) {
+            let p = (i / 16) * TAU + t * .0015;
+            x.fillStyle = `rgba(${rgb(a)},.42)`;
+            x.beginPath();
+            x.moveTo(cx, cy);
+            x.lineTo(cx + Math.cos(p - .12) * r, cy + Math.sin(p - .12) * r);
+            x.lineTo(cx + Math.cos(p + .12) * r, cy + Math.sin(p + .12) * r);
+            x.fill();
+        }
+    }
+
+    // 🔴 วาดดวงอาทิตย์ไว้ตรงกลาง
+    x.fillStyle = a;
+    x.shadowColor = a;
+    x.shadowBlur = 18;
+    x.beginPath();
+    x.arc(cx, cy, Math.min(W, H) * .12, 0, TAU);
+    x.fill();
+    x.shadowBlur = 0;
+}
+/* sun มีกระพริบ
+function grid() {
+    bg(.18);
+    let cx = W / 2,
+        cy = H / 2,
+        a = tone(),
+        r = Math.hypot(W, H);
+
+    // ☀️ วาด Sunburst (รัศมีหมุน)
+    // ตรงนี้เราอาจจะอยากให้มันกระพริบตามพระอาทิตย์ด้วย
+    for (let i = 0; i < 16; i++) {
+        if (i % 2) {
+            let p = (i / 16) * TAU + t * .0015;
+            // สุ่ม Opacity เล็กน้อยให้แสงรัศมีดูไม่นิ่ง
+            let burstAlpha = .35 + Math.random() * .15; 
+            x.fillStyle = `rgba(${rgb(a)},${burstAlpha})`;
+            x.beginPath();
+            x.moveTo(cx, cy);
+            x.lineTo(cx + Math.cos(p - .12) * r, cy + Math.sin(p - .12) * r);
+            x.lineTo(cx + Math.cos(p + .12) * r, cy + Math.sin(p + .12) * r);
+            x.fill();
+        }
+    }
+
+    // 🔴 ส่วนดวงอาทิตย์ (จุดสำคัญของ Effect นีออนเสีย)
+    
+    // 1. สร้างตัวแปรสุ่มสถานะการกระพริบ (Neon Flicker Logic)
+    let flicker = Math.random();
+    let shadowBase = 22;  // ขนาดเงาปกติ
+    let currentShadow = 0; // ขนาดเงาในเฟรมนี้
+    let currentAlpha = 1;  // ความเข้มสีในเฟรมนี้
+
+    if (flicker < 0.03) {
+        // อัตรา 3% สว่างวาบสุดๆ
+        currentShadow = shadowBase * 2.5; 
+        currentAlpha = 1;
+    } else if (flicker < 0.10) {
+        // อัตรา 7% ถัดมา ดับเกือบสนิท
+        currentShadow = shadowBase * 0.2; 
+        currentAlpha = 0.3;
+    } else if (flicker < 0.15) {
+        // อัตรา 5% ถัดมา สว่างแบบสั่นๆ
+        currentShadow = shadowBase + (Math.random() * 8 - 4);
+        currentAlpha = 0.9;
+    } else {
+        // สถานะปกติ 85% ของเวลาทั้งหมด
+        currentShadow = shadowBase;
+        currentAlpha = 1;
+    }
+
+    // 2. ใช้สี Theme 'a' แต่ปรับ Opacity ตามสถานะการกระพริบ
+    let finalColor = `rgba(${rgb(a)},${currentAlpha})`;
+
+    // 3. วาดดวงอาทิตย์พร้อมเงากระพริบ
+    x.fillStyle = finalColor;
+    x.shadowColor = finalColor; // ให้เงาใช้สีเดียวกับตัว
+    x.shadowBlur = currentShadow; // ขนาดเงาที่สุ่มได้
+
+    x.beginPath();
+    x.arc(cx, cy, Math.min(W, H) * .12, 0, TAU);
+    x.fill();
+    x.shadowBlur = 0; // รีเซ็ตค่าเสมอ
+}*/
 function network(k) {
     bg(.14);
     let a = S.p;
@@ -998,6 +1098,7 @@ function tv_clock() {
     let shiftY = Math.cos(t * 0.015) * 10;
     
     x.textAlign = 'center';
+    x.textBaseline = 'alphabetic'; // 🎯 บังคับจุดวางตัวอักษรแนวตั้ง
     x.fillStyle = color;
     x.font = `600 ${Math.min(W * .15, 140)}px "Space Grotesk", sans-serif`;
     x.fillText(d.toLocaleTimeString(), W / 2 + shiftX, H / 2 + shiftY);
@@ -1113,7 +1214,7 @@ function tv_grid(k) {
         x.stroke();
     }
 }
-
+/*
 let neonFlicker = 1;
 let neonFlickerTimer = 0;
 function tv_grid2(k) {
@@ -1210,8 +1311,198 @@ function tv_grid2(k) {
     x.stroke();
 
     x.restore();
-}
+}*/
+function tv_grid2(k) {
+    bg(0.2);
 
+    // 🎯 1. ปรับขนาดตารางให้ขยายเต็มชิดขอบทั้ง 4 ด้านพอดี
+    const targetSize = Math.min(W, H) > 600 ? 50 : 35;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols; // คำนวณความกว้างช่องให้พอดีขอบ W
+    const cellH = H / rows; // คำนวณความสูงช่องให้พอดีขอบ H
+    const totalCells = cols * rows;
+
+    // Initial Setup
+    if (!S.tv_grid2 || S.tv_grid2.cols !== cols || S.tv_grid2.rows !== rows) {
+        S.tv_grid2 = {
+            cols, rows,
+            state: 'FILL', // 'FILL', 'HOLD', 'FLASH', 'CLEAR', 'WAIT'
+            cells: Array.from({ length: totalCells }, () => ({
+                active: false,
+                flickering: false,
+                flickerTimer: 0,
+                opacity: 0,
+                // 🎯 สุ่มสี 1 ใน 3 สีของ Theme ไว้ประจำช่อง
+                colorIndex: Math.floor(Math.random() * 3) 
+            })),
+            timer: 0,
+            flashTimer: 0,
+            gridAlpha: 0.3
+        };
+    }
+
+    let g = S.tv_grid2;
+
+    // --------------------------------------------------
+    // 2. Logic ควบคุมการ ติด / กระพริบทั้งจอ / ดับ (State Machine)
+    // --------------------------------------------------
+    g.timer += k;
+
+    if (g.state === 'FILL') {
+        if (g.timer > 3) {
+            g.timer = 0;
+            let inactiveIndices = g.cells
+                .map((c, i) => (!c.active && !c.flickering ? i : -1))
+                .filter(i => i !== -1);
+
+            if (inactiveIndices.length > 0) {
+                let pickIndex = inactiveIndices[Math.floor(Math.random() * inactiveIndices.length)];
+                g.cells[pickIndex].flickering = true;
+                g.cells[pickIndex].flickerTimer = 0;
+            } else {
+                let stillFlickering = g.cells.some(c => c.flickering);
+                if (!stillFlickering) {
+                    g.state = 'HOLD';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'HOLD') {
+        // ติดครบแล้ว ค้างไว้ 240 เฟรม (ใช้อัตรา k เพื่อรองรับจอ 144Hz/240Hz ให้เวลาเท่ากัน)
+        if (g.timer > 240) { 
+            g.state = 'FLASH'; // 🎯 ย้ายไปกระพริบพร้อมกันทั้งจอก่อนดับ
+            g.timer = 0;
+            g.flashTimer = 0;
+        }
+    } else if (g.state === 'FLASH') {
+        // 🎯 กระพริบพร้อมกันทั้งจอประมาณ 25 เฟรม
+        g.flashTimer += k;
+        if (g.flashTimer > 25) {
+            g.state = 'CLEAR';
+            g.timer = 0;
+        }
+    } else if (g.state === 'CLEAR') {
+        if (g.timer > 1.5) {
+            g.timer = 0;
+            let activeIndices = g.cells
+                .map((c, i) => (c.active ? i : -1))
+                .filter(i => i !== -1);
+
+            if (activeIndices.length > 0) {
+                let closeCount = Math.min(activeIndices.length, Math.floor(Math.random() * 2) + 1);
+                for (let i = 0; i < closeCount; i++) {
+                    if (activeIndices.length === 0) break;
+                    let randIdx = Math.floor(Math.random() * activeIndices.length);
+                    let targetIndex = activeIndices[randIdx];
+                    activeIndices.splice(randIdx, 1);
+
+                    g.cells[targetIndex].active = false;
+                    g.cells[targetIndex].flickering = true;
+                    g.cells[targetIndex].flickerTimer = 0;
+                }
+            } else {
+                let anyFlickering = g.cells.some(c => c.flickering);
+                if (!anyFlickering) {
+                    g.state = 'WAIT';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'WAIT') {
+        if (g.timer > 120) {
+            // 🎯 ก่อนเริ่มรอบใหม่ สุ่มเปลี่ยนสีของแต่ละช่องใหม่ให้หลากหลายขึ้น
+            g.cells.forEach(c => c.colorIndex = Math.floor(Math.random() * 3));
+            g.state = 'FILL';
+            g.timer = 0;
+        }
+    }
+
+    // --------------------------------------------------
+    // 3. วาดเส้นตาราง (Grid Lines) ชิดขอบ 4 ด้าน
+    // --------------------------------------------------
+    let themeMainColor = tone(0); // ใช้สีหลักวาดตาราง
+
+    if (Math.random() < 0.08) {
+        g.gridAlpha = Math.random() < 0.3 ? 0.05 : 0.45;
+    } else {
+        g.gridAlpha += (0.25 - g.gridAlpha) * 0.1;
+    }
+
+    x.strokeStyle = `rgba(${rgb(themeMainColor)}, ${g.gridAlpha})`;
+    x.lineWidth = 3; //1.5
+
+    x.beginPath();
+    // เส้นแนวตั้ง (ชิดขอบซ้ายไปขวา)
+    for (let c = 0; c <= cols; c++) {
+        let lx = c * cellW;
+        x.moveTo(lx, 0);
+        x.lineTo(lx, H);
+    }
+    // เส้นแนวนอน (ชิดขอบบนลงล่าง)
+    for (let r = 0; r <= rows; r++) {
+        let ly = r * cellH;
+        x.moveTo(0, ly);
+        x.lineTo(W, ly);
+    }
+    x.stroke();
+
+    // --------------------------------------------------
+    // 4. วาดกล่องไฟสุ่ม 3 สี + Effect กระพริบ
+    // --------------------------------------------------
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let idx = r * cols + c;
+            let cell = g.cells[idx];
+            let cellX = c * cellW + 2;
+            let cellY = r * cellH + 2;
+            let drawW = cellW - 4;
+            let drawH = cellH - 4;
+
+            // ดึงสีสุ่ม 1 ใน 3 สีของ Theme ตาม colorIndex ของช่องนั้นๆ
+            let cellColor = tone(cell.colorIndex);
+
+            // 🎯 สภาพการกระพริบตอน FLASH (กระพริบพร้อมกันทั้งจอ)
+            if (g.state === 'FLASH') {
+                cell.opacity = Math.random() < 0.35 ? (Math.random() * 0.9 + 0.1) : 0.05;
+            } 
+            // สภาพการกระพริบปกติ
+            else if (cell.flickering) {
+                cell.flickerTimer += k;
+
+                if (g.state === 'FILL') {
+                    cell.opacity = Math.random() < 0.35 ? (Math.random() * 0.9 + 0.1) : 0.05;
+                    if (cell.flickerTimer > 25) {
+                        cell.flickering = false;
+                        cell.active = true;
+                        cell.opacity = 1;
+                    }
+                } else {
+                    cell.opacity = Math.random() < 0.5 ? 0.8 : 0.1;
+                    if (cell.flickerTimer > 25) {
+                        cell.flickering = false;
+                        cell.opacity = 0;
+                    }
+                }
+            } else if (cell.active) {
+                cell.opacity = 0.85 + Math.random() * 0.15;
+            } else {
+                cell.opacity = 0;
+            }
+
+            // วาดบล็อกไฟ
+            if (cell.opacity > 0.05) {
+                x.save();
+                x.fillStyle = `rgba(${rgb(cellColor)}, ${cell.opacity * 0.85})`;
+                x.shadowColor = cellColor;
+                x.shadowBlur = cell.opacity * 12;
+
+                x.fillRect(cellX, cellY, drawW, drawH);
+                x.restore();
+            }
+        }
+    }
+}
 function tv_blobs(k) {
     bg(.16);
     if (!S.tv_blobs) return;
@@ -1245,9 +1536,12 @@ function tv_dvd(k) {
     x.strokeStyle = x.fillStyle = curColor;
     x.lineWidth = 3;
     x.strokeRect(d.x, d.y, boxW, boxH);
+    
+    // 🎯 ล็อกจุดอ้างอิงแนวตั้งให้อยู่ตรงกลางกล่องพอดี
     x.font = 'bold 30px "Space Grotesk", sans-serif';
     x.textAlign = 'center';
-    x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2 + 10);
+    x.textBaseline = 'middle'; 
+    x.fillText('TV DVD', d.x + boxW / 2, d.y + boxH / 2); // วางกึ่งกลางกล่อง
 }
 
 // ==========================================
