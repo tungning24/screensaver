@@ -19,6 +19,7 @@ let W, H, last = 0,
     scene = localStorage.screenScene || 'inkBubblesWebGL',
     S = {},
     theme = localStorage.screenTheme || 'normal';
+	
 	/*
 const sounds = {rain:'mp3/light-rain.mp3',waves:'mp3/ocean-waves.mp3',birds:'mp3/rainy-with-birds.mp3',mood:'mp3/Rainy-Mood.m4a'}, audio = new Audio();
 audio.loop = true;
@@ -714,6 +715,7 @@ function renderSoundOptions() {
 // เรียกใช้งานฟังก์ชันทันทีตอนโหลดหน้าเว็บ
 document.addEventListener('DOMContentLoaded', () => {
   renderSoundOptions();
+  if (theme === 'random3Colors') {updateRandom3Colors();}
   
   // ดึงค่าเดิมที่เคยเลือกไว้กลับมาแสดง
   const savedSound = localStorage.screenSound || '';
@@ -763,11 +765,27 @@ const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
     chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
 let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
 
-const tone = (i = 0) => {
+/*const tone = (i = 0) => {
         let isRandomPal = theme === 'randomTheme' || theme.startsWith('random_');
         let p = palettes[isRandomPal ? activeRandomTheme : theme] || [color];
         return p[i % p.length]
-    },
+    }*/
+const tone = (i = 0) => {
+    // 1. เช็กว่าเป็นโหมดสุ่มตัวใดตัวหนึ่งในบรรดาโหมดสุ่มทั้งหมดหรือไม่
+    let isRandomPal = theme === 'randomTheme' || theme.startsWith('random_');
+    
+    // 2. ถ้าเป็น random3Colors ให้ดึงจาก palettes['random3Colors']
+    //    ถ้าเป็น randomTheme ให้ดึงจาก activeRandomTheme
+    //    ถ้าเป็น Theme ปกติ ให้ดึงตามชื่อ theme ตรงๆ
+    let selectedPalette = (theme === 'random3Colors') 
+        ? palettes.random3Colors 
+        : (isRandomPal ? palettes[activeRandomTheme] : palettes[theme]);
+
+    // 3. Fallback เป็น [color] หากยังไม่มีค่าใน Palette
+    let p = selectedPalette || [color];
+    
+    return p[i % p.length];
+},
     rgb = h => {
         let n = parseInt(h.slice(1), 16);
         return `${n>>16},${n>>8&255},${n&255}`
@@ -3269,6 +3287,26 @@ function rotateRandomTheme() {
     localStorage.screenActiveRandomTheme = activeRandomTheme;
     setColor(tone());
 }
+// 1. ฟังก์ชันสร้างสีแบบ Hex สุ่ม (เช่น #36F76D)
+function getRandomHexColor() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
+}
+
+// 2. ฟังก์ชันสุ่มและอัปเดตพาเลทสี 3 สี
+function updateRandom3Colors() {
+    // สุ่มสีใหม่ 3 สี
+    const new3Colors = [
+        getRandomHexColor(),
+        getRandomHexColor(),
+        getRandomHexColor()
+    ];
+    
+    // บันทึกลงใน palettes.random3Colors
+    palettes.random3Colors = new3Colors;
+    
+    // อัปเดตสีหน้าจอด้วยสีแรกของพาเลทใหม่
+    setColor(new3Colors[0]);
+}
 
 function resize() {
     let isTvScene = scene.startsWith('tv_');
@@ -3292,7 +3330,9 @@ $('theme').onchange = e => {
     theme = e.target.value;
     localStorage.screenTheme = theme;
 
-    if (theme.startsWith('random')) {
+    if (theme === 'random3Colors') {
+        updateRandom3Colors(); // สุ่มทันทีที่เลือก
+    } else if (theme.startsWith('random')) {
         rotateRandomTheme();
     } else if (palettes[theme]) {
         setColor(tone());
@@ -3475,6 +3515,12 @@ setInterval(() => {
         rotateRandomTheme();
     }
 }, 20000);
+// สุ่มสีพาเลท 3 สีใหม่ทุกๆ 60,000 มิลลิวินาที (60 วินาที)
+setInterval(() => {
+    if (theme === 'random3Colors') {
+        updateRandom3Colors();
+    }
+}, 10000);
 
 setColor(palettes[theme] || theme === 'randomTheme' ? tone() : color);
 if (localStorage.screenControlsHidden === '1') setControlsHidden(true);
