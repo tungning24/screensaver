@@ -19,9 +19,300 @@ let W, H, last = 0,
     scene = localStorage.screenScene || 'inkBubblesWebGL',
     S = {},
     theme = localStorage.screenTheme || 'normal';
+	/*
 const sounds = {rain:'mp3/light-rain.mp3',waves:'mp3/ocean-waves.mp3',birds:'mp3/rainy-with-birds.mp3',mood:'mp3/Rainy-Mood.m4a'}, audio = new Audio();
 audio.loop = true;
 function setSound(v) { localStorage.screenSound = v; audio.pause(); if (!v) return audio.removeAttribute('src'); audio.src = sounds[v]; audio.play().catch(() => {}) }
+*/
+/* อัพเดท 0.1 มีมัลติ
+// 1. กำหนดเสียงโดยเปลี่ยนค่าบางตัวเป็น Array ของไฟล์สั้นๆ (0.5 - 1.5 MB รวมกัน)
+const soundGroups = {
+    rain: [{
+        src: 'mp3/light-rain.mp3',
+        volume: 1
+    }], // เล่น 3 เสียงพร้อมกัน
+    waves: [{
+        src: 'mp3/ocean-waves.mp3',
+        volume: 1
+    }], // เสียงเดี่ยวแบบเดิมก็ยังใช้ได้
+    birds: [{
+        src: 'mp3/rainy-with-birds.mp3',
+        volume: 1
+    }],
+    mood: [{
+        src: 'mp3/Rainy-Mood.m4a',
+        volume: 1
+    }],
+    theFall: [{
+            src: 'mp3/theFall/0a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/1a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/2a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/3a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/4a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/5a.ogg',
+            volume: 0.3
+        }, 
+		{
+            src: 'mp3/theFall/6a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/7a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/theFall/8a.ogg',
+            volume: 0.3
+        }, 
+		{
+            src: 'mp3/theFall/9a.ogg',
+            volume: 0.3
+        }
+    ],
+	japGarden: [{
+            src: 'mp3/japGarden/0a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/1a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/2a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/3a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/4a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/5a.ogg',
+            volume: 0.3
+        }, 
+		{
+            src: 'mp3/japGarden/6a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/7a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/japGarden/8a.ogg',
+            volume: 0.3
+        }, 
+		{
+            src: 'mp3/japGarden/9a.ogg',
+            volume: 0.3
+        }
+    ],
+	singingBowl: [{
+            src: 'mp3/singingBowl/0a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/1a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/2a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/3a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/4a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/5a.ogg',
+            volume: 0.3
+        }, 
+		{
+            src: 'mp3/singingBowl/6a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/7a.ogg',
+            volume: 0.3
+        },
+        {
+            src: 'mp3/singingBowl/8a.ogg',
+            volume: 0.3
+        }, 
+		{
+            src: 'mp3/singingBowl/9a.ogg',
+            volume: 0.3
+        }
+    ]
+};
+
+// 2. ตัวแปรเก็บรายการ Audio Elements ที่กำลังเล่นอยู่
+let activeAudios = [];
+
+function setSound(v) {
+  localStorage.screenSound = v;
+
+  // หยุดและล้างเสียงเดิมที่กำลังเล่นอยู่ทั้งหมด
+  activeAudios.forEach(a => a.pause());
+  activeAudios = [];
+
+  if (!v || !soundGroups[v]) return;
+
+  // แปลงให้เป็น Array เสมอ (เพื่อรองรับทั้งแบบไฟล์เดียว และหลายไฟล์)
+  //const files = Array.isArray(soundGroups[v]) ? soundGroups[v] : [soundGroups[v]];
+
+  // สร้าง Audio element และสั่งเล่นพร้อมกันทุกไฟล์ในชุด
+  soundGroups[v].forEach(item => {
+    const a = new Audio(item.src);
+    a.loop = true;
+    a.volume = item.volume ?? 1.0; // กำหนดความดัง (ถ้าไม่ตั้งไว้ จะใช้ 1.0)
+    a.play().catch(() => {});
+    activeAudios.push(a);
+  });
+}*/
+// 1. Config เก็บข้อมูลเสียงทั้งหมด
+const soundConfig = {
+  // --- เสียงเดี่ยว ( Single Track ) ---
+  rain:  { type: 'single', src: 'mp3/light-rain.mp3', volume: 1.0 },
+  waves: { type: 'single', src: 'mp3/ocean-waves.mp3', volume: 1.0 },
+  birds: { type: 'single', src: 'mp3/rainy-with-birds.mp3', volume: 1.0 },
+  mood:  { type: 'single', src: 'mp3/Rainy-Mood.m4a', volume: 1.0 },
+
+  // --- เสียงมัลติแทร็ก ( Multi Track ) ---
+  theFall: {
+    type: 'multi',
+    folder: 'mp3/theFall/',
+    volume: 1.0, // Master Volume รวมของเสียงนี้
+    defaultMode: 'natural',
+    modes: {
+      natural: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45], // % จาก myNoise
+      WhiteNoisy: [57.07, 0, 57.07, 57.07, 0, 57.07, 57.07, 0, 0, 0],
+	  Watery: [0, 62.12, 0, 0, 0, 0, 0, 62.12, 62.12, 0]
+    }
+  },
+
+  japGarden: {
+    type: 'multi',
+    folder: 'mp3/japGarden/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+      natural: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45], // ถ้าไม่ใส่ % จะคิดที่ 100% เต็มทุกช่อง
+	  Wildlife: [56.57, 0, 0, 56.57, 56.57, 56.57, 0, 0, 0, 0],
+	  DistantWaterfall: [75.76, 0, 0, 0, 0, 0, 53.03, 0, 0, 0]
+    }
+  },
+
+  singingBowl: {
+    type: 'multi',
+    folder: 'mp3/singingBowl/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+      natural: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+    }
+  },
+
+  rainOnTent: {
+    type: 'multi',
+    folder: 'mp3/rainOnTent/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+      natural: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22],
+	  covered: [0,0,0,43.13,0,68.69,0,58.89,0,0],
+	  LastDrops: [0, 0, 43.33, 75.76, 43.33, 0, 0, 0, 0, 0],
+	  White: [22.12, 26.26, 30.4, 34.55, 37.27, 42.83, 48.28, 52.42, 57.98, 62.12],
+	  RainyDay: [68.69, 38.18, 24.44, 48.89, 61.01, 50.4, 42.73, 38.18, 35.15, 35.15]
+    }
+  }
+};
+
+// 2. ตัวแปรเก็บรายการ Audio Elements ที่กำลังเล่นอยู่
+let activeAudios = [];
+
+// ฟังก์ชั่นแปลง % (0-100) เป็น Volume (0.0 - 1.0) แบบเนียนเป็นธรรมชาติ
+function pctToVol(pct) {
+  if (pct <= 0) return 0;
+  return Math.pow(pct / 100, 2); 
+}
+
+// 3. ฟังก์ชั่นสั่งเล่นเสียง (รองรับทั้ง single, multi และการส่ง mode ย่อย)
+function setSound(v, mode = null) {
+  
+  // หยุดและล้างเสียงเดิมทั้งหมด
+  activeAudios.forEach(a => a.pause());
+  activeAudios = [];
+  
+  //localStorage.screenSound = v;
+  // บันทึกค่าที่จะนำไปใช้กับ <select> โดยตรง
+  const fullValue = mode ? `${v}:${mode}` : v;
+  localStorage.screenSound = fullValue || '';
+  if (mode) localStorage.screenSoundMode = mode;
+  
+  const sound = soundConfig[v];
+  if (!v || !sound) return;
+
+  // --- Case A: แบบเสียงเดี่ยว (Single) ---
+  if (sound.type === 'single') {
+    const a = new Audio(sound.src);
+	localStorage.screenSound = v || '';
+    a.loop = true;
+    a.volume = sound.volume ?? 1.0;
+    a.play().catch(() => {});
+    activeAudios.push(a);
+  } 
+
+  // --- Case B: แบบมัลติแทร็ก (Multi 10 ช่อง) ---
+  else if (sound.type === 'multi') {
+    const selectedMode = mode || sound.defaultMode || 'natural';
+    const percentages = sound.modes?.[selectedMode] || [];
+    const masterVol = sound.volume ?? 1.0;
+
+    // สร้างวนลูป 0 ถึง 9 อัตโนมัติ (ไม่ต้องเขียน 0a.ogg ถึง 9a.ogg เองให้เมื่อย)
+    for (let i = 0; i < 10; i++) {
+      const src = `${sound.folder}${i}a.ogg`;
+      const a = new Audio(src);
+      a.loop = true;
+
+      // ความดัง = (เปอร์เซ็นต์ของช่อง i) x (Master Volume)
+      const trackPct = percentages[i] !== undefined ? percentages[i] : 100;
+      a.volume = pctToVol(trackPct) * masterVol;
+
+      a.play().catch(() => {});
+      activeAudios.push(a);
+    }
+  }
+}
+function handleSingleSelect(compositeValue) {
+  // แยกค่าด้วยเครื่องหมาย : เช่น "theFall:lulling" -> ["theFall", "lulling"]
+  const [soundKey, modeKey] = compositeValue.split(':');
+  
+  // เรียกใช้ setSound ตามปกติ
+  setSound(soundKey, modeKey || compositeValue);
+}
 const palettes = {
     neon: ['#36F76D', '#35D7FF', '#C77DFF'],
     ocean: ['#32D9FF', '#147DFF', '#A6FFFF'],
@@ -2577,7 +2868,7 @@ function resize() {
 }
 
 $('sound').value = localStorage.screenSound || '';
-$('sound').onchange = e => setSound(e.target.value);
+$('sound').onchange = e => handleSingleSelect(e.target.value);
 
 $('theme').value = theme;
 $('theme').onchange = e => {
