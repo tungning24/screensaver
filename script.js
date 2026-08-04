@@ -195,57 +195,97 @@ function setSound(v) {
 // 1. Config เก็บข้อมูลเสียงทั้งหมด
 const soundConfig = {
   // --- เสียงเดี่ยว ( Single Track ) ---
-  rain:  { type: 'single', src: 'mp3/light-rain.mp3', volume: 1.0 },
-  waves: { type: 'single', src: 'mp3/ocean-waves.mp3', volume: 1.0 },
-  birds: { type: 'single', src: 'mp3/rainy-with-birds.mp3', volume: 1.0 },
-  mood:  { type: 'single', src: 'mp3/Rainy-Mood.m4a', volume: 1.0 },
+  rain:  { type: 'single', title: 'Light rain', src: 'mp3/light-rain.mp3', volume: 1.0 },
+  waves: { type: 'single', title: 'Ocean waves', src: 'mp3/ocean-waves.mp3', volume: 1.0 },
+  birds: { type: 'single', title: 'Rain with birds', src: 'mp3/rainy-with-birds.mp3', volume: 1.0 },
+  mood:  { type: 'single', title: 'Rainy mood', src: 'mp3/Rainy-Mood.m4a', volume: 1.0 },
 
   // --- เสียงมัลติแทร็ก ( Multi Track ) ---
   theFall: {
     type: 'multi',
+	title: 'The Fall',
     folder: 'mp3/theFall/',
-    volume: 1.0, // Master Volume รวมของเสียงนี้
+    volume: 1.0, // Master Volume รวมของเสียงนี้ 0.0-1.0
     defaultMode: 'natural',
     modes: {
-      natural: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45], // % จาก myNoise
-      WhiteNoisy: [57.07, 0, 57.07, 57.07, 0, 57.07, 57.07, 0, 0, 0],
-	  Watery: [0, 62.12, 0, 0, 0, 0, 0, 62.12, 62.12, 0]
+      natural: {
+		  title: 'The Fall (Natural)',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+	  }, // % จาก myNoise
+      WhiteNoisy: {
+		  title: 'The Fall (WhiteNoisy)',
+		  levels: [57.07, 0, 57.07, 57.07, 0, 57.07, 57.07, 0, 0, 0]
+	  },
+	  Watery: {
+		  title: 'The Fall (Watery)',
+		  levels: [0, 62.12, 0, 0, 0, 0, 0, 62.12, 62.12, 0]
+	  }
     }
   },
 
   japGarden: {
     type: 'multi',
+	title: 'Japanese Garden',
     folder: 'mp3/japGarden/',
     volume: 1.0,
     defaultMode: 'natural',
     modes: {
-      natural: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45], // ถ้าไม่ใส่ % จะคิดที่ 100% เต็มทุกช่อง
-	  Wildlife: [56.57, 0, 0, 56.57, 56.57, 56.57, 0, 0, 0, 0],
-	  DistantWaterfall: [75.76, 0, 0, 0, 0, 0, 53.03, 0, 0, 0]
+      natural:  {
+		  title: 'Japanese Garden (Natural)',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+	  }, // ถ้าไม่ใส่ % จะคิดที่ 100% เต็มทุกช่อง
+	  Wildlife:  {
+		  title: 'Japanese Garden (Wildlife)',
+		  levels: [56.57, 0, 0, 56.57, 56.57, 56.57, 0, 0, 0, 0]
+	  },
+	  DistantWaterfall:  {
+		  title: 'Japanese Garden (DistantWaterfall)',
+		  levels: [75.76, 0, 0, 0, 0, 0, 53.03, 0, 0, 0]
+	  }
     }
   },
 
   singingBowl: {
     type: 'multi',
+	title: 'Singing Bowls',
     folder: 'mp3/singingBowl/',
     volume: 1.0,
     defaultMode: 'natural',
     modes: {
-      natural: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+      natural:  {
+		  title: 'Singing Bowls (Natural)',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+	  }
     }
   },
 
   rainOnTent: {
     type: 'multi',
+	title: 'Rain On Tent',
     folder: 'mp3/rainOnTent/',
     volume: 1.0,
     defaultMode: 'natural',
     modes: {
-      natural: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22],
-	  covered: [0,0,0,43.13,0,68.69,0,58.89,0,0],
-	  LastDrops: [0, 0, 43.33, 75.76, 43.33, 0, 0, 0, 0, 0],
-	  White: [22.12, 26.26, 30.4, 34.55, 37.27, 42.83, 48.28, 52.42, 57.98, 62.12],
-	  RainyDay: [68.69, 38.18, 24.44, 48.89, 61.01, 50.4, 42.73, 38.18, 35.15, 35.15]
+      natural:  {
+		  title: 'Rain On Tent (Natural)',
+		  levels: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22]
+	  },
+	  covered:  {
+		  title: 'Rain On Tent (Covered)',
+		  levels: [0,0,0,43.13,0,68.69,0,58.89,0,0]
+	  },
+	  LastDrops:  {
+		  title: 'Rain On Tent (LastDrops)',
+		  levels: [0, 0, 43.33, 75.76, 43.33, 0, 0, 0, 0, 0]
+	  },
+	  White:  {
+		  title: 'Rain On Tent (White)',
+		  levels: [22.12, 26.26, 30.4, 34.55, 37.27, 42.83, 48.28, 52.42, 57.98, 62.12]
+	  },
+	  RainyDay:  {
+		  title: 'Rain On Tent (RainyDayx)',
+		  levels: [68.69, 38.18, 24.44, 48.89, 61.01, 50.4, 42.73, 38.18, 35.15, 35.15]
+	  }
     }
   }
 };
@@ -261,15 +301,14 @@ function pctToVol(pct) {
 
 // 3. ฟังก์ชั่นสั่งเล่นเสียง (รองรับทั้ง single, multi และการส่ง mode ย่อย)
 function setSound(v, mode = null) {
-  
-  // หยุดและล้างเสียงเดิมทั้งหมด
-  activeAudios.forEach(a => a.pause());
-  activeAudios = [];
-  
   //localStorage.screenSound = v;
   // บันทึกค่าที่จะนำไปใช้กับ <select> โดยตรง
   const fullValue = mode ? `${v}:${mode}` : v;
   localStorage.screenSound = fullValue || '';
+  // หยุดและล้างเสียงเดิมทั้งหมด
+  activeAudios.forEach(a => a.pause());
+  activeAudios = [];
+    
   if (mode) localStorage.screenSoundMode = mode;
   
   const sound = soundConfig[v];
@@ -288,7 +327,9 @@ function setSound(v, mode = null) {
   // --- Case B: แบบมัลติแทร็ก (Multi 10 ช่อง) ---
   else if (sound.type === 'multi') {
     const selectedMode = mode || sound.defaultMode || 'natural';
-    const percentages = sound.modes?.[selectedMode] || [];
+	const modeData = sound.modes?.[selectedMode];
+	const percentages = modeData?.levels || modeData || [];
+    //const percentages = sound.modes?.[selectedMode] || [];
     const masterVol = sound.volume ?? 1.0;
 
     // สร้างวนลูป 0 ถึง 9 อัตโนมัติ (ไม่ต้องเขียน 0a.ogg ถึง 9a.ogg เองให้เมื่อย)
@@ -313,6 +354,60 @@ function handleSingleSelect(compositeValue) {
   // เรียกใช้ setSound ตามปกติ
   setSound(soundKey, modeKey || compositeValue);
 }
+function renderSoundOptions() {
+  const selectEl = document.getElementById('sound');
+  
+  // 1. เคลียร์ค่าเดิมและใส่ "No sound" เป็นตัวแรก
+  selectEl.innerHTML = '<option value="">No sound</option>';
+
+  // 2. วนลูปสร้าง Option ตาม config
+  Object.keys(soundConfig).forEach(key => {
+    const item = soundConfig[key];
+
+    if (item.type === 'single') {
+      // --- เสียงเดี่ยว: สร้าง <option> ปกติ ---
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = item.title;
+      selectEl.appendChild(opt);
+
+    } else if (item.type === 'multi') {
+      // --- เสียงมัลติ: สร้าง <optgroup> แล้วใส่โหมดย่อยลงไป ---
+      const group = document.createElement('optgroup');
+      group.label = item.title;
+
+      Object.keys(item.modes).forEach(modeKey => {
+        const mode = item.modes[modeKey];
+        const opt = document.createElement('option');
+        opt.value = `${key}:${modeKey}`; // e.g. "theFall:natural"
+        opt.textContent = mode.title || `${item.title} (${modeKey})`;
+        group.appendChild(opt);
+      });
+
+      selectEl.appendChild(group);
+    }
+  });
+}
+
+// เรียกใช้งานฟังก์ชันทันทีตอนโหลดหน้าเว็บ
+document.addEventListener('DOMContentLoaded', () => {
+  renderSoundOptions();
+  
+  // ดึงค่าเดิมที่เคยเลือกไว้กลับมาแสดง
+  const savedSound = localStorage.screenSound || '';
+  const soundSelect = document.getElementById('sound');
+  
+  // เช็กว่าค่ายังอยู่ในลิสต์ไหม ถ้าอยู่ค่อยใส่ค่า
+  if (Array.from(soundSelect.options).some(opt => opt.value === savedSound)) {
+    soundSelect.value = savedSound;
+  } else {
+    soundSelect.value = '';
+  }
+  
+  // สั่งเล่นเสียงตามปกติ
+  const [soundKey, modeKey] = soundSelect.value.split(':');
+  setSound(soundKey, modeKey);
+});
 const palettes = {
     neon: ['#36F76D', '#35D7FF', '#C77DFF'],
     ocean: ['#32D9FF', '#147DFF', '#A6FFFF'],
