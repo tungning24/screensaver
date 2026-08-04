@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#020403">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon_192.png">
+    <title> Screen Gallery </title>
+    <link rel="preconnect" href="https:/ / fonts.googleapis.com ">
+    <link rel="preconnect " href="https: //fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body><canvas id="matrix" aria-label="Animated screensaver"></canvas><canvas id="webglLayer"></canvas>
+    <main class="hud">
+        <section class="brand"><span class="status-dot"></span><span id="sceneTitle">MATRIX FLOW</span></section>
+        <section class="panel" id="panel">
+            <div class="panel-top"><span>DISPLAY SETTINGS</span><button id="toggle" aria-label="Collapse settings">-</button></div>
+            <div class="settings" id="settings"><label for="scene">SCREENSAVER</label><select id="scene">
+					<optgroup label="🧊 WEBGL OPTIMIZED">
+                        <option value="inkBubblesWebGL">🧊 01 - INK BUBBLES (WebGL)</option>
+						<option value="nebulaWebGL">🧊 02 - Cosmic Nebula (WebGL)</option>
+						<option value="matrixWebGL">🧊 03 - Matrix (WebGL)</option>
+						<option value="tunnelWebGL">🧊 04 - Tunnel (WebGL)</option>				
+                    </optgroup>
+                    <optgroup label="⚡ TV 60FPS OPTIMIZED">
+                        <option value="tv_clock">📺 01 - TV Flip Clock (60FPS)</option>
+                        <option value="tv_stars">📺 02 - TV Cosmic Star Warp (60FPS)</option>
+                        <option value="tv_matrix">📺 03 - TV Optimized Matrix (60FPS)</option>
+						<option value="tv_matrix2">📺 03 - TV Optimized Matrix 2 (60FPS)</option>
+                        <option value="tv_grid">📺 04 - TV Cyberpunk Grid (60FPS)</option>
+                        <option value="tv_grid2">📺 04b - TV Cyberpunk Grid Motion (60FPS)</option>
+                        <option value="tv_blobs">📺 05 - TV Neon Fluid Blobs (60FPS)</option>
+                        <option value="tv_dvd">📺 06 - TV Retro DVD Drift (60FPS)</option>
+						<option value="tv_inkBubbles">📺 07 - TV FLOATING BUBBLES (60FPS)</option>
+                    </optgroup>
+                    <optgroup label="💻 PC / FULL GRAPHICS">
+                        <option value="matrix">01 - Matrix Flow</option>
+                        <option value="matrix2">01b - Authentic Matrix Rain</option>
+                        <option value="stars">02 - Starfield</option>
+                        <option value="fire">03 - Fireplace Ember</option>
+                        <option value="rain">04 - Rain on Glass</option>
+                        <option value="aurora">05 - Aurora</option>
+                        <option value="ink">06 - Fluid Ink</option>
+                        <option value="ink2">06b - Fluid Ink Bubbles</option>
+                        <option value="dvd">07 - Retro DVD</option>
+                        <option value="clock">08 - Digital Clock</option>
+                        <option value="grid">09 - Cyber Grid</option>
+                        <option value="network">10 - Particle Network</option>
+                        <option value="terminal">11 - Code Terminal</option>
+                        <option value="hello">12 - Hello World</option>
+                        <option value="fireflies">13 - Fireflies</option>
+                        <option value="bubbles">14 - Floating Bubbles</option>
+                        <option value="mesh">15 - Low Poly Mesh</option>
+                        <option value="sakura">16 - Sakura</option>
+						<option value="sakura2">17 - Sakura 2</option>
+                        <option value="snow">18 - Snow</option>
+                        <option value="snow2">19 - Snow 2</option>
+                        <option value="storm">20 - Storm Rain</option>
+                        <option value="storm2">21 - Storm Rain 2</option>
+                        <option value="fireworks">22 - Fireworks</option>
+                        <option value="plasma">23 - Plasma</option>
+                        <option value="smoke">24 - Smoke</option>
+                        <option value="confetti">25 - Confetti</option>
+						<option value="confetti2">26 - Confetti 2</option>
+						<option value="synthwave">27 - RETRO SYNTHWAVE</option>
+                    </optgroup>
+                </select>
+				<label for="theme">COLOR THEME</label>
+				<select id="theme">
+					<option value="normal">Normal</option>
+					<option value="random">Random presets / 12 sec</option>
+					
+					<!-- 🎲 กลุ่มสุ่มตามหมวดหมู่ ( Random Options ) -->
+					<optgroup label="── RANDOM CATEGORIES ──">
+						<option value="randomTheme">Random theme / 20 sec (All)</option>
+						<option value="random_dark">Random Dark theme / 20 sec</option>
+						<option value="random_light">Random Light theme / 20 sec</option>
+						<option value="random_neon">Random Neon theme / 20 sec</option>
+						<option value="random_warm">Random Warm theme / 20 sec</option>
+					</optgroup>
+
+					<!-- 🎨 รายชื่อ Theme เดี่ยวๆ ( Palettes ) -->
+					<optgroup label="── SINGLE PALETTES ──">
+						<option value="neon">Neon</option>
+						<option value="ocean">Ocean</option>
+						<option value="sunset">Sunset</option>
+						<option value="violet">Violet</option>
+						<option value="mono">Mono</option>
+						<option value="ice">Ice</option>
+						<option value="forest">Forest</option>
+						<option value="candy">Candy</option>
+						<option value="gold">Gold</option>
+						<option value="lava">Lava</option>
+						<option value="pastel">Pastel</option>
+						<option value="cyberpunk">Cyberpunk</option>
+						<option value="midnight">Midnight</option>
+						<option value="deepspace">Deepspace</option>
+						<option value="vampire">Vampire</option>
+						<option value="synthdark">Synthdark</option>
+						<option value="abyss">Abyss</option>
+						<option value="toxin">Toxin</option>
+						<option value="voids">Voids</option>
+					</optgroup>
+				</select>
+				<label for="sound">AMBIENT SOUND</label>
+				<select id="sound"></select>
+				<label for="colorPicker">ACCENT COLOR</label>
+                <div class="color-row"><input type="color" id="colorPicker" value="#36f76d"><input id="colorText" maxlength="7" value="#36F76D"></div><label for="speed">ANIMATION SPEED <output id="speedValue">1.0x</output></label><input type="range" id="speed" min="0.25" max="2" step="0.05" value="1"><label for="density">DENSITY <output id="densityValue">Normal</output></label><input type="range" id="density" min="12" max="42" step="1" value="24">
+                <div class="presets"><button class="swatch active" data-color="#36F76D" style="--swatch:#36F76D" aria-label="Green accent"></button><button class="swatch" data-color="#35D7FF" style="--swatch:#35D7FF" aria-label="Blue accent"></button><button class="swatch" data-color="#C77DFF" style="--swatch:#C77DFF" aria-label="Purple accent"></button><button class="swatch" data-color="#FF4D7D" style="--swatch:#FF4D7D" aria-label="Pink accent"></button><button class="swatch" data-color="#FFB347" style="--swatch:#FFB347" aria-label="Orange accent"></button></div>
+            </div>
+        </section>
+		<div id="fpsCounter">FPS 60</div>
+        <div class="hint">REMOTE: <kbd>↑↓</kbd> SELECT · <kbd>←→</kbd> ADJUST · <kbd>OK</kbd> ACTIVATE · <kbd>BACK</kbd> HIDE</div>
+    </main>
+    <button id="uiVisibilityToggle" class="ui-visibility-toggle" type="button" aria-pressed="false" aria-label="Hide controls">HIDE CONTROLS</button>
+    <script src="script.js"></script>
+</body>
+
+</html>
