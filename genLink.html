@@ -53,13 +53,13 @@ input[type=number]{
 function copyConsoleScript() {
   // สคริปต์ที่ต้องการคัดลอก
   const scriptToCopy = `{
-  // 1. ดึงข้อความจาก <div class="msg" id="msg">
+  // 1. ดึงข้อความจาก <div class="msg" id="msg"> มาทำ Title
   const msgEl = document.getElementById('msg');
-  const msgText = msgEl ? msgEl.textContent.trim() : 'preset';
+  const msgText = msgEl ? msgEl.textContent.trim() : 'Natural';
 
   // 2. ดึงค่า % ทั้ง 10 ช่อง
   const levels = Array.from({ length: 10 }, (_, i) => {
-    const el = document.getElementById(\`s\${i}\`);
+    const el = document.getElementById(\`\s\${i}\`);
     if (!el) return 0;
     
     const handle = el.querySelector('.ui-slider-handle');
@@ -68,11 +68,20 @@ function copyConsoleScript() {
     return parseFloat(parseFloat(bottomVal).toFixed(2)) || 0;
   });
 
-  // 3. จัดฟอร์แมตข้อความให้อยู่ในบรรทัดเดียวเป็น "key": [array]
-  const formattedArray = \`[\${levels.join(', ')}]\`;
-  const output = \`\${msgText}: \${formattedArray}\`;
+  // 3. สร้าง Key สำหรับใช้ใน JavaScript (ตัดเว้นวรรคและอักขระพิเศษออกเพื่อให้เป็น Valid Key)
+  const safeKey = msgText.replace(/[^a-zA-Z0-9]/g, '');
+  const objectKey = safeKey ? safeKey.charAt(0).toLowerCase() + safeKey.slice(1) : 'preset';
+
+  // 4. จัดฟอร์แมตให้อยู่ในรูปโครงสร้าง Object ชุดใหม่
+  const output = \`\${objectKey}: {\\n  title: '\${msgText}',\\n  levels: [\${levels.join(', ')}]\\n},\`;
 
   console.log(output);
+
+  // 5. สั่ง Copy ลง Clipboard ทันที
+  //navigator.clipboard.writeText(output).then(() => {
+  copy(output);
+  console.log("%c Copied to clipboard successfully! ✅", "color: #00ff00; font-weight: bold;");
+  });
 }`;
 
   // สั่ง คัดลอก ลง Clipboard
