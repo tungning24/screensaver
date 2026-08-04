@@ -195,12 +195,53 @@ function setSound(v) {
 // 1. Config เก็บข้อมูลเสียงทั้งหมด
 const soundConfig = {
   // --- เสียงเดี่ยว ( Single Track ) ---
-  rain:  { type: 'single', title: 'Light rain', src: 'mp3/light-rain.mp3', volume: 1.0 },
-  waves: { type: 'single', title: 'Ocean waves', src: 'mp3/ocean-waves.mp3', volume: 1.0 },
-  birds: { type: 'single', title: 'Rain with birds', src: 'mp3/rainy-with-birds.mp3', volume: 1.0 },
-  mood:  { type: 'single', title: 'Rainy mood', src: 'mp3/Rainy-Mood.m4a', volume: 1.0 },
+  //rain:  { type: 'single', title: 'Light rain', src: 'mp3/light-rain.mp3', volume: 1.0 },
+  //waves: { type: 'single', title: 'Ocean waves', src: 'mp3/ocean-waves.mp3', volume: 1.0 },
+  //birds: { type: 'single', title: 'Rain with birds', src: 'mp3/rainy-with-birds.mp3', volume: 1.0 },
+  //mood:  { type: 'single', title: 'Rainy mood', src: 'mp3/Rainy-Mood.m4a', volume: 1.0 },
 
   // --- เสียงมัลติแทร็ก ( Multi Track ) ---
+  rain: {
+    type: 'multi',
+	title: 'Rain',
+    folder: 'mp3/rain/',
+    volume: 1.0, // Master Volume รวมของเสียงนี้ 0.0-1.0
+    defaultMode: 'natural',
+    modes: {
+	  natural: {
+		  title: 'Natural',
+		  levels: [18.18, 28.28, 36.36, 51.52, 59.6, 54.55, 36.36, 27.27, 17.17, 6.06]
+		},
+      Brown: {
+		  title: 'Brown',
+		  levels: [62.12, 57.17, 52.22, 47.17, 42.22, 37.27, 33.54, 29.8, 26.06, 22.32]
+		},
+	  pink: {
+		  title: 'Pink',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+		},
+		white: {
+		  title: 'White',
+		  levels: [22.12, 26.26, 30.4, 34.55, 37.27, 42.83, 48.28, 52.42, 57.98, 62.12]
+		},
+		speechBlocker: {
+		  title: 'Speech Blocker',
+		  levels: [18.89, 29.7, 37.78, 54.04, 62.12, 56.77, 37.78, 28.38, 17.58, 6.77]
+		},
+		fairyRain: {
+		  title: 'Fairy Rain',
+		  levels: [0, 0, 0, 0, 19.6, 29.39, 39.29, 49.09, 58.89, 68.69]
+		},
+		bedroom: {
+		  title: 'Bedroom',
+		  levels: [0, 0, 0, 22.83, 51.82, 62.12, 51.82, 31.11, 14.55, 0]
+		},
+		jungleLodge: {
+		  title: 'Jungle Lodge',
+		  levels: [75.76, 0, 31.52, 0, 44.14, 0, 44.14, 0, 31.52, 0]
+		}
+    }
+  },
   theFall: {
     type: 'multi',
 	title: 'The Fall',
@@ -208,18 +249,42 @@ const soundConfig = {
     volume: 1.0, // Master Volume รวมของเสียงนี้ 0.0-1.0
     defaultMode: 'natural',
     modes: {
-      natural: {
-		  title: 'The Fall (Natural)',
+		natural: {
+		  title: 'Natural',
 		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
-	  }, // % จาก myNoise
-      WhiteNoisy: {
-		  title: 'The Fall (WhiteNoisy)',
+		}, // % จาก myNoise
+		WhiteNoisy: {
+		  title: 'WhiteNoisy',
 		  levels: [57.07, 0, 57.07, 57.07, 0, 57.07, 57.07, 0, 0, 0]
-	  },
-	  Watery: {
-		  title: 'The Fall (Watery)',
+		  },
+		Watery: {
+		  title: 'Watery',
 		  levels: [0, 62.12, 0, 0, 0, 0, 0, 62.12, 62.12, 0]
-	  }
+		  },
+		majestic: {
+		  title: 'Majestic',
+		  levels: [75.76, 60.61, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 30.3, 15.15]
+		},
+		gigantic: {
+		  title: 'Gigantic',
+		  levels: [68.69, 43.74, 56.16, 0, 0, 0, 0, 0, 0, 0]
+		},
+		fresh: {
+		  title: 'Fresh',
+		  levels: [0, 18.99, 38.08, 57.07, 57.07, 57.07, 57.07, 57.07, 38.08, 18.99]
+		},
+		sparkling: {
+		  title: 'Sparkling',
+		  levels: [0, 0, 18.89, 37.88, 37.88, 37.88, 37.88, 37.88, 56.77, 75.76]
+		},
+		distant: {
+		  title: 'Distant',
+		  levels: [0, 0, 0, 0, 75.76, 56.77, 37.88, 0, 0, 0]
+		},
+		closeFall: {
+		  title: 'CloseFall',
+		  levels: [0, 0, 0, 0, 37.88, 56.77, 75.76, 0, 0, 0]
+		}
     }
   },
 
@@ -230,18 +295,38 @@ const soundConfig = {
     volume: 1.0,
     defaultMode: 'natural',
     modes: {
-      natural:  {
-		  title: 'Japanese Garden (Natural)',
+		natural:  {
+		  title: 'Natural',
 		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
-	  }, // ถ้าไม่ใส่ % จะคิดที่ 100% เต็มทุกช่อง
-	  Wildlife:  {
-		  title: 'Japanese Garden (Wildlife)',
+		}, // ถ้าไม่ใส่ % จะคิดที่ 100% เต็มทุกช่อง
+		Wildlife:  {
+		  title: 'Wildlife',
 		  levels: [56.57, 0, 0, 56.57, 56.57, 56.57, 0, 0, 0, 0]
-	  },
-	  DistantWaterfall:  {
-		  title: 'Japanese Garden (DistantWaterfall)',
+	    },
+		DistantWaterfall:  {
+		  title: 'DistantWaterfall',
 		  levels: [75.76, 0, 0, 0, 0, 0, 53.03, 0, 0, 0]
-	  }
+		},
+		ShishiOdoshi: {
+		  title: 'Shishi Odoshi',
+		  levels: [0, 0, 0, 0, 0, 0, 43.33, 75.76, 0, 0]
+		},
+		bambooGarden: {
+		  title: 'Bamboo Garden',
+		  levels: [0, 60.61, 75.76, 45.45, 60.61, 0, 0, 0, 0, 0]
+		},
+		japaneseSummer: {
+		  title: 'Japanese Summer',
+		  levels: [0, 0, 0, 0, 45.45, 45.45, 0, 0, 75.76, 0]
+		},
+		quietude: {
+		  title: 'Quietude',
+		  levels: [0, 0, 0, 0, 0, 0, 60.61, 0, 0, 75.76]
+		},
+		lonelyBird: {
+		  title: 'Lonely Bird',
+		  levels: [0, 0, 53.03, 45.45, 0, 75.76, 60.61, 60.61, 0, 0]
+		}
     }
   },
 
@@ -252,11 +337,216 @@ const soundConfig = {
     volume: 1.0,
     defaultMode: 'natural',
     modes: {
-      natural:  {
-		  title: 'Singing Bowls (Natural)',
+		natural:  {
+		  title: 'Natural',
 		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
-	  }
+		}
     }
+  },
+  unrealOcean: {
+    type: 'multi',
+	title: 'Unreal Ocean',
+    folder: 'mp3/unrealOcean/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+		natural: {
+		  title: 'Natural',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+		},
+		brown: {
+		  title: 'Brown',
+		  levels: [62.12, 57.17, 52.22, 47.17, 42.22, 37.27, 33.54, 29.8, 26.06, 22.32]
+		},
+		pink: {
+		  title: 'Pink',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+		},
+		white: {
+		  title: 'White',
+		  levels: [22.12, 26.26, 30.4, 34.55, 37.27, 42.83, 48.28, 52.42, 57.98, 62.12]
+		},
+		speechBlocker: {
+		  title: 'Speech Blocker',
+		  levels: [18.89, 29.7, 37.78, 54.04, 62.12, 56.77, 37.78, 28.38, 17.58, 6.77]
+		},
+		distantShore: {
+		  title: 'Distant Shore',
+		  levels: [0, 18.89, 37.88, 56.77, 75.76, 56.77, 37.88, 18.89, 0, 0]
+		},
+		closetotheWater: {
+		  title: 'Close to the Water',
+		  levels: [0, 53.84, 0, 22.93, 35.05, 45.76, 56.57, 49.8, 39.09, 31.01]
+		},
+		homebytheSea: {
+		  title: 'Home by the Sea',
+		  levels: [0, 0, 0, 34.34, 68.69, 34.34, 68.69, 34.34, 0, 0]
+		},
+		rainyShore: {
+		  title: 'Rainy Shore',
+		  levels: [0, 0, 37.88, 56.77, 37.88, 56.77, 56.77, 56.77, 75.76, 56.77]
+		},
+		underwater: {
+		  title: 'Underwater',
+		  levels: [0, 53.03, 0, 75.76, 37.88, 0, 0, 0, 0, 0]
+		}
+	}
+  },
+  stormyWeather: {
+    type: 'multi',
+	title: 'Stormy Weather',
+    folder: 'mp3/stormyWeather/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+		natural:  {
+		  title: 'Natural',
+		  levels: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22]
+		},
+		stormWinds: {
+		  title: 'Storm Winds',
+		  levels: [68.69, 68.69, 0, 0, 0, 0, 0, 0, 0, 0]
+		},
+		porchRain: {
+		  title: 'Porch Rain',
+		  levels: [0, 0, 62.12, 0, 0, 0, 0, 62.12, 62.12, 0]
+		},
+		distantThunder: {
+		  title: 'Distant Thunder',
+		  levels: [0, 0, 0, 62.12, 62.12, 62.12, 0, 0, 0, 0]
+		},
+		calmRain: {
+		  title: 'Calm Rain',
+		  levels: [0, 0, 0, 0, 0, 0, 75.76, 60.61, 45.45, 0]
+		},
+		sizzlingRain: {
+		  title: 'Sizzling Rain',
+		  levels: [0, 0, 0, 0, 0, 0, 0, 45.45, 60.61, 75.76]
+		}
+	}
+  },
+  calmLake: {
+    type: 'multi',
+	title: 'Calm Lake',
+    folder: 'mp3/calmLake/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+		natural: {
+		  title: 'Natural',
+		  levels: [54.34, 54.34, 23.33, 23.33, 23.33, 0, 0, 62.12, 23.33, 23.33]
+		},
+		ambience: {
+		  title: 'Ambience',
+		  levels: [0, 0, 68.69, 68.69, 0, 0, 0, 0, 0, 0]
+		},
+		kissUs: {
+		  title: 'Kiss Us',
+		  levels: [25.76, 0, 17.17, 68.69, 68.69, 0, 0, 0, 0, 0]
+		},
+		canoeSnipes: {
+		  title: 'Canoe & Snipes',
+		  levels: [51.52, 68.69, 0, 0, 0, 68.69, 0, 0, 0, 0]
+		},
+		snipesLapwings: {
+		  title: 'Snipes & Lapwings',
+		  levels: [34.34, 0, 0, 0, 0, 68.69, 68.69, 0, 0, 0]
+		},
+		midnightLoon: {
+		  title: 'Midnight Loon',
+		  levels: [33.64, 0, 0, 0, 33.64, 0, 0, 0, 75.76, 0]
+		},
+		loonCalls: {
+		  title: 'Loon Calls',
+		  levels: [34.34, 0, 0, 0, 0, 0, 0, 68.69, 68.69, 0]
+		},
+		windyLake: {
+		  title: 'Windy Lake',
+		  levels: [61.01, 22.93, 0, 0, 0, 0, 0, 22.93, 22.93, 68.69]
+		}
+	}
+  },
+  distantThunder: {
+    type: 'multi',
+	title: 'Distant Thunder',
+    folder: 'mp3/distantThunder/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+		natural:  {
+		  title: 'Natural',
+		  levels: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22]
+		},
+		stillDry: {
+		  title: 'Still Dry',
+		  levels: [57.07, 57.07, 57.07, 57.07, 57.07, 0, 0, 0, 0, 0]
+		},
+		firstDrops: {
+		  title: 'First Drops',
+		  levels: [57.07, 0, 57.07, 0, 57.07, 57.07, 0, 57.07, 0, 0]
+		},
+		gettingWet: {
+		  title: 'Getting Wet',
+		  levels: [0, 51.52, 0, 51.52, 51.52, 51.52, 45.05, 45.05, 38.59, 25.76]
+		},
+		calmStorm: {
+		  title: 'Calm Storm',
+		  levels: [62.12, 43.43, 43.43, 43.43, 43.43, 43.43, 49.7, 55.86, 55.86, 43.43]
+		},
+		summerRain: {
+		  title: 'Summer Rain',
+		  levels: [51.52, 51.52, 51.52, 0, 0, 0, 0, 51.52, 51.52, 51.52]
+		},
+		almostGone: {
+		  title: 'Almost Gone',
+		  levels: [0, 56.57, 0, 0, 56.57, 0, 0, 28.28, 49.49, 49.49]
+		}
+	}
+  },
+  healingWater: {
+    type: 'multi',
+	title: 'Healing Water',
+    folder: 'mp3/healingWater/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+		natural:  {
+		  title: 'Natural',
+		  levels: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22]
+		},
+		earlyMorning: {
+		  title: 'Early Morning',
+		  levels: [0, 56.77, 47.37, 0, 0, 0, 0, 0, 0, 75.76]
+		},
+		cascade: {
+		  title: 'Cascade',
+		  levels: [0, 62.12, 54.34, 0, 54.34, 0, 0, 0, 0, 0]
+		},
+		creek: {
+		  title: 'Creek',
+		  levels: [0, 0, 0, 51.52, 60.1, 0, 68.69, 0, 0, 0]
+		},
+		babblingBrook: {
+		  title: 'Babbling Brook',
+		  levels: [0, 0, 0, 0, 0, 0, 37.78, 60.1, 68.69, 0]
+		},
+		almostUnreal: {
+		  title: 'Almost Unreal',
+		  levels: [0, 0, 0, 0, 0, 0, 0, 0, 75.76, 56.77]
+		},
+		calming: {
+		  title: 'Calming',
+		  levels: [0, 54.55, 0, 68.69, 0, 0, 56.57, 0, 0, 0]
+		},
+		walkwithMe: {
+		  title: 'Walk with Me',
+		  levels: [75.76, 31.82, 25.66, 0, 36.67, 0, 29.29, 0, 0, 24.44]
+		},
+		woodenBridges: {
+		  title: 'Wooden Bridges',
+		  levels: [75.76, 21.01, 25.25, 0, 0, 0, 0, 0, 0, 0]
+		}
+	}
   },
 
   rainOnTent: {
@@ -266,26 +556,58 @@ const soundConfig = {
     volume: 1.0,
     defaultMode: 'natural',
     modes: {
-      natural:  {
-		  title: 'Rain On Tent (Natural)',
+		natural:  {
+		  title: 'Natural',
 		  levels: [43.43, 56.57, 51.52, 46.46, 41.41, 52.53, 33.33, 29.29, 25.25, 22.22]
-	  },
-	  covered:  {
-		  title: 'Rain On Tent (Covered)',
+		},
+		covered:  {
+		  title: 'Covered',
 		  levels: [0,0,0,43.13,0,68.69,0,58.89,0,0]
-	  },
-	  LastDrops:  {
-		  title: 'Rain On Tent (LastDrops)',
+		},
+		LastDrops:  {
+		  title: 'LastDrops',
 		  levels: [0, 0, 43.33, 75.76, 43.33, 0, 0, 0, 0, 0]
-	  },
-	  White:  {
-		  title: 'Rain On Tent (White)',
+		},
+		brown: {
+		  title: 'Brown',
+		  levels: [62.12, 57.17, 52.22, 47.17, 42.22, 37.27, 33.54, 29.8, 26.06, 22.32]
+		},
+		pink: {
+		  title: 'Pink',
+		  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45]
+		},
+		White:  {
+		  title: 'White',
 		  levels: [22.12, 26.26, 30.4, 34.55, 37.27, 42.83, 48.28, 52.42, 57.98, 62.12]
-	  },
-	  RainyDay:  {
-		  title: 'Rain On Tent (RainyDayx)',
+		},
+		speechBlocker: {
+		  title: 'Speech Blocker',
+		  levels: [18.89, 29.7, 37.78, 54.04, 62.12, 56.77, 37.78, 28.38, 17.58, 6.77]
+		},
+		lightRain: {
+		  title: 'Light Rain',
+		  levels: [0, 0, 0, 0, 20.71, 32.02, 41.41, 52.73, 62.12, 52.73]
+		},
+		lullingRain: {
+		  title: 'Lulling Rain',
+		  levels: [0, 0, 0, 22.63, 52.73, 62.12, 52.73, 32.02, 15.05, 0]
+		},
+		steadyRain: {
+		  title: 'Steady Rain',
+		  levels: [37.68, 37.68, 56.57, 0, 56.57, 0, 56.57, 0, 56.57, 37.68]
+		},
+		RainyDay:  {
+		  title: 'RainyDay',
 		  levels: [68.69, 38.18, 24.44, 48.89, 61.01, 50.4, 42.73, 38.18, 35.15, 35.15]
-	  }
+		},
+		bytheRiver: {
+		  title: 'By the River',
+		  levels: [0, 75.76, 52.73, 32.42, 14.85, 0, 0, 20.3, 20.3, 0]
+		},
+		jungleOvernight: {
+		  title: 'Jungle Overnight',
+		  levels: [75.76, 0, 31.52, 0, 44.14, 31.52, 44.14, 0, 31.52, 0]
+		}
     }
   }
 };
@@ -380,7 +702,7 @@ function renderSoundOptions() {
         const mode = item.modes[modeKey];
         const opt = document.createElement('option');
         opt.value = `${key}:${modeKey}`; // e.g. "theFall:natural"
-        opt.textContent = mode.title || `${item.title} (${modeKey})`;
+        opt.textContent = item.title+" ("+mode.title+")" || `${item.title} (${modeKey})`;
         group.appendChild(opt);
       });
 
