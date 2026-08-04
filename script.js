@@ -3520,7 +3520,7 @@ setInterval(() => {
     if (theme === 'random3Colors') {
         updateRandom3Colors();
     }
-}, 10000);
+}, 30000);
 
 setColor(palettes[theme] || theme === 'randomTheme' ? tone() : color);
 if (localStorage.screenControlsHidden === '1') setControlsHidden(true);
