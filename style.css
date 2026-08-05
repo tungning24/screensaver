@@ -358,7 +358,7 @@ kbd {
 }
 
 .hidden-ui .ui-visibility-toggle {
-    opacity: .35;
+    opacity: .0; /*default .35*/
 }
 
 @media (max-width: 560px) {
