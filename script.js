@@ -2434,7 +2434,7 @@ const scenes = {
 
 function renderSceneOptions() {
     const meta = {
-        webgl: { group: document.getElementById('group-webgl'), icon: '🧊 ' },
+        webgl: { group: document.getElementById('group-webgl'), icon: '🧮 ' },
         tv:    { group: document.getElementById('group-tv'), icon: '📺 ' },
         pc:    { group: document.getElementById('group-pc'), icon: '💻' }
     };
