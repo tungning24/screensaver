@@ -25,9 +25,49 @@ input[type=number]{
 .link-item{
     margin:3px 0;
 }
+tabs{
+    margin-bottom:15px;
+}
+.tab-btn{
+    padding:8px 15px;
+    cursor:pointer;
+    border:1px solid #ccc;
+    background:#eee;
+}
+.tab-btn.active{
+    background:#4caf50;
+    color:#fff;
+}
+.tab-content{
+    display:none;
+}
+.tab-content.active{
+    display:block;
+}
+
+#paletteInput{
+    width:100%;
+    height:220px;
+}
+
+#paletteResult{
+    margin-top:15px;
+    border:1px solid #ccc;
+    padding:10px;
+    white-space:pre-wrap;
+    font-family:Consolas, monospace;
+}
 </style>
 </head>
 <body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="showTab(1,this)">Link Generator</button>
+    <button class="tab-btn" onclick="showTab(2,this)">Palette Converter</button>
+</div>
+
+<!-- TAB 1 -->
+<div id="tab1" class="tab-content active">
 
 <h2>Link Generator</h2>
 
@@ -49,7 +89,99 @@ input[type=number]{
 
 <div id="result"></div>
 
+</div>
+
+<!-- TAB 2 -->
+<div id="tab2" class="tab-content">
+
+<h2>Palette Converter</h2>
+
+<p>วาง HTML ของ palette-card</p>
+
+<textarea id="paletteInput"></textarea>
+<br><br>
+
+<button onclick="convertPalette()">แปลง</button>
+<button id="copyPaletteBtn" onclick="copyPaletteResult()">Copy</button>
+
+<div id="paletteResult"></div>
+
+</div>
+
 <script>
+function copyPaletteResult(){
+
+    const text =
+        document.getElementById("paletteResult").textContent.trim();
+
+    if(!text){
+        alert("ยังไม่มีผลลัพธ์");
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+
+        const btn = document.getElementById("copyPaletteBtn");
+
+        const oldText = btn.textContent;
+
+        btn.textContent = "Copied! ✅";
+
+        setTimeout(() => {
+            btn.textContent = oldText;
+        }, 2000);
+
+    }).catch(err => {
+        console.error(err);
+        alert("Copy ไม่สำเร็จ");
+    });
+}
+function showTab(tab, btn){
+
+    document.querySelectorAll(".tab-content")
+        .forEach(el => el.classList.remove("active"));
+
+    document.querySelectorAll(".tab-btn")
+        .forEach(el => el.classList.remove("active"));
+
+    document.getElementById("tab"+tab)
+        .classList.add("active");
+
+    btn.classList.add("active");
+}
+
+function convertPalette(){
+
+    const html = document.getElementById("paletteInput").value;
+
+    // ชื่อ Palette
+    let nameMatch = html.match(/palette-card_name[^>]*>(.*?)<\/a>/i);
+
+    let paletteName = "Palette";
+
+    if(nameMatch){
+        paletteName = nameMatch[1]
+            .replace(/[^a-zA-Z0-9 ]/g,"")
+            .trim()
+            .replace(/\s+/g,"");
+    }
+
+    // ดึง HEX ทั้งหมด
+    const colors = [];
+
+    const colorRegex = /<span>\s*([A-Fa-f0-9]{6})\s*<\/span>/g;
+
+    let match;
+
+    while((match = colorRegex.exec(html)) !== null){
+        colors.push(`#${match[1].toUpperCase()}`);
+    }
+
+    const output =
+        `${paletteName}: [${colors.map(c=>`'${c}'`).join(",")}]`;
+
+    document.getElementById("paletteResult").textContent = output;
+}
 function copyConsoleScript() {
   // สคริปต์ที่ต้องการคัดลอก
   const scriptToCopy = `{
@@ -134,48 +266,6 @@ function generateLinks() {
         result.appendChild(div);
     }
 }
-// console ดึง % จาก mynoise.net
-/*
-{
-  const levels = Array.from({ length: 10 }, (_, i) => {
-    const el = document.getElementById(`s${i}`);
-    if (!el) return 0;
-    
-    // ดึงตัวเลข % จาก style bottom ของตัวเลื่อน (.ui-slider-handle)
-    const handle = el.querySelector('.ui-slider-handle');
-    const bottomVal = handle ? handle.style.bottom : '0%';
-    
-    // แปลง "22.6263%" ให้เป็นตัวเลขแบบตัดทศนิยมเนียนๆ (หรือใช้ parseFloat ตรงๆ ก็ได้)
-    return parseFloat(parseFloat(bottomVal).toFixed(2)) || 0;
-  });
-
-  console.log(JSON.stringify(levels));
-}
-*/
-/* ใช้อันนี้
-{
-  // 1. ดึงข้อความจาก <div class="msg" id="msg">
-  const msgEl = document.getElementById('msg');
-  const msgText = msgEl ? msgEl.textContent.trim() : 'preset';
-
-  // 2. ดึงค่า % ทั้ง 10 ช่อง
-  const levels = Array.from({ length: 10 }, (_, i) => {
-    const el = document.getElementById(`s${i}`);
-    if (!el) return 0;
-    
-    const handle = el.querySelector('.ui-slider-handle');
-    const bottomVal = handle ? handle.style.bottom : '0%';
-    
-    return parseFloat(parseFloat(bottomVal).toFixed(2)) || 0;
-  });
-
-  // 3. จัดฟอร์แมตข้อความให้อยู่ในบรรทัดเดียวเป็น "key": [array]
-  const formattedArray = `[${levels.join(', ')}]`;
-  const output = `${msgText}: ${formattedArray}`;
-
-  console.log(output);
-}
-*/
 </script>
 
 </body>

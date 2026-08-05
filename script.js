@@ -715,11 +715,35 @@ function renderSoundOptions() {
 // เรียกใช้งานฟังก์ชันทันทีตอนโหลดหน้าเว็บ
 document.addEventListener('DOMContentLoaded', () => {
   renderSoundOptions();
+  renderThemeOptions(); // เติม <option> อัตโนมัติ
+  renderSceneOptions();
   if (theme === 'random3Colors') {updateRandom3Colors();}
   
   // ดึงค่าเดิมที่เคยเลือกไว้กลับมาแสดง
   const savedSound = localStorage.screenSound || '';
   const soundSelect = document.getElementById('sound');
+	// ผูก Event Listener เมื่อผู้ใช้เปลี่ยน Scene
+    const sceneSelect = document.getElementById('scene');
+    if (sceneSelect) {
+        sceneSelect.addEventListener('change', (e) => {
+            const selected = e.target.value;
+            localStorage.setItem('screenScene', selected); // บันทึกค่าลง LocalStorage
+            
+            // เรียกฟังก์ชันเปลี่ยน Scene ของคุณที่นี่ เช่น changeScene(selected);
+        });
+    }  
+  const themeSelect = document.getElementById('theme');
+    if (themeSelect) {
+        themeSelect.value = theme;
+        themeSelect.addEventListener('change', (e) => {
+            theme = e.target.value;
+            localStorage.screenTheme = theme;
+            updateThemeColors();
+        });
+    }
+
+    // สั่งเริ่มทำงานระบบจับเวลาสุ่มสี
+    updateThemeColors();
   
   // เช็กว่าค่ายังอยู่ในลิสต์ไหม ถ้าอยู่ค่อยใส่ค่า
   if (Array.from(soundSelect.options).some(opt => opt.value === savedSound)) {
@@ -731,12 +755,119 @@ document.addEventListener('DOMContentLoaded', () => {
   // สั่งเล่นเสียงตามปกติ
   const [soundKey, modeKey] = soundSelect.value.split(':');
   setSound(soundKey, modeKey);
+  const colorPicker = document.getElementById('colorPicker');
+    const colorText = document.getElementById('colorText');
+    const swatches = document.querySelectorAll('.presets .swatch');
+
+    // 1. เมื่อเปลี่ยนสีจาก Color Picker (<input type="color">)
+    if (colorPicker) {
+        colorPicker.addEventListener('input', (e) => {
+            setAccentColor(e.target.value);
+        });
+    }
+
+    // 2. เมื่อพิมพ์ Hex Code เองในช่อง Text
+    if (colorText) {
+        colorText.addEventListener('change', (e) => {
+            let val = e.target.value.trim();
+            if (!val.startsWith('#')) val = '#' + val;
+            
+            // ตรวจสอบความถูกต้องของ Hex Code
+            if (/^#[0-9A-F]{6}$/i.test(val)) {
+                setAccentColor(val);
+            } else {
+                e.target.value = color; // ถ้าพิมพ์ผิดให้เด้งกลับเป็นสีเดิม
+            }
+        });
+    }
+
+    // 3. เมื่อคลิกเลือกสีปุ่ม Swatch
+    swatches.forEach(swatch => {
+        swatch.addEventListener('click', () => {
+            const selectedColor = swatch.dataset.color;
+            setAccentColor(selectedColor);
+        });
+    });
 });
+// ==========================================
+// 🎨 PALETTES & CATEGORIES CONFIGURATION
+// ==========================================
+const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'];
+/*
+const paletteCategories = {
+    dark: ['cyberpunk', 'midnight', 'deepspace', 'vampire', 'synthdark', 'abyss', 'toxin', 'voids', 'VividNightfall'],
+    light: ['pastel', 'mono', 'ice', 'SoftPeachyDelight', 'SoftPastelShades', 'PastelDreamland', 'LightSteel'],
+    neon: ['neon', 'ocean', 'violet', 'candy', 'GradientBlues', 'VibrantFusion'],
+    warm: ['sunset', 'gold', 'lava', 'forest', 'FieryRedSunset', 'SunsetGradient', 'WarmEarthTones']
+};*/
+const paletteCategories = {
+    calm: [
+        'SoftPeachyDelight',
+        'SoftPastelShades',
+        'CoastalBlues',
+        'OceanBlueSerenity',
+        'FreshGreens',
+        'LightSteel'
+    ],
+    energetic: [
+        'VibrantFusion',
+        'VibrantTones',
+        'ColorfulRainbowSpectrum',
+        'PurpleRaindrops'
+    ],
+    cyberpunk: [
+        'GradientBlues',
+        'PurpleRaindrops',
+        'VividNightfall',
+        'VibrantSunset'
+    ],
+    nature: [
+        'FreshGreens',
+        'SpringGreenHarmony',
+        'WarmEarthTones',
+        'GoldenHarvest'
+    ],
+    sunset: [
+        'FieryRedSunset',
+        'OceanSunset',
+        'SunsetGradient',
+        'VibrantSunset'
+    ],
+    dark: [
+        'DeepSeaBlue',
+        'VividNightfall',
+        'ClassicRedPalette',
+        'WarmNeutralTones'
+    ],
+    pastel: [
+        'SoftPeachyDelight',
+        'SoftPastelShades',
+        'PastelDreamland',
+        'CherryBlossomBloom'
+    ],
+	retro: [
+    'ClassicRedPalette',
+    'VibrantSunset',
+    'SunsetGradient'
+	],
+
+	space: [
+		'DeepSeaBlue',
+		'VividNightfall',
+		'GradientBlues'
+	],
+
+	matrix: [
+		'FreshGreens',
+		'SpringGreenHarmony'
+	]
+};
 const palettes = {
-    neon: ['#36F76D', '#35D7FF', '#C77DFF'],
+    /*neon: ['#36F76D', '#35D7FF', '#C77DFF'],
     ocean: ['#32D9FF', '#147DFF', '#A6FFFF'],
     sunset: ['#FF4D7D', '#FF9D40', '#FFE17D'],
     violet: ['#C77DFF', '#765CFF', '#FF92D0'],
+	violet: ['#F72585','#B5179E','#7209B7','#560BAD','#480CA8','#3A0CA3','#3F37C9','#4361EE','#4895EF','#4CC9F0'],
     mono: ['#F3F7F4', '#AABAB0', '#617168'],
     ice: ['#E8FAFF', '#77D9FF', '#4D7CFF'],
     forest: ['#B7F34A', '#32A852', '#0B5D3B'],
@@ -751,18 +882,38 @@ const palettes = {
     synthdark: ['#2B0B3F', '#521262', '#FF007F'],
     abyss:     ['#081C15', '#1B4332', '#40916C'],
     toxin:     ['#0B090A', '#161A1D', '#52B788'],
-    voids:      ['#181823', '#537188', '#CBB279']
+    voids:      ['#181823', '#537188', '#CBB279'],*/
+	SoftPeachyDelight: ['#FEC5BB','#FCD5CE','#FAE1DD','#F8EDEB','#E8E8E4','#D8E2DC','#ECE4DB','#FFE5D9','#FFD7BA','#FEC89A'],
+	SoftPastelShades: ['#EDDCD2','#FFF1E6','#FDE2E4','#FAD2E1','#C5DEDD','#DBE7E4','#F0EFEB','#D6E2E9','#BCD4E6','#99C1DE'],
+	PastelDreamland: ['#FFCBF2','#F3C4FB','#ECBCFD','#E5B3FE','#E2AFFF','#DEAAFF','#D8BBFF','#D0D1FF','#C8E7FF','#C0FDFF'],
+	FieryRedSunset: ['#03071E','#370617','#6A040F','#9D0208','#D00000','#DC2F02','#E85D04','#F48C06','#FAA307','#FFBA08'],
+	OceanSunset: ['#001219','#005F73','#0A9396','#94D2BD','#E9D8A6','#EE9B00','#CA6702','#BB3E03','#AE2012','#9B2226'],
+	ColorfulRainbowSpectrum: ['#669900','#99CC33','#CCEE66','#006699','#3399CC','#990066','#CC3399','#FF6600','#FF9900','#FFCC00'],
+	VibrantTones: ['#F94144','#F3722C','#F8961E','#F9844A','#F9C74F','#90BE6D','#43AA8B','#4D908E','#577590','#277DA1'],
+	VibrantFusion: ['#FF0000','#FF8700','#FFD300','#DEFF0A','#A1FF0A','#0AFF99','#0AEFFF','#147DF5','#580AFF','#BE0AFF'],
+	CoastalBlues: ['#012A4A','#013A63','#01497C','#014F86','#2A6F97','#2C7DA0','#468FAF','#61A5C2','#89C2D9','#A9D6E5'],
+	DeepSeaBlue: ['#0466C8','#0353A4','#023E7D','#002855','#001845','#001233','#33415C','#5C677D','#7D8597','#979DAC'],
+	OceanBlueSerenity: ['#03045E','#023E8A','#0077B6','#0096C7','#00B4D8','#48CAE4','#90E0EF','#ADE8F4','#CAF0F8'],
+	BlueGradient: ['#E3F2FD','#BBDEFB','#90CAF9','#64B5F6','#42A5F5','#2196F3','#1E88E5','#1976D2','#1565C0','#0D47A1'],
+	GradientBlues: ['#7400B8','#6930C3','#5E60CE','#5390D9','#4EA8DE','#48BFE3','#56CFE1','#64DFDF','#72EFDD','#80FFDB'],
+	CherryBlossomBloom: ['#590D22','#800F2F','#A4133C','#C9184A','#FF4D6D','#FF758F','#FF8FA3','#FFB3C1','#FFCCD5','#FFF0F3'],
+	FreshGreens: ['#D8F3DC','#B7E4C7','#95D5B2','#74C69D','#52B788','#40916C','#2D6A4F','#1B4332','#081C15'],
+	SpringGreenHarmony: ['#007F5F','#2B9348','#55A630','#80B918','#AACC00','#BFD200','#D4D700','#DDDF00','#EEEF20','#FFFF3F'],
+	SunsetGradient: ['#FF7B00','#FF8800','#FF9500','#FFA200','#FFAA00','#FFB700','#FFC300','#FFD000','#FFDD00','#FFEA00'],
+	GoldenHarvest: ['#FFE169','#FAD643','#EDC531','#DBB42C','#C9A227','#B69121','#A47E1B','#926C15','#805B10','#76520E'],
+	PurpleRaindrops: ['#F72585','#B5179E','#7209B7','#560BAD','#480CA8','#3A0CA3','#3F37C9','#4361EE','#4895EF','#4CC9F0'],
+	VividNightfall: ['#10002B','#240046','#3C096C','#5A189A','#7B2CBF','#9D4EDD','#C77DFF','#E0AAFF'],
+	VibrantSunset: ['#FF6D00','#FF7900','#FF8500','#FF9100','#FF9E00','#240046','#3C096C','#5A189A','#7B2CBF','#9D4EDD'],
+	WarmNeutralTones: ['#582F0E','#7F4F24','#936639','#A68A64','#B6AD90','#C2C5AA','#A4AC86','#656D4A','#414833','#333D29'],
+	WarmEarthTones: ['#EDC4B3','#E6B8A2','#DEAB90','#D69F7E','#CD9777','#C38E70','#B07D62','#9D6B53','#8A5A44','#774936'],
+	ClassicRedPalette: ['#0B090A','#161A1D','#660708','#A4161A','#BA181B','#E5383B','#B1A7A6','#D3D3D3','#F5F3F4','#FFFFFF'],
+	LightSteel: ['#F8F9FA','#E9ECEF','#DEE2E6','#CED4DA','#ADB5BD','#6C757D','#495057','#343A40','#212529']
 };
+// ตัวแปรเก็บสีปัจจุบันที่ถูกสุ่มเลือกออกมา
+let activeColors = [...baseColors];
+let themeTimer = null;
 
-const baseColors = ['#36F76D', '#35D7FF', '#C77DFF', '#FF4D7D', '#FFB347'],
-    randomThemes = ['neon', 'ocean', 'sunset', 'violet', 'ice', 'forest', 'candy', 'gold', 'lava','cyberpunk','midnight','deepspace','vampire','synthdark','abyss','toxin','voids'],
-	paletteCategories = {
-		dark: ['cyberpunk', 'midnight', 'deepspace', 'vampire', 'synthdark', 'abyss', 'toxin', 'voids'],
-		light: ['pastel', 'mono', 'ice'],
-		neon: ['neon', 'ocean', 'violet', 'candy'],
-		warm: ['sunset', 'gold', 'lava', 'forest']
-	},
-    chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
+const chars = 'アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%#&_()[]{}<>!';
 let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
 
 /*const tone = (i = 0) => {
@@ -770,7 +921,7 @@ let activeRandomTheme = localStorage.screenActiveRandomTheme || randomThemes[0];
         let p = palettes[isRandomPal ? activeRandomTheme : theme] || [color];
         return p[i % p.length]
     }*/
-const tone = (i = 0) => {
+/*const tone = (i = 0) => {
     // 1. เช็กว่าเป็นโหมดสุ่มตัวใดตัวหนึ่งในบรรดาโหมดสุ่มทั้งหมดหรือไม่
     let isRandomPal = theme === 'randomTheme' || theme.startsWith('random_');
     
@@ -785,6 +936,10 @@ const tone = (i = 0) => {
     let p = selectedPalette || [color];
     
     return p[i % p.length];
+}*/
+const tone = (i = 0) => {
+    if (!activeColors || activeColors.length === 0) return color;
+    return activeColors[i % activeColors.length];
 },
     rgb = h => {
         let n = parseInt(h.slice(1), 16);
@@ -809,6 +964,151 @@ const darkTone = (hex, p = 20) =>
         .map(c => Math.max(0, parseInt(c, 16) * (100 - p) / 100 | 0)
         .toString(16).padStart(2, "0"))
         .join("");
+// ==========================================
+// 🛠️ AUTO-GENERATE THEME OPTIONS IN SELECT
+// ==========================================
+
+function renderThemeOptions() {
+    const randomGroup = document.getElementById('randomOptGroup');
+    const singleGroup = document.getElementById('singleOptGroup');
+    
+    if (randomGroup) {
+        // สร้าง <option> สำหรับ Random ตาม Categories
+        Object.keys(paletteCategories).forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = `random_${cat}`;
+            opt.textContent = `Random ${cat.charAt(0).toUpperCase() + cat.slice(1)} (30s)`;
+            randomGroup.appendChild(opt);
+        });
+    }
+
+    if (singleGroup) {
+        // ล้างข้อมูลเก่าแล้วสร้าง <option> สำหรับ Single Palettes ทั้งหมด
+        singleGroup.innerHTML = '';
+        Object.keys(palettes).forEach(pKey => {
+            const opt = document.createElement('option');
+            opt.value = pKey;
+            opt.textContent = pKey.charAt(0).toUpperCase() + pKey.slice(1);
+            singleGroup.appendChild(opt);
+        });
+    }
+}
+
+// Helper: ฟังก์ชั่นสุ่มดึง N รายการแบบไม่ซ้ำจาก Array
+function getRandomItems(arr, num) {
+    const shuffled = [...arr].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(num, arr.length));
+}
+
+// Helper: สุ่มสร้างสี Hex 1 สี
+function getRandomHexColor() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+}
+// ==========================================
+// 🔄 LOGIC UPDATE COLOR & ROTATION TIMER
+// ==========================================
+
+function updateThemeColors() {
+    // 1. ล้าง Timer เก่าออกก่อนเสมอเพื่อไม่ให้ Timer ซ้อนกัน
+    if (themeTimer) {
+        clearInterval(themeTimer);
+        themeTimer = null;
+    }
+
+    // 2. ฟังก์ชันช่วยอัปเดต UI (ปุ่ม Swatch + ช่อง Color Picker)
+    const updateUI = (currentColor) => {
+        // อัปเดตขอบปุ่ม Swatch
+        document.querySelectorAll('.presets .swatch').forEach(swatch => {
+            if (theme === 'normal' && swatch.dataset.color.toLowerCase() === currentColor.toLowerCase()) {
+                swatch.classList.add('active');
+            } else {
+                swatch.classList.remove('active');
+            }
+        });
+
+        // ถ้ามีการส่งสีมา ให้เปลี่ยนสีในช่อง Color Picker และ Text Box ตามด้วย
+        if (currentColor) {
+            const colorPicker = document.getElementById('colorPicker');
+            const colorText = document.getElementById('colorText');
+            if (colorPicker) colorPicker.value = currentColor;
+            if (colorText) colorText.value = currentColor.toUpperCase();
+        }
+    };
+
+    // 1. Normal Mode: ใช้สีเดี่ยวจาก Picker
+    if (theme === 'normal') {
+        activeColors = [color];
+        updateUI(color);
+        return;
+    }
+
+    // 2. Random Presets Mode: สุ่มสี 1 สีจาก baseColors ทุก 12 วินาที
+    if (theme === 'random') {
+        const rotateRandomBase = () => {
+            const pick = baseColors[Math.floor(Math.random() * baseColors.length)];
+            activeColors = [pick];
+            updateUI(pick); // สั่งอัปเดตสีที่ Color Picker ตามสีที่สุ่มได้
+        };
+        rotateRandomBase();
+        themeTimer = setInterval(rotateRandomBase, 12000);
+        return;
+    }
+
+    // 3. Random 3 Colors Mode: สุ่ม 3 สีใหม่แบบไม่ซ้ำ ทุก 30 วินาที
+    if (theme === 'random3Colors') {
+        const rotate3Colors = () => {
+            activeColors = [getRandomHexColor(), getRandomHexColor(), getRandomHexColor()];
+            updateUI(activeColors[0]);
+        };
+        rotate3Colors();
+        themeTimer = setInterval(rotate3Colors, 30000);
+        return;
+    }
+
+    // 4. Random Theme All: สุ่มเปลี่ยนธีมจาก Palettes ทั้งหมด ทุก 30 วินาที
+    if (theme === 'randomTheme') {
+        const allKeys = Object.keys(palettes);
+        const rotateThemeAll = () => {
+            const randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
+            activeColors = getRandomItems(palettes[randomKey], 3);
+            updateUI(activeColors[0]);
+        };
+        rotateThemeAll();
+        themeTimer = setInterval(rotateThemeAll, 30000);
+        return;
+    }
+
+    // 5. Random ตาม Category (เช่น random_dark, random_warm): สุ่มเปลี่ยนธีมในหมวดนั้น ทุก 30 วินาที
+    if (theme.startsWith('random_')) {
+        const catKey = theme.replace('random_', '');
+        const catList = paletteCategories[catKey] || Object.keys(palettes);
+        const rotateCategory = () => {
+            const randomPaletteKey = catList[Math.floor(Math.random() * catList.length)];
+            const pal = palettes[randomPaletteKey] || baseColors;
+            activeColors = getRandomItems(pal, 3);
+            updateUI(activeColors[0]);
+        };
+        rotateCategory();
+        themeTimer = setInterval(rotateCategory, 30000);
+        return;
+    }
+
+    // 6. Single Palette Mode: เลือก 3 สีแบบไม่ซ้ำจาก Palette นั้นๆ ทุก 30 วินาที
+    if (palettes[theme]) {
+        const targetPalette = palettes[theme];
+        const rotateSinglePalette = () => {
+            activeColors = getRandomItems(targetPalette, 3);
+            updateUI(activeColors[0]);
+        };
+        rotateSinglePalette();
+        themeTimer = setInterval(rotateSinglePalette, 30000);
+        return;
+    }
+
+    // Fallback
+    activeColors = [color];
+    updateUI(color);
+}
 
 function reset() {
     let q = count(+$('density').value),
@@ -3135,57 +3435,104 @@ function initTunnelWebGL() {
 
 // ==========================================
 // CENTRALIZED SCENE REGISTRY
+// 🎬 CONFIGURATION: SCENES
 // ==========================================
-
 const scenes = { 
     // --- 🧊 WebGL Optimized Scenes --- 
-    inkBubblesWebGL: { type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "ink", render: (k) => inkBubblesWebGL(k) }, 
-    nebulaWebGL:     { type: "webgl", title: "COSMIC NEBULA[WebGL]", init: initNebulaWebGL, glSceneName: "nebulaWebGL", render: (k) => nebulaWebGL(k) }, 
-    matrixWebGL:     { type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
-    tunnelWebGL:     { type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
+    inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "inkWebGL", render: (k) => inkBubblesWebGL(k) }, 
+    nebulaWebGL:     { category: "webgl", type: "webgl", title: "COSMIC NEBULA[WebGL]", init: initNebulaWebGL, glSceneName: "nebulaWebGL", render: (k) => nebulaWebGL(k) }, 
+    matrixWebGL:     { category: "webgl", type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
+    tunnelWebGL:     { category: "webgl", type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
 
     // --- 📺 TV 60FPS Optimized Scenes --- 
-    tv_clock:      { type: "canvas", title: "TV FLIP CLOCK [60FPS]", render: () => tv_clock() }, 
-    tv_stars:      { type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
-    tv_matrix:     { type: "canvas", title: "TV OPTIMIZED MATRIX [60FPS]", render: (k) => tv_matrix(k) }, 
-	tv_matrix2:    { type: "canvas", title: "TV OPTIMIZED MATRIX 2 [60FPS]", render: (k) => tv_matrix2() },
-    tv_grid:       { type: "canvas", title: "TV CYBERPUNK GRID [60FPS]", render: (k) => tv_grid(k) }, 
-    tv_grid2:      { type: "canvas", title: "TV CYBERPUNK GRID MOTION [60FPS]", render: (k) => tv_grid2(k) }, 
-    tv_blobs:      { type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
-    tv_dvd:        { type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
-    tv_inkBubbles: { type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
+    tv_clock:      { category: "tv", type: "canvas", title: "TV FLIP CLOCK [60FPS]", render: () => tv_clock() }, 
+    tv_stars:      { category: "tv", type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
+    tv_matrix:     { category: "tv", type: "canvas", title: "TV OPTIMIZED MATRIX [60FPS]", render: (k) => tv_matrix(k) }, 
+	tv_matrix2:    { category: "tv", type: "canvas", title: "TV OPTIMIZED MATRIX 2 [60FPS]", render: (k) => tv_matrix2() },
+    tv_grid:       { category: "tv", type: "canvas", title: "TV CYBERPUNK GRID [60FPS]", render: (k) => tv_grid(k) }, 
+    tv_grid2:      { category: "tv", type: "canvas", title: "TV CYBERPUNK GRID MOTION [60FPS]", render: (k) => tv_grid2(k) }, 
+    tv_blobs:      { category: "tv", type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
+    tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
+    tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
 
     // --- 💻 PC / Full Graphics Scenes --- 
-    matrix:    { type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
-    matrix2:   { type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
-    stars:     { type: "canvas", title: "STARFIELD", render: (k) => stars(k) }, 
-    fire:      { type: "canvas", title: "FIREPLACE EMBER", render: (k) => fire(k) }, 
-    rain:      { type: "canvas", title: "RAIN ON GLASS", render: (k) => rain(k) }, 
-    aurora:    { type: "canvas", title: "AURORA", render: (k) => blobs(k) }, 
-    ink:       { type: "canvas", title: "FLUID INK", render: (k) => blobs(k, true) }, 
-    ink2:      { type: "canvas", title: "FLUID INK BUBBLES", render: (k) => inkBubbles(k) }, 
-    dvd:       { type: "canvas", title: "RETRO DVD", render: (k) => dvd(k) }, 
-    clock:     { type: "canvas", title: "DIGITAL CLOCK", render: () => clock() }, 
-    grid:      { type: "canvas", title: "CYBER GRID", render: () => grid() }, 
-    network:   { type: "canvas", title: "PARTICLE NETWORK", render: (k) => network(k) }, 
-    terminal:  { type: "canvas", title: "CODE TERMINAL", render: () => terminal() }, 
-    hello:     { type: "canvas", title: "HELLO WORLD", render: (k) => hello(k) }, 
-    fireflies: { type: "canvas", title: "FIREFLIES", render: (k) => fireflies(k) }, 
-    bubbles:   { type: "canvas", title: "FLOATING BUBBLES", render: (k) => bubbles(k) }, 
-    mesh:      { type: "canvas", title: "LOW POLY MESH", render: (k) => mesh(k) }, 
-    sakura:    { type: "canvas", title: "SAKURA", render: (k) => fall(k, 'sakura') }, 
-	sakura2:   { type: "canvas", title: "SAKURA 2", render: (k) => fall2(k) },
-    snow:      { type: "canvas", title: "SNOW", render: (k) => fall(k, 'snow') },  
-    snow2:     { type: "canvas", title: "SNOW 2", render: (k) => fall2(k) },
-	storm:     { type: "canvas", title: "STORM RAIN", render: (k) => fall(k, 'storm') },	
-    storm2:    { type: "canvas", title: "STORM RAIN 2", render: (k) => fall(k, 'storm2') }, 
-    fireworks: { type: "canvas", title: "Fireworks", render: (k) => fireworks(k) }, 
-    plasma:    { type: "canvas", title: "PLASMA", render: () => plasma() }, 
-    smoke:     { type: "canvas", title: "SMOKE", render: (k) => smoke(k) }, 
-    confetti:  { type: "canvas", title: "CONFETTI", render: (k) => fall(k, 'confetti') }, 
-	confetti2: { type: "canvas", title: "CONFETTI 2", render: (k) => fall2(k) },
-    synthwave: { type: "canvas", title: "RETRO SYNTHWAVE", render: (k) => synthwave(k) } 
+    matrix:    { category: "pc", type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
+    matrix2:   { category: "pc", type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
+    stars:     { category: "pc", type: "canvas", title: "STARFIELD", render: (k) => stars(k) }, 
+    fire:      { category: "pc", type: "canvas", title: "FIREPLACE EMBER", render: (k) => fire(k) }, 
+    rain:      { category: "pc", type: "canvas", title: "RAIN ON GLASS", render: (k) => rain(k) }, 
+    aurora:    { category: "pc", type: "canvas", title: "AURORA", render: (k) => blobs(k) }, 
+    ink:       { category: "pc", type: "canvas", title: "FLUID INK", render: (k) => blobs(k, true) }, 
+    ink2:      { category: "pc", type: "canvas", title: "FLUID INK BUBBLES", render: (k) => inkBubbles(k) }, 
+    dvd:       { category: "pc", type: "canvas", title: "RETRO DVD", render: (k) => dvd(k) }, 
+    clock:     { category: "pc", type: "canvas", title: "DIGITAL CLOCK", render: () => clock() }, 
+    grid:      { category: "pc", type: "canvas", title: "CYBER GRID", render: () => grid() }, 
+    network:   { category: "pc", type: "canvas", title: "PARTICLE NETWORK", render: (k) => network(k) }, 
+    terminal:  { category: "pc", type: "canvas", title: "CODE TERMINAL", render: () => terminal() }, 
+    hello:     { category: "pc", type: "canvas", title: "HELLO WORLD", render: (k) => hello(k) }, 
+    fireflies: { category: "pc", type: "canvas", title: "FIREFLIES", render: (k) => fireflies(k) }, 
+    bubbles:   { category: "pc", type: "canvas", title: "FLOATING BUBBLES", render: (k) => bubbles(k) }, 
+    mesh:      { category: "pc", type: "canvas", title: "LOW POLY MESH", render: (k) => mesh(k) }, 
+    sakura:    { category: "pc", type: "canvas", title: "SAKURA", render: (k) => fall(k, 'sakura') }, 
+	sakura2:   { category: "pc", type: "canvas", title: "SAKURA 2", render: (k) => fall2(k) },
+    snow:      { category: "pc", type: "canvas", title: "SNOW", render: (k) => fall(k, 'snow') },  
+    snow2:     { category: "pc", type: "canvas", title: "SNOW 2", render: (k) => fall2(k) },
+	storm:     { category: "pc", type: "canvas", title: "STORM RAIN", render: (k) => fall(k, 'storm') },	
+    storm2:    { category: "pc", type: "canvas", title: "STORM RAIN 2", render: (k) => fall(k, 'storm2') }, 
+    fireworks: { category: "pc", type: "canvas", title: "Fireworks", render: (k) => fireworks(k) }, 
+    plasma:    { category: "pc", type: "canvas", title: "PLASMA", render: () => plasma() }, 
+    smoke:     { category: "pc", type: "canvas", title: "SMOKE", render: (k) => smoke(k) }, 
+    confetti:  { category: "pc", type: "canvas", title: "CONFETTI", render: (k) => fall(k, 'confetti') }, 
+	confetti2: { category: "pc", type: "canvas", title: "CONFETTI 2", render: (k) => fall2(k) },
+    synthwave: { category: "pc", type: "canvas", title: "RETRO SYNTHWAVE", render: (k) => synthwave(k) } 
 };
+// ==========================================
+// ⚙️ AUTO BUILD OPTIONS & INDEX NUMBERS
+// ==========================================
+
+function renderSceneOptions() {
+    // กำหนดองค์ประกอบไอคอนประจำหมวด
+    const meta = {
+        webgl: { group: document.getElementById('group-webgl'), icon: '🧊 ' },
+        tv:    { group: document.getElementById('group-tv'), icon: '📺 ' },
+        pc:    { group: document.getElementById('group-pc'), icon: '' }
+    };
+
+    // ตัวนับลำดับของแต่ละหมวด
+    const counters = { webgl: 1, tv: 1, pc: 1 };
+	
+	// 1. ล้างข้อมูลเก่าใน group เผื่อกรณี re-render
+    Object.values(meta).forEach(m => {
+        if (m.group) m.group.innerHTML = '';
+    });
+
+    // 2. วนลูปอ่านค่าจาก scenes เพื่อสร้าง <option>
+    Object.keys(scenes).forEach((key) => {
+        const item = scenes[key];
+        const category = item.category || 'pc';
+        const targetGroup = meta[category]?.group;
+
+        if (targetGroup) {
+            // ปรับรูปแบบตัวเลข เช่น 1 -> 01, 10 -> 10
+            const numStr = String(counters[category]++).padStart(2, '0');
+            const icon = meta[category].icon;
+            
+            const opt = document.createElement('option');
+            opt.value = key;
+            // รูปแบบชื่อที่จะแสดง: [Icon] [01] - [Title]
+            opt.textContent = `${icon}${numStr} - ${item.title}`;
+            
+            targetGroup.appendChild(opt);
+        }
+    });
+	// 3. 🎯 [จุดสำคัญ] คืนค่า Selected ให้ตรงกับ localStorage หลังจากสร้าง options เสร็จ
+    const sceneSelect = document.getElementById('scene');
+    const savedScene = localStorage.getItem('screenScene') || currentScene; // หรือเปลี่ยนเป็นชื่อตัวแปรเก็บ scene ของคุณ
+
+    if (sceneSelect && savedScene && scenes[savedScene]) {
+        sceneSelect.value = savedScene;
+    }
+}
 
 // ==========================================
 // REFACTORED CORE FUNCTIONS
@@ -3252,6 +3599,45 @@ function loop(now) {
     }
 
     requestAnimationFrame(loop);
+}
+
+// ==========================================
+// 🎨 CENTRAL COLOR UPDATE FUNCTION
+// ==========================================
+
+function setAccentColor(newColor) {
+    // 1. อัปเดตตัวแปรสีหลัก
+    color = newColor;
+    localStorage.screenColor = newColor;
+
+    // 2. ปรับ Theme กลับเป็น normal อัตโนมัติ (และเซฟลง localStorage)
+    theme = 'normal';
+    localStorage.screenTheme = 'normal';
+
+    // 3. ปรับ Dropdown UI บนหน้าจอให้แสดงผลเป็น 'normal' ตาม
+    const themeSelect = document.getElementById('theme');
+    if (themeSelect) {
+        themeSelect.value = 'normal';
+    }
+
+    // 4. อัปเดต UI ของ Color Picker และ Text Box
+    const colorPicker = document.getElementById('colorPicker');
+    const colorText = document.getElementById('colorText');
+    if (colorPicker) colorPicker.value = newColor;
+    if (colorText) colorText.value = newColor.toUpperCase();
+
+    // 5. 🎯 [จุดสำคัญ] รีเซ็ต activeColors และ เคลียร์ Timer สุ่มสีเก่าทิ้งทันที
+    updateThemeColors();
+
+    // 6. อัปเดตสถานะ active ของ Swatch Buttons
+	/*
+    document.querySelectorAll('.presets .swatch').forEach(swatch => {
+        if (swatch.dataset.color.toLowerCase() === newColor.toLowerCase()) {
+            swatch.classList.add('active');
+        } else {
+            swatch.classList.remove('active');
+        }
+    });*/
 }
 
 // ==========================================
