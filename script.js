@@ -2355,6 +2355,90 @@ function tv_grid_tetris2(k) {
         x.restore();
     }
 }
+
+function tv_grid_spectrum(k) {
+    bg(0.15); // พื้นหลังมืดช่วยลดภาระการเรนเดอร์
+
+    const targetSize = Math.min(W, H) > 600 ? 45 : 30;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols;
+    const cellH = H / rows;
+
+    if (!S.tv_spec || S.tv_spec.cols !== cols || S.tv_spec.rows !== rows) {
+        S.tv_spec = {
+            cols, rows,
+            time: 0,
+            modeTimer: 0,
+            mode: 0, // 0: Vertical Waves, 1: Ripple Waves, 2: Noise Grid
+            // สุ่มกำหนดค่า Phase สำหรับแต่ละคอลัมน์เพื่อความหลากหลาย
+            offsets: Array.from({ length: cols }, () => Math.random() * 10)
+        };
+    }
+
+    let g = S.tv_spec;
+    g.time += k * 0.08; // ความเร็วของคลื่น
+    g.modeTimer += k;
+
+    // สลับโหมดการเล่นทุกๆ 80 เฟรม เพื่อไม่ให้ภาพซ้ำจำเจ
+    if (g.modeTimer > 80) {
+        g.modeTimer = 0;
+        g.mode = (g.mode + 1) % 3;
+    }
+
+    const gap = 1.5;
+
+    // วาดครอบคลุมทั้งจอ (Loop เดียวรวดเดียว)
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let val = 0;
+
+            if (g.mode === 0) {
+                // โหมด คลื่นวิ่งแนวนอน/แนวตั้งสลับกัน (Equalizer Wave)
+                let wave1 = Math.sin(c * 0.3 + g.time + g.offsets[c]);
+                let wave2 = Math.cos(r * 0.2 - g.time);
+                val = (wave1 + wave2 + 2) / 4; // Normalized 0..1
+            } else if (g.mode === 1) {
+                // โหมด คลื่นวงกลมกระจายออกจากจุดศูนย์กลาง (Center Ripple)
+                let cx = cols / 2;
+                let cy = rows / 2;
+                let dist = Math.sqrt((c - cx) ** 2 + (r - cy) ** 2);
+                val = (Math.sin(dist * 0.5 - g.time * 2) + 1) / 2;
+            } else {
+                // โหมด สัญญาณรบกวนอนาล็อกแบบเป็นจังหวะ (Pulse Noise)
+                val = Math.sin(c * 0.5 + g.time) * Math.cos(r * 0.5 + g.time);
+                val = Math.abs(val);
+            }
+
+            // คำนวณความสว่างและความเข้มแสง
+            let opacity = Math.min(1, Math.max(0, val));
+
+            // ข้ามการวาดช่องที่มืดสนิท เพื่อประหยัด Render Performance บนเครื่องเก่า
+            if (opacity < 0.1) continue;
+
+            let cellX = c * cellW + gap;
+            let cellY = r * cellH + gap;
+            let drawW = cellW - gap * 2;
+            let drawH = cellH - gap * 2;
+
+            // เลือกสีตามความสูง/ตำแหน่ง (ไล่เฉด RGB สไตล์ไซเบอร์ปังก์)
+            let colorIndex = (r + c + Math.floor(g.time * 2)) % 3;
+            let cellColor = tone(colorIndex);
+
+            x.save();
+            x.fillStyle = `rgba(${rgb(cellColor)}, ${opacity * 0.8})`;
+
+            // เปิด Glow เฉพาะช่องที่สว่างมากๆ เพื่อประหยัดการคำนวณ Shadow
+            if (opacity > 0.7) {
+                x.shadowColor = cellColor;
+                x.shadowBlur = opacity * 8;
+            }
+
+            x.fillRect(cellX, cellY, drawW, drawH);
+            x.restore();
+        }
+    }
+}
 /*
 function tv_grid2(k) {
     bg(0.2);
@@ -3093,6 +3177,7 @@ const scenes = {
     tv_grid2:      { category: "tv", type: "canvas", title: "TV GRID PULSE WAVE [60FPS]", render: (k) => tv_grid2(k) }, 
 	tv_grid_tetris:{ category: "tv", type: "canvas", title: "TV TETRIS [60FPS]", render: (k) => tv_grid_tetris(k) },
 	tv_grid_tetris2:{ category: "tv", type: "canvas", title: "TV TETRIS 2[60FPS]", render: (k) => tv_grid_tetris2(k) },
+	tv_grid_spectrum:{ category: "tv", type: "canvas", title: "TV GRID SPECTRUM [60FPS]", render: (k) => tv_grid_spectrum(k) },
     tv_blobs:      { category: "tv", type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
     tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
     tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
