@@ -3316,7 +3316,9 @@ function cyberGridWebGL(k) {
     
     // ใช้สเกลเวลา 0.1 ที่ไหลลื่นกำลังดี
     let currentTime = (typeof t !== 'undefined' ? t : performance.now()) * 0.1;
-    gl.uniform1f(gl.getUniformLocation(glProgramCyberGrid, "u_time"), currentTime % 10000.0);
+    //gl.uniform1f(gl.getUniformLocation(glProgramCyberGrid, "u_time"), currentTime % 10000.0);
+	let safeTime = (performance.now() * 0.001) % 100.0; // หรือใช้ (t * 0.001) % 100.0
+	gl.uniform1f(gl.getUniformLocation(glProgramCyberGrid, "u_time"), safeTime);
 
     let c1 = hexToRgbNormalizedFast(tone(0)); 
     let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
@@ -3422,7 +3424,6 @@ function initCyberGridWebGL() {
 	
 //gemini fixed	
 	const fs = `
-    // เปลี่ยนเป็น mediump เพื่อลดภาระ GPU มือถือ และป้องกัน OOM
     precision mediump float;
 
     uniform vec2 u_res;
@@ -3430,9 +3431,7 @@ function initCyberGridWebGL() {
     uniform vec3 u_colorMain;
     uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper ที่ปลอดภัยสำหรับ GPU มือถือ
     float rand(vec2 co){
-        // ลดสเกลตัวคูณลง ป้องกัน Float Overflow บน Android
         return fract(sin(dot(co, vec2(12.9898, 78.233))) * 437.585);
     }
 
@@ -3445,27 +3444,18 @@ function initCyberGridWebGL() {
         vec2 p = uv;
         p.y -= horizon;
 
-        // -------------------------------------------------------------
-        // จุดสำคัญ: ป้องกัน Division by Zero / Infinity ใน GPU มือถือ
-        // -------------------------------------------------------------
-        float minGap = 0.08;
-        float shiftedY = abs(p.y) + minGap;
-        
-        // บังคับไม่ให้ shiftedY เข้าใกล้ 0 มากเกินไป
-        shiftedY = max(shiftedY, 0.001);
+        // --- แก้ไขจุดนี้: ล็อกตัวหารไม่ให้เป็น 0 ป้องกันตารางยืดเป็นเส้นแนวตั้ง ---
+        float safeY = max(abs(p.y), 0.04);
+        float z = clamp(fov / safeY, 0.0, 15.0); 
 
-        float z = fov / shiftedY;
-        
-        // จำกัดค่า z ไม่ให้พุ่งสูงเกินไปจน GPU คำนวณไม่ไหว
-        z = min(z, 50.0);
-
-        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+        //vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+		vec2 gridUv = vec2(p.x * z, fract(z * 0.1 + u_time * 0.05) * 10.0);
 
         // Grid Calculations
         vec2 gridCount = vec2(12.0, 12.0);
         vec2 cellId = floor(gridUv * gridCount);
 
-        // ตัดเส้นขอบออก บล็อกติดกัน (cellMask = 1.0)
+        // บล็อกติดกัน ชนกันพอดี
         float cellMask = 1.0; 
 
         // Digital Wave & Pulse
@@ -3480,11 +3470,10 @@ function initCyberGridWebGL() {
         float colorSelect = step(0.5, rand(cellId + vec2(1.0, 1.0)));
         vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
 
-        // คำนวณ Fog และ Glow แบบปลอดภัย
-        float fog = smoothstep(25.0, 0.0, z); // ปรับระยะหมอก
-        
+        // Fog & Center Glow
+        float fog = smoothstep(18.0, 0.0, z);
         float distToCenter = length(uv - vec2(0.0, horizon));
-        float centerGlow = exp(-clamp(distToCenter * 2.0, 0.0, 10.0));
+        float centerGlow = exp(-clamp(distToCenter * 2.5, 0.0, 10.0));
 
         vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
         finalColor += u_colorAccent * centerGlow * 0.8; 
@@ -3726,6 +3715,154 @@ default มีช่องมืดตรงกลาง
     glReadyCyberGrid = true;
 }
 
+let glProgramCyberGridFloor = null;
+let glReadyCyberGridFloor = false;
+let glCyberGridFloorBuffer = null;
+
+function cyberGridFloorWebGL(k) {
+    x.clearRect(0, 0, W, H);
+    if (!glReadyCyberGridFloor) initCyberGridFloorWebGL();
+    if (!glProgramCyberGridFloor) return;
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0.05, 0.05, 0.08, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(glProgramCyberGridFloor);
+
+    // Bind Buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridFloorBuffer);
+    let loc = gl.getAttribLocation(glProgramCyberGridFloor, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    // Uniforms
+    gl.uniform2f(gl.getUniformLocation(glProgramCyberGridFloor, "u_res"), glCanvas.width, glCanvas.height);
+    
+    // ใช้สเกลเวลา 0.1 ที่ไหลลื่นกำลังดี
+    let currentTime = (typeof t !== 'undefined' ? t : performance.now()) * 0.1;
+    //gl.uniform1f(gl.getUniformLocation(glProgramCyberGridFloor, "u_time"), currentTime % 10000.0);
+	let safeTime = (performance.now() * 0.001) % 100.0; // หรือใช้ (t * 0.001) % 100.0
+	gl.uniform1f(gl.getUniformLocation(glProgramCyberGridFloor, "u_time"), safeTime);
+
+    let c1 = hexToRgbNormalizedFast(tone(0)); 
+    let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
+
+    gl.uniform3f(gl.getUniformLocation(glProgramCyberGridFloor, "u_colorMain"), c1[0], c1[1], c1[2]);
+    gl.uniform3f(gl.getUniformLocation(glProgramCyberGridFloor, "u_colorAccent"), c2[0], c2[1], c2[2]);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+function initCyberGridFloorWebGL() {
+    if (glReadyCyberGridFloor) return;
+
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false }) ||
+             glCanvas.getContext("experimental-webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+    }
+    if (!gl) return;
+
+    const vs = `
+    attribute vec2 a_pos;
+    void main(){
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+    }`;
+
+    const fs = `
+    precision mediump float;
+
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    // Pseudo-random helper (Safe for Mobile GPU)
+    float rand(vec2 co){
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 437.585);
+    }
+
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        // คำนวณเฉพาะระนาบพื้นล่างที่ Horizon อยู่สูง (0.6)
+        float horizon = 0.6;
+        float fov = 0.8;
+        
+        // คำนวณระยะห่างจากเส้นขอบฟ้าลงมาด้านล่าง
+        float pY = horizon - uv.y;
+
+        // บังคับคำนวณเฉพาะพื้นที่ใต้เส้น Horizon เท่านั้น
+        if (pY <= 0.0) {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+            return;
+        }
+
+        // ป้องกัน Division by Zero & Precision Loss บน Android
+        float safeY = max(pY, 0.04);
+        float z = clamp(fov / safeY, 0.0, 15.0); 
+
+        // คำนวณ Grid UV แบบ Safe Time Loop
+        vec2 gridUv = vec2(uv.x * z, fract(z * 0.1 + u_time * 0.05) * 10.0);
+
+        // Grid & Cell Calculations
+        vec2 gridCount = vec2(12.0, 12.0);
+        vec2 cellId = floor(gridUv * gridCount);
+
+        // Digital Wave & Pulse Activity
+        float rnd = rand(cellId);
+        float pulse = sin(u_time * 2.0 + rnd * 6.28318) * 0.5 + 0.5;
+        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
+        
+        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
+        activity = clamp(activity, 0.05, 1.0);
+
+        // Color Selection
+        float colorSelect = step(0.5, rand(cellId + vec2(1.0, 1.0)));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+
+        // Depth Fog & Center Glow
+        float fog = smoothstep(18.0, 0.0, z);
+        float distToCenter = length(uv - vec2(0.0, horizon));
+        float centerGlow = exp(-clamp(distToCenter * 2.5, 0.0, 10.0));
+
+        // รวมแสงและสีทั้งหมด
+        vec3 finalColor = baseColor * (activity * 1.5);
+        finalColor += u_colorAccent * centerGlow * 0.8; 
+        finalColor *= fog;
+
+        gl_FragColor = vec4(finalColor, fog);
+    }`;
+
+    function shader(type, src) {
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.error(gl.getShaderInfoLog(s));
+        }
+        return s;
+    }
+
+    glProgramCyberGridFloor = gl.createProgram();
+    gl.attachShader(glProgramCyberGridFloor, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramCyberGridFloor, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramCyberGridFloor);
+
+    if (!gl.getProgramParameter(glProgramCyberGridFloor, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(glProgramCyberGridFloor));
+        return;
+    }
+
+    glCyberGridFloorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridFloorBuffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        gl.STATIC_DRAW
+    );
+
+    glReadyCyberGridFloor = true;
+}
 // --- Centralized Scene Registry ---
 const scenes = { 
     inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "inkWebGL", render: (k) => inkBubblesWebGL(k) }, 
@@ -3734,6 +3871,7 @@ const scenes = {
     tunnelWebGL:     { category: "webgl", type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
     spectrumWebGL:   { category: "webgl", type: "webgl", title: "Spectrum Matrix [WebGL]", init: initSpectrumWebGL, glSceneName: "spectrumWebGL", render: (k) => spectrumWebGL(k) }, 
     cyberGridWebGL:   { category: "webgl", type: "webgl", title: "Cyber City Grid [WebGL]", init: initCyberGridWebGL, glSceneName: "cyberGridWebGL", render: (k) => cyberGridWebGL(k) }, 
+	cyberGridFloorWebGL:   { category: "webgl", type: "webgl", title: "Cyber Grid Floor [WebGL]", init: initCyberGridFloorWebGL, glSceneName: "cyberGridFloorWebGL", render: (k) => cyberGridFloorWebGL(k) }, 
 
     tv_clock:      { category: "tv", type: "canvas", title: "TV FLIP CLOCK [60FPS]", render: () => tv_clock() }, 
     tv_stars:      { category: "tv", type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
