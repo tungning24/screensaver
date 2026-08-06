@@ -1661,7 +1661,701 @@ function tv_grid(k) {
         }
     }
 }
+function tv_grid2(k) {
+    bg(0.2);
 
+    const targetSize = Math.min(W, H) > 600 ? 50 : 35;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols;
+    const cellH = H / rows;
+    const totalCells = cols * rows;
+
+    if (!S.tv_grid2 || S.tv_grid2.cols !== cols || S.tv_grid2.rows !== rows) {
+        S.tv_grid2 = {
+            cols, rows,
+            state: 'FILL',
+            cells: Array.from({ length: totalCells }, () => ({
+                active: false,
+                flickering: false,
+                flickerTimer: 0,
+                opacity: 0,
+                colorIndex: Math.floor(Math.random() * 3)
+            })),
+            timer: 0,
+            flashTimer: 0,
+            clearWaveProgress: 0,
+            clearBatches: []
+        };
+    }
+
+    let g = S.tv_grid2;
+    g.timer += k;
+
+    if (g.state === 'FILL') {
+        if (g.timer > 3) {
+            g.timer = 0;
+            let inactiveIndices = g.cells
+                .map((c, i) => (!c.active && !c.flickering ? i : -1))
+                .filter(i => i !== -1);
+
+            if (inactiveIndices.length > 0) {
+                let pickIndex = inactiveIndices[Math.floor(Math.random() * inactiveIndices.length)];
+                g.cells[pickIndex].flickering = true;
+                g.cells[pickIndex].flickerTimer = 0;
+            } else {
+                let stillFlickering = g.cells.some(c => c.flickering);
+                if (!stillFlickering) {
+                    g.state = 'HOLD';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'HOLD') {
+        if (g.timer > 240) { 
+            g.state = 'FLASH';
+            g.timer = 0;
+            g.flashTimer = 0;
+        }
+    } else if (g.state === 'FLASH') {
+        g.flashTimer += k;
+        if (g.flashTimer > 25) {
+            g.state = 'CLEAR';
+            g.timer = 0;
+            g.clearWaveProgress = 0;
+
+            // --- สุ่มทิศทางคลื่นการดับ (Direction Setup) ---
+            const dirs = ['TOP_BOTTOM', 'BOTTOM_TOP', 'LEFT_RIGHT', 'RIGHT_LEFT', 'TL_BR', 'TR_BL', 'BL_TR', 'BR_TL'];
+            const dir = dirs[Math.floor(Math.random() * dirs.length)];
+            
+            let groups = {};
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    let idx = r * cols + c;
+                    let key = 0;
+
+                    switch (dir) {
+                        case 'TOP_BOTTOM': key = r; break;
+                        case 'BOTTOM_TOP': key = (rows - 1 - r); break;
+                        case 'LEFT_RIGHT': key = c; break;
+                        case 'RIGHT_LEFT': key = (cols - 1 - c); break;
+                        case 'TL_BR':      key = r + c; break;                     // มุมบนซ้าย -> ล่างขวา
+                        case 'TR_BL':      key = r + (cols - 1 - c); break;        // มุมบนขวา -> ล่างซ้าย
+                        case 'BL_TR':      key = (rows - 1 - r) + c; break;        // มุมล่างซ้าย -> บนขวา
+                        case 'BR_TL':      key = (rows - 1 - r) + (cols - 1 - c); break; // มุมล่างขวา -> บนซ้าย
+                    }
+
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(idx);
+                }
+            }
+
+            // จัดกลุ่มแถวตามลำดับคลื่น
+            g.clearBatches = Object.keys(groups)
+                .sort((a, b) => Number(a) - Number(b))
+                .map(k => groups[k]);
+        }
+    } else if (g.state === 'CLEAR') {
+        // ทุกๆ 3 เฟรม/เวลาที่กำหนด ปล่อยคลื่นดับไปแถวถัดไป
+        if (g.timer > 3) {
+            g.timer = 0;
+            
+            if (g.clearWaveProgress < g.clearBatches.length) {
+                let currentBatch = g.clearBatches[g.clearWaveProgress];
+                currentBatch.forEach(targetIndex => {
+                    if (g.cells[targetIndex].active) {
+                        g.cells[targetIndex].active = false;
+                        g.cells[targetIndex].flickering = true;
+                        g.cells[targetIndex].flickerTimer = 0;
+                    }
+                });
+                g.clearWaveProgress++;
+            } else {
+                let anyFlickering = g.cells.some(c => c.flickering);
+                if (!anyFlickering) {
+                    g.state = 'WAIT';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'WAIT') {
+        if (g.timer > 40) {
+            g.cells.forEach(c => c.colorIndex = Math.floor(Math.random() * 3));
+            g.state = 'FILL';
+            g.timer = 0;
+        }
+    }
+
+    // --- RENDER ---
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let idx = r * cols + c;
+            let cell = g.cells[idx];
+            
+            let gap = 1.5; 
+            let cellX = c * cellW + gap;
+            let cellY = r * cellH + gap;
+            let drawW = cellW - gap * 2;
+            let drawH = cellH - gap * 2;
+
+            let cellColor = tone(cell.colorIndex);
+
+            if (g.state === 'FLASH') {
+                cell.opacity = Math.random() < 0.35 ? (Math.random() * 0.9 + 0.1) : 0.05;
+            } else if (cell.flickering) {
+                cell.flickerTimer += k;
+
+                if (g.state === 'FILL') {
+                    cell.opacity = Math.random() < 0.35 ? (Math.random() * 0.9 + 0.1) : 0.05;
+                    if (cell.flickerTimer > 25) {
+                        cell.flickering = false;
+                        cell.active = true;
+                        cell.opacity = 1;
+                    }
+                } else {
+                    // เอฟเฟกต์กะพริบตอนกำลังดับลง
+                    cell.opacity = Math.random() < 0.5 ? 0.8 : 0.1;
+                    if (cell.flickerTimer > 25) {
+                        cell.flickering = false;
+                        cell.opacity = 0;
+                    }
+                }
+            } else if (cell.active) {
+                cell.opacity = 0.85 + Math.random() * 0.15;
+            } else {
+                cell.opacity = 0;
+            }
+
+            if (cell.opacity > 0.05) {
+                x.save();
+                x.fillStyle = `rgba(${rgb(cellColor)}, ${cell.opacity * 0.85})`;
+                x.shadowColor = cellColor;
+                x.shadowBlur = cell.opacity * 12;
+
+                x.fillRect(cellX, cellY, drawW, drawH);
+                x.restore();
+            }
+        }
+    }
+}
+/*
+function tv_grid_tetris(k) {
+    bg(0.2);
+
+    const targetSize = Math.min(W, H) > 600 ? 50 : 35;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols;
+    const cellH = H / rows;
+    const totalCells = cols * rows;
+
+    if (!S.tv_tetris || S.tv_tetris.cols !== cols || S.tv_tetris.rows !== rows) {
+        S.tv_tetris = {
+            cols, rows,
+            state: 'FALL', // 'FALL', 'HOLD', 'DRAIN', 'WAIT'
+            // grid เก็บข้อมูลเซลล์ [row][col]
+            grid: Array.from({ length: rows }, () => 
+                Array.from({ length: cols }, () => ({
+                    active: false,
+                    colorIndex: 0,
+                    opacity: 0
+                }))
+            ),
+            fallingBlock: null, // บล็อก 1 ช่องที่กำลังหล่น { r, c, colorIndex }
+            timer: 0,
+            fallSpeed: 1.5, // ความเร็วในการหล่น (ปรับตามชอบ)
+            drainTimer: 0
+        };
+        
+        // สุ่มสร้างบล็อกแรกที่กำลังหล่น
+        spawnBlock(S.tv_tetris);
+    }
+
+    let g = S.tv_tetris;
+    g.timer += k;
+
+    // ฟังก์ชันสร้างบล็อก 1 ช่องสุ่มหล่นจากด้านบน
+    function spawnBlock(state) {
+        // หาคอลัมน์ที่ยังไม่เต็ม (แถวบนสุด [0] ยังว่างอยู่)
+        let validCols = [];
+        for (let c = 0; c < state.cols; c++) {
+            if (!state.grid[0][c].active) {
+                validCols.push(c);
+            }
+        }
+
+        if (validCols.length > 0) {
+            let selectedCol = validCols[Math.floor(Math.random() * validCols.length)];
+            state.fallingBlock = {
+                r: 0,
+                c: selectedCol,
+                colorIndex: Math.floor(Math.random() * 3)
+            };
+        } else {
+            // ถ้าทุกคอลัมน์เต็มแล้ว เปลี่ยนเป็น HOLD เพื่อเตรียมลบออก
+            state.fallingBlock = null;
+            state.state = 'HOLD';
+            state.timer = 0;
+        }
+    }
+
+    // --- LOGIC STATES ---
+    if (g.state === 'FALL') {
+        if (g.fallingBlock && g.timer > g.fallSpeed) {
+            g.timer = 0;
+            let fb = g.fallingBlock;
+            let nextR = fb.r + 1;
+
+            // เช็คว่าชนขอบล่าง หรือชนบล็อกที่อยู่ข้างใต้แล้วหรือยัง
+            if (nextR >= rows || g.grid[nextR][fb.c].active) {
+                // หยุดอยู่กับที่และรวมเข้ากับ grid
+                g.grid[fb.r][fb.c].active = true;
+                g.grid[fb.r][fb.c].colorIndex = fb.colorIndex;
+                g.grid[fb.r][fb.c].opacity = 1;
+
+                // สุ่มสร้างบล็อกใหม่
+                spawnBlock(g);
+            } else {
+                // หล่นลงล่าง 1 แถว
+                fb.r = nextR;
+            }
+        }
+    } else if (g.state === 'HOLD') {
+        if (g.timer > 30) {
+            g.state = 'DRAIN';
+            g.timer = 0;
+            g.drainTimer = 0;
+        }
+    } else if (g.state === 'DRAIN') {
+        g.drainTimer += k;
+        // ลบแถวล่างสุดออกเรื่อยๆ ทำให้แถวบนไหลลงมา
+        if (g.drainTimer > 4) { // จังหวะเวลาการไหลลงล่าง
+            g.drainTimer = 0;
+
+            // เลื่อนข้อมูลแถวด้านบนลงมาด้านล่างทีละ 1 แถว
+            for (let r = rows - 1; r > 0; r--) {
+                for (let c = 0; c < cols; c++) {
+                    g.grid[r][c].active = g.grid[r - 1][c].active;
+                    g.grid[r][c].colorIndex = g.grid[r - 1][c].colorIndex;
+                    g.grid[r][c].opacity = g.grid[r - 1][c].opacity;
+                }
+            }
+
+            // แถวบนสุดเติมความว่างเปล่า
+            for (let c = 0; c < cols; c++) {
+                g.grid[0][c].active = false;
+                g.grid[0][c].opacity = 0;
+            }
+
+            // เช็คว่าล้างจนว่างเปล่าหมดทุกเซลล์หรือยัง
+            let hasActiveCell = g.grid.some(row => row.some(cell => cell.active));
+            if (!hasActiveCell) {
+                g.state = 'WAIT';
+                g.timer = 0;
+            }
+        }
+    } else if (g.state === 'WAIT') {
+        if (g.timer > 20) {
+            g.state = 'FALL';
+            g.timer = 0;
+            spawnBlock(g);
+        }
+    }
+
+    // --- RENDER ---
+    const gap = 1.5;
+
+    // 1. วาดบล็อกที่คงค้างอยู่ใน Grid
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let cell = g.grid[r][c];
+            if (cell.active) {
+                let cellX = c * cellW + gap;
+                let cellY = r * cellH + gap;
+                let drawW = cellW - gap * 2;
+                let drawH = cellH - gap * 2;
+                let cellColor = tone(cell.colorIndex);
+
+                let opacity = (0.85 + Math.random() * 0.15) * cell.opacity;
+
+                x.save();
+                x.fillStyle = `rgba(${rgb(cellColor)}, ${opacity * 0.85})`;
+                x.shadowColor = cellColor;
+                x.shadowBlur = opacity * 12;
+
+                x.fillRect(cellX, cellY, drawW, drawH);
+                x.restore();
+            }
+        }
+    }
+
+    // 2. วาดบล็อกกำลังหล่น (Falling Block)
+    if (g.state === 'FALL' && g.fallingBlock) {
+        let fb = g.fallingBlock;
+        let cellX = fb.c * cellW + gap;
+        let cellY = fb.r * cellH + gap;
+        let drawW = cellW - gap * 2;
+        let drawH = cellH - gap * 2;
+        let cellColor = tone(fb.colorIndex);
+
+        x.save();
+        x.fillStyle = `rgba(${rgb(cellColor)}, 0.95)`;
+        x.shadowColor = cellColor;
+        x.shadowBlur = 15;
+
+        x.fillRect(cellX, cellY, drawW, drawH);
+        x.restore();
+    }
+}
+*/
+function tv_grid_tetris(k) {
+    bg(0.2);
+
+    const targetSize = Math.min(W, H) > 600 ? 50 : 35;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols;
+    const cellH = H / rows;
+    const totalCells = cols * rows;
+
+    if (!S.tv_tetris2 || S.tv_tetris2.cols !== cols || S.tv_tetris2.rows !== rows) {
+        S.tv_tetris2 = {
+            cols, rows,
+            state: 'FALL', // 'FALL', 'HOLD', 'CLEAR_WAVE', 'WAIT'
+            grid: Array.from({ length: rows }, () => 
+                Array.from({ length: cols }, () => ({
+                    active: false,
+                    colorIndex: 0,
+                    flickering: false,
+                    flickerTimer: 0
+                }))
+            ),
+            fallingBlock: null,
+            timer: 0,
+            fallSpeed: 1.2,
+            clearRow: rows - 1, // เริ่มลบจากแถวล่างสุด
+            clearCol: 0        // เริ่มลบจากซ้ายไปขวา
+        };
+        spawnBlock(S.tv_tetris2);
+    }
+
+    let g = S.tv_tetris2;
+    g.timer += k;
+
+    function spawnBlock(state) {
+        let validCols = [];
+        for (let c = 0; c < state.cols; c++) {
+            if (!state.grid[0][c].active) validCols.push(c);
+        }
+
+        if (validCols.length > 0) {
+            let selectedCol = validCols[Math.floor(Math.random() * validCols.length)];
+            state.fallingBlock = {
+                r: 0,
+                c: selectedCol,
+                colorIndex: Math.floor(Math.random() * 3)
+            };
+        } else {
+            // เต็มจอแล้ว! ไปโหมด HOLD
+            state.fallingBlock = null;
+            state.state = 'HOLD';
+            state.timer = 0;
+        }
+    }
+
+    // --- LOGIC STATES ---
+    if (g.state === 'FALL') {
+        if (g.fallingBlock && g.timer > g.fallSpeed) {
+            g.timer = 0;
+            let fb = g.fallingBlock;
+            let nextR = fb.r + 1;
+
+            if (nextR >= rows || g.grid[nextR][fb.c].active) {
+                g.grid[fb.r][fb.c].active = true;
+                g.grid[fb.r][fb.c].colorIndex = fb.colorIndex;
+                spawnBlock(g);
+            } else {
+                fb.r = nextR;
+            }
+        }
+    } else if (g.state === 'HOLD') {
+        if (g.timer > 30) {
+            g.state = 'CLEAR_WAVE';
+            g.timer = 0;
+            g.clearRow = rows - 1; // ลบจากล่างขึ้นบน
+            g.clearCol = 0;        // ลบจากซ้ายไปขวา
+        }
+    } else if (g.state === 'CLEAR_WAVE') {
+        // วิ่งลบทีละเซลล์จากซ้ายไปขวา
+        if (g.timer > 1.5) { // ปรับความเร็วคลื่นตรงนี้
+            g.timer = 0;
+
+            if (g.clearRow >= 0) {
+                let cell = g.grid[g.clearRow][g.clearCol];
+                if (cell.active) {
+                    cell.active = false;
+                    cell.flickering = true;
+                    cell.flickerTimer = 0;
+                }
+
+                g.clearCol++;
+                // ถ้าลบหมดแถวแล้ว ขึ้นไปแถวบน
+                if (g.clearCol >= cols) {
+                    g.clearCol = 0;
+                    g.clearRow--;
+                }
+            } else {
+                // เช็คว่าเอฟเฟกต์กะพริบดับหมดหรือยัง
+                let anyFlickering = g.grid.some(row => row.some(c => c.flickering));
+                if (!anyFlickering) {
+                    g.state = 'WAIT';
+                    g.timer = 0;
+                }
+            }
+        }
+    } else if (g.state === 'WAIT') {
+        if (g.timer > 30) {
+            g.state = 'FALL';
+            g.timer = 0;
+            spawnBlock(g);
+        }
+    }
+
+    // --- RENDER ---
+    const gap = 1.5;
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let cell = g.grid[r][c];
+            let cellX = c * cellW + gap;
+            let cellY = r * cellH + gap;
+            let drawW = cellW - gap * 2;
+            let drawH = cellH - gap * 2;
+            let cellColor = tone(cell.colorIndex);
+            let opacity = 0;
+
+            if (cell.flickering) {
+                cell.flickerTimer += k;
+                opacity = Math.random() < 0.5 ? 0.8 : 0.1;
+                if (cell.flickerTimer > 15) {
+                    cell.flickering = false;
+                    opacity = 0;
+                }
+            } else if (cell.active) {
+                opacity = 0.85 + Math.random() * 0.15;
+            }
+
+            if (opacity > 0.05) {
+                x.save();
+                x.fillStyle = `rgba(${rgb(cellColor)}, ${opacity * 0.85})`;
+                x.shadowColor = cellColor;
+                x.shadowBlur = opacity * 12;
+                x.fillRect(cellX, cellY, drawW, drawH);
+                x.restore();
+            }
+        }
+    }
+
+    // วาดบล็อกกำลังหล่น
+    if (g.state === 'FALL' && g.fallingBlock) {
+        let fb = g.fallingBlock;
+        let cellX = fb.c * cellW + gap;
+        let cellY = fb.r * cellH + gap;
+        let drawW = cellW - gap * 2;
+        let drawH = cellH - gap * 2;
+        let cellColor = tone(fb.colorIndex);
+
+        x.save();
+        x.fillStyle = `rgba(${rgb(cellColor)}, 0.95)`;
+        x.shadowColor = cellColor;
+        x.shadowBlur = 15;
+        x.fillRect(cellX, cellY, drawW, drawH);
+        x.restore();
+    }
+}
+function tv_grid_tetris2(k) {
+    bg(0.2);
+
+    const targetSize = Math.min(W, H) > 600 ? 50 : 35;
+    const cols = Math.max(1, Math.round(W / targetSize));
+    const rows = Math.max(1, Math.round(H / targetSize));
+    const cellW = W / cols;
+    const cellH = H / rows;
+
+    if (!S.tv_tetris_cls || S.tv_tetris_cls.cols !== cols || S.tv_tetris_cls.rows !== rows) {
+        S.tv_tetris_cls = {
+            cols, rows,
+            state: 'FALL', // 'FALL', 'CLEARING'
+            grid: Array.from({ length: rows }, () => 
+                Array.from({ length: cols }, () => ({
+                    active: false,
+                    colorIndex: 0,
+                    flickering: false,
+                    flickerTimer: 0
+                }))
+            ),
+            fallingBlock: null,
+            timer: 0,
+            fallSpeed: 1.0,
+            clearingRows: [], // รายชื่อแถวที่กำลังจะลบ
+            clearCol: 0,
+            clearTimer: 0
+        };
+        spawnBlock(S.tv_tetris_cls);
+    }
+
+    let g = S.tv_tetris_cls;
+    g.timer += k;
+
+    function spawnBlock(state) {
+        // สุ่มปล่อยบล็อกในคอลัมน์ที่ยังไม่เต็ม
+        let validCols = [];
+        for (let c = 0; c < state.cols; c++) {
+            if (!state.grid[0][c].active) validCols.push(c);
+        }
+
+        if (validCols.length > 0) {
+            let selectedCol = validCols[Math.floor(Math.random() * validCols.length)];
+            state.fallingBlock = {
+                r: 0,
+                c: selectedCol,
+                colorIndex: Math.floor(Math.random() * 3)
+            };
+        } else {
+            // กรณีฉุกเฉินถ้าเกือบเต็ม ให้ล้างกระดาน
+            state.grid.forEach(row => row.forEach(c => { c.active = false; c.flickering = false; }));
+            spawnBlock(state);
+        }
+    }
+
+    // --- LOGIC STATES ---
+    if (g.state === 'FALL') {
+        if (g.fallingBlock && g.timer > g.fallSpeed) {
+            g.timer = 0;
+            let fb = g.fallingBlock;
+            let nextR = fb.r + 1;
+
+            if (nextR >= rows || g.grid[nextR][fb.c].active) {
+                // บล็อกตกถึงพื้น/ชนแถวอื่น
+                g.grid[fb.r][fb.c].active = true;
+                g.grid[fb.r][fb.c].colorIndex = fb.colorIndex;
+                g.fallingBlock = null;
+
+                // ตรวจหาแถวที่เต็ม (Full Rows)
+                let fullRows = [];
+                for (let r = 0; r < rows; r++) {
+                    if (g.grid[r].every(cell => cell.active)) {
+                        fullRows.push(r);
+                    }
+                }
+
+                if (fullRows.length > 0) {
+                    g.state = 'CLEARING';
+                    g.clearingRows = fullRows;
+                    g.clearCol = 0;
+                    g.clearTimer = 0;
+                } else {
+                    spawnBlock(g);
+                }
+            } else {
+                fb.r = nextR;
+            }
+        }
+    } else if (g.state === 'CLEARING') {
+        g.clearTimer += k;
+        
+        // ลบจากซ้ายไปขวา (Wave Effect)
+        if (g.clearTimer > 1.2) {
+            g.clearTimer = 0;
+
+            if (g.clearCol < cols) {
+                g.clearingRows.forEach(r => {
+                    let cell = g.grid[r][g.clearCol];
+                    cell.active = false;
+                    cell.flickering = true;
+                    cell.flickerTimer = 0;
+                });
+                g.clearCol++;
+            } else {
+                // เช็คว่ากะพริบดับหมดหรือยัง
+                let anyFlickering = g.grid.some(row => row.some(c => c.flickering));
+                if (!anyFlickering) {
+                    // เลื่อนแถวข้างบนลงมาแทนที่แถวที่โดนลบ
+                    g.clearingRows.sort((a, b) => a - b).forEach(clearedRow => {
+                        for (let r = clearedRow; r > 0; r--) {
+                            for (let c = 0; c < cols; c++) {
+                                g.grid[r][c].active = g.grid[r - 1][c].active;
+                                g.grid[r][c].colorIndex = g.grid[r - 1][c].colorIndex;
+                            }
+                        }
+                        for (let c = 0; c < cols; c++) {
+                            g.grid[0][c].active = false;
+                        }
+                    });
+
+                    g.clearingRows = [];
+                    g.state = 'FALL';
+                    g.timer = 0;
+                    spawnBlock(g);
+                }
+            }
+        }
+    }
+
+    // --- RENDER ---
+    const gap = 1.5;
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let cell = g.grid[r][c];
+            let cellX = c * cellW + gap;
+            let cellY = r * cellH + gap;
+            let drawW = cellW - gap * 2;
+            let drawH = cellH - gap * 2;
+            let cellColor = tone(cell.colorIndex);
+            let opacity = 0;
+
+            if (cell.flickering) {
+                cell.flickerTimer += k;
+                opacity = Math.random() < 0.5 ? 0.8 : 0.1;
+                if (cell.flickerTimer > 15) {
+                    cell.flickering = false;
+                    opacity = 0;
+                }
+            } else if (cell.active) {
+                opacity = 0.85 + Math.random() * 0.15;
+            }
+
+            if (opacity > 0.05) {
+                x.save();
+                x.fillStyle = `rgba(${rgb(cellColor)}, ${opacity * 0.85})`;
+                x.shadowColor = cellColor;
+                x.shadowBlur = opacity * 12;
+                x.fillRect(cellX, cellY, drawW, drawH);
+                x.restore();
+            }
+        }
+    }
+
+    // วาดบล็อกกำลังหล่น
+    if (g.state === 'FALL' && g.fallingBlock) {
+        let fb = g.fallingBlock;
+        let cellX = fb.c * cellW + gap;
+        let cellY = fb.r * cellH + gap;
+        let drawW = cellW - gap * 2;
+        let drawH = cellH - gap * 2;
+        let cellColor = tone(fb.colorIndex);
+
+        x.save();
+        x.fillStyle = `rgba(${rgb(cellColor)}, 0.95)`;
+        x.shadowColor = cellColor;
+        x.shadowBlur = 15;
+        x.fillRect(cellX, cellY, drawW, drawH);
+        x.restore();
+    }
+}
+/*
 function tv_grid2(k) {
     bg(0.2);
 
@@ -1830,7 +2524,7 @@ function tv_grid2(k) {
         }
     }
 }
-
+*/
 function tv_blobs(k) {
     bg(.16);
     if (!S.tv_blobs) return;
@@ -2395,8 +3089,10 @@ const scenes = {
     tv_stars:      { category: "tv", type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
     tv_matrix:     { category: "tv", type: "canvas", title: "TV OPTIMIZED MATRIX [60FPS]", render: (k) => tv_matrix(k) }, 
     tv_matrix2:    { category: "tv", type: "canvas", title: "TV OPTIMIZED MATRIX 2 [60FPS]", render: (k) => tv_matrix2() },
-    tv_grid:       { category: "tv", type: "canvas", title: "TV CYBERPUNK GRID [60FPS]", render: (k) => tv_grid(k) }, 
-    tv_grid2:      { category: "tv", type: "canvas", title: "TV CYBERPUNK GRID MOTION [60FPS]", render: (k) => tv_grid2(k) }, 
+    tv_grid:       { category: "tv", type: "canvas", title: "TV GRID PULSE [60FPS]", render: (k) => tv_grid(k) }, 
+    tv_grid2:      { category: "tv", type: "canvas", title: "TV GRID PULSE WAVE [60FPS]", render: (k) => tv_grid2(k) }, 
+	tv_grid_tetris:{ category: "tv", type: "canvas", title: "TV TETRIS [60FPS]", render: (k) => tv_grid_tetris(k) },
+	tv_grid_tetris2:{ category: "tv", type: "canvas", title: "TV TETRIS 2[60FPS]", render: (k) => tv_grid_tetris2(k) },
     tv_blobs:      { category: "tv", type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
     tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
     tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
