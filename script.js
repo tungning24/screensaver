@@ -3342,19 +3342,21 @@ function initCyberGridWebGL() {
     }`;
 	
 	const fs = `
-    precision highp float;
+    // เปลี่ยนเป็น mediump เพื่อลดภาระ GPU มือถือ และป้องกัน OOM
+    precision mediump float;
+
     uniform vec2 u_res;
     uniform float u_time;
     uniform vec3 u_colorMain;
     uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper
+    // Pseudo-random helper ที่ปลอดภัยสำหรับ GPU มือถือ
     float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+        // ลดสเกลตัวคูณลง ป้องกัน Float Overflow บน Android
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 437.585);
     }
 
     void main() {
-        // Normalize UV to Center (-1.0 to 1.0)
         vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
 
         float horizon = 0.1;
@@ -3362,50 +3364,50 @@ function initCyberGridWebGL() {
         
         vec2 p = uv;
         p.y -= horizon;
-        
-        // =========================================================
-        // ดึงระนาบด้านบนและล่างเข้ามาชนกันตรงกลาง (โดยไม่เปลี่ยนสเกลลึก)
-        // =========================================================
-        // กำหนดระยะขั้นต่ำของ Y เพื่อไม่ให้มีช่องว่างดำตรงกลาง แต่สเกลมุมมองเท่าเดิม
-        float minGap = 0.08; 
+
+        // -------------------------------------------------------------
+        // จุดสำคัญ: ป้องกัน Division by Zero / Infinity ใน GPU มือถือ
+        // -------------------------------------------------------------
+        float minGap = 0.08;
         float shiftedY = abs(p.y) + minGap;
         
-        // คำนวณความลึก Z-Depth จากพิกัดที่ดึงเข้าหากันแล้ว
+        // บังคับไม่ให้ shiftedY เข้าใกล้ 0 มากเกินไป
+        shiftedY = max(shiftedY, 0.001);
+
         float z = fov / shiftedY;
+        
+        // จำกัดค่า z ไม่ให้พุ่งสูงเกินไปจน GPU คำนวณไม่ไหว
+        z = min(z, 50.0);
+
         vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
 
-        // Grid & Cell Calculations (เท่าเดิมเป๊ะ)
+        // Grid Calculations
         vec2 gridCount = vec2(12.0, 12.0);
         vec2 cellId = floor(gridUv * gridCount);
-        vec2 cellUv = fract(gridUv * gridCount);
 
-        // เส้นขอบตารางพิกเซล
-        // vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
-        // float cellMask = border.x * border.y;
-		float cellMask = 1.0; // บล็อกจะชนกันพอดีโดยไม่มีช่องว่าง
+        // ตัดเส้นขอบออก บล็อกติดกัน (cellMask = 1.0)
+        float cellMask = 1.0; 
 
-        // Digital Wave & Pulse Activity (เท่าเดิมเป๊ะ)
+        // Digital Wave & Pulse
         float rnd = rand(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
+        float pulse = sin(u_time * 2.0 + rnd * 6.28318) * 0.5 + 0.5;
         float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
         
         float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
         activity = clamp(activity, 0.05, 1.0);
 
-        // Color & Depth Fog Fade (เท่าเดิมเป๊ะ)
-        float colorSelect = step(0.5, rand(cellId + 1.0));
+        // Color & Depth Fog Fade
+        float colorSelect = step(0.5, rand(cellId + vec2(1.0, 1.0)));
         vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
 
-        // คงเอฟเฟกต์แสงหมอกและ Glow แสงเดิมไว้ทั้งหมด
-		// เลข 12.0 คือระยะความลึกที่เริ่มมืด:
-		// - ปรับเพิ่มเป็น 20.0 หรือ 30.0 = ตารางตรงกลางจะสว่างชัดขึ้น ไม่โดนหมอกสีดำบัง
-		// - ปรับลดเหลือ 5.0 = หมอกมืดจะกินพื้นที่สว่างตรงกลางมากขึ้น
-        float fog = smoothstep(15.5, 0.0, z);
-        float centerGlow = exp(-length(uv - vec2(0.0, horizon)) * 3.0);
+        // คำนวณ Fog และ Glow แบบปลอดภัย
+        float fog = smoothstep(25.0, 0.0, z); // ปรับระยะหมอก
+        
+        float distToCenter = length(uv - vec2(0.0, horizon));
+        float centerGlow = exp(-clamp(distToCenter * 2.0, 0.0, 10.0));
 
-        // รวมแสงและสีตามโค้ดแรกสุด
         vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
-        finalColor += u_colorAccent * centerGlow * 0.6; 
+        finalColor += u_colorAccent * centerGlow * 0.8; 
         finalColor *= fog;
 
         gl_FragColor = vec4(finalColor, fog);
