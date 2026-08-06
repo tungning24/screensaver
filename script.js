@@ -3162,12 +3162,141 @@ function initTunnelWebGL() {
     glReadyTunnel = true;
 }
 
+let glProgramSpectrum = null;
+let glReadySpectrum = false;
+let glSpectrumBuffer = null; // เพิ่มตัวแปรเก็บ Buffer เพื่อประหยัด CPU/GPU
+
+function spectrumWebGL(k) {
+    x.clearRect(0, 0, W, H);
+    if (!glReadySpectrum) initSpectrumWebGL();
+    if (!glProgramSpectrum) return; // กัน crash ถ้าสร้าง shader ไม่สำเร็จ
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0.15, 0.15, 0.15, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(glProgramSpectrum);
+
+    // Bind Buffer และผูก Attribute ทุกครั้งก่อน Draw ป้องกันภาพค้างจากการสลับ Scene
+    gl.bindBuffer(gl.ARRAY_BUFFER, glSpectrumBuffer);
+    let loc = gl.getAttribLocation(glProgramSpectrum, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    // Uniforms
+    gl.uniform2f(gl.getUniformLocation(glProgramSpectrum, "u_res"), glCanvas.width, glCanvas.height);
+    
+    // ใช้ u_time จากค่าสะสม k หรือ t ให้แน่ใจว่าตัวแปร t ส่งค่าขยับตลอดเวลา
+    let currentTime = (typeof t !== 'undefined' ? t : performance.now()) * 0.1;
+    gl.uniform1f(gl.getUniformLocation(glProgramSpectrum, "u_time"), currentTime % 10000.0);
+
+    let c1 = hexToRgbNormalizedFast(tone(0)); 
+    let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
+
+    gl.uniform3f(gl.getUniformLocation(glProgramSpectrum, "u_colorMain"), c1[0], c1[1], c1[2]);
+    gl.uniform3f(gl.getUniformLocation(glProgramSpectrum, "u_colorAccent"), c2[0], c2[1], c2[2]);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function initSpectrumWebGL() {
+    if (glReadySpectrum) return;
+
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+    }
+    if (!gl) return;
+
+    const vs = `
+    attribute vec2 a_pos;
+    void main(){
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+    }`;
+
+    const fs = `
+    precision highp float;
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    void main() {
+        vec2 st = gl_FragCoord.xy / u_res.xy;
+        
+        float targetSize = min(u_res.x, u_res.y) > 600.0 ? 45.0 : 30.0;
+        vec2 gridCount = max(vec2(1.0), floor(u_res / targetSize));
+        
+        vec2 cellId = floor(st * gridCount);
+        vec2 cellUv = fract(st * gridCount);
+
+        vec2 border = step(vec2(0.06), cellUv) * step(cellUv, vec2(0.94));
+        float cellMask = border.x * border.y;
+
+        float time = u_time * 0.8; // เพิ่มความเร็วเวลา
+        float mode = mod(floor(time / 8.0), 3.0);
+
+        float val = 0.0;
+        if (mode < 0.5) {
+            float wave1 = sin(cellId.x * 0.3 + time);
+            float wave2 = cos(cellId.y * 0.2 - time);
+            val = (wave1 + wave2 + 2.0) / 4.0;
+        } else if (mode < 1.5) {
+            vec2 center = gridCount * 0.5;
+            float dist = length(cellId - center);
+            val = (sin(dist * 0.4 - time * 2.0) + 1.0) / 2.0;
+        } else {
+            val = abs(sin(cellId.x * 0.5 + time) * cos(cellId.y * 0.5 + time));
+        }
+
+        float opacity = clamp(val, 0.0, 1.0);
+        float colorSwitch = step(0.5, fract((cellId.x + cellId.y) * 0.1));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSwitch);
+
+        float innerGlow = smoothstep(0.2, 0.5, opacity);
+        vec3 finalColor = baseColor * (0.6 + innerGlow * 1.2) * cellMask * opacity;
+
+        gl_FragColor = vec4(finalColor, opacity * cellMask);
+    }`;
+
+    function shader(type, src) {
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.error(gl.getShaderInfoLog(s));
+        }
+        return s;
+    }
+
+    glProgramSpectrum = gl.createProgram();
+    gl.attachShader(glProgramSpectrum, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramSpectrum, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramSpectrum);
+
+    if (!gl.getProgramParameter(glProgramSpectrum, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(glProgramSpectrum));
+        return;
+    }
+
+    // สร้าง Buffer เก็บไว้ครั้งเดียว
+    glSpectrumBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, glSpectrumBuffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        gl.STATIC_DRAW
+    );
+
+    glReadySpectrum = true;
+}
+
 // --- Centralized Scene Registry ---
 const scenes = { 
     inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "inkWebGL", render: (k) => inkBubblesWebGL(k) }, 
     nebulaWebGL:     { category: "webgl", type: "webgl", title: "COSMIC NEBULA[WebGL]", init: initNebulaWebGL, glSceneName: "nebulaWebGL", render: (k) => nebulaWebGL(k) }, 
     matrixWebGL:     { category: "webgl", type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
     tunnelWebGL:     { category: "webgl", type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
+    spectrumWebGL:   { category: "webgl", type: "webgl", title: "Spectrum Matrix [WebGL]", init: initSpectrumWebGL, glSceneName: "spectrumWebGL", render: (k) => spectrumWebGL(k) }, 
 
     tv_clock:      { category: "tv", type: "canvas", title: "TV FLIP CLOCK [60FPS]", render: () => tv_clock() }, 
     tv_stars:      { category: "tv", type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
