@@ -3340,7 +3340,87 @@ function initCyberGridWebGL() {
     void main(){
         gl_Position = vec4(a_pos, 0.0, 1.0);
     }`;
+	/*
+	//chatgpt fixed
+	const fs = `
+    // เปลี่ยนเป็น mediump เพื่อลดภาระ GPU มือถือ และป้องกัน OOM
+    precision mediump float;
+
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    // Pseudo-random helper ที่ปลอดภัยสำหรับ GPU มือถือ
+	float hash21(vec2 p){
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+	}
+
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        float horizon = 0.1;
+        float fov = 0.8;
+        
+        vec2 p = uv;
+        p.y -= horizon;
+
+        // -------------------------------------------------------------
+        // จุดสำคัญ: ป้องกัน Division by Zero / Infinity ใน GPU มือถือ
+        // -------------------------------------------------------------
+        float minGap = 0.08;
+        float shiftedY = abs(p.y) + minGap;
+        
+        // บังคับไม่ให้ shiftedY เข้าใกล้ 0 มากเกินไป
+        shiftedY = max(shiftedY, 0.001);
+
+        float z = fov / shiftedY;
+        
+        // จำกัดค่า z ไม่ให้พุ่งสูงเกินไปจน GPU คำนวณไม่ไหว
+        z = min(z, 30.0);
+
+        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+
+        // Grid Calculations
+        vec2 gridCount = vec2(8.0);
+        vec2 cellId = floor(gridUv * gridCount);
+
+        // ตัดเส้นขอบออก บล็อกติดกัน (cellMask = 1.0)
+        float cellMask = 1.0; 
+
+        // Digital Wave & Pulse
+        float rnd = hash21(cellId);
+        float pulse = sin(u_time * 2.0 + rnd * 6.28318) * 0.5 + 0.5;
+        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
+        
+        float activity = smoothstep(0.4,0.8,rnd);
+        activity = clamp(activity, 0.05, 1.0)*(pulse * 0.6 + wave * 0.4);;
+		
+		float center =1.0 / (1.0 + abs(p.x) * z * 0.25);
+		activity *= center;
+
+        // Color & Depth Fog Fade
+        float colorSelect = step(0.5, hash21(cellId));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+
+        // คำนวณ Fog และ Glow แบบปลอดภัย
+        float fog = 1.0 - clamp(z / 25.0, 0.0, 1.0); // ปรับระยะหมอก
+        
+        vec2 d = uv - vec2(0.0, horizon);
+		float dist2 = dot(d, d);
+        float centerGlow = 1.0 - smoothstep(0.0, 2.0, dist2);
+
+        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
+        finalColor += u_colorAccent * centerGlow * 0.8; 
+        finalColor *= fog;
+
+        gl_FragColor = vec4(finalColor, 1.0);
+    }`;
+	*/
 	
+//gemini fixed	
 	const fs = `
     // เปลี่ยนเป็น mediump เพื่อลดภาระ GPU มือถือ และป้องกัน OOM
     precision mediump float;
