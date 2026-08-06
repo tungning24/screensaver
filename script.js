@@ -3290,6 +3290,360 @@ function initSpectrumWebGL() {
     glReadySpectrum = true;
 }
 
+let glProgramCyberGrid = null;
+let glReadyCyberGrid = false;
+let glCyberGridBuffer = null;
+
+function cyberGridWebGL(k) {
+    x.clearRect(0, 0, W, H);
+    if (!glReadyCyberGrid) initCyberGridWebGL();
+    if (!glProgramCyberGrid) return;
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.clearColor(0.05, 0.05, 0.08, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(glProgramCyberGrid);
+
+    // Bind Buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridBuffer);
+    let loc = gl.getAttribLocation(glProgramCyberGrid, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    // Uniforms
+    gl.uniform2f(gl.getUniformLocation(glProgramCyberGrid, "u_res"), glCanvas.width, glCanvas.height);
+    
+    // ใช้สเกลเวลา 0.1 ที่ไหลลื่นกำลังดี
+    let currentTime = (typeof t !== 'undefined' ? t : performance.now()) * 0.1;
+    gl.uniform1f(gl.getUniformLocation(glProgramCyberGrid, "u_time"), currentTime % 10000.0);
+
+    let c1 = hexToRgbNormalizedFast(tone(0)); 
+    let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
+
+    gl.uniform3f(gl.getUniformLocation(glProgramCyberGrid, "u_colorMain"), c1[0], c1[1], c1[2]);
+    gl.uniform3f(gl.getUniformLocation(glProgramCyberGrid, "u_colorAccent"), c2[0], c2[1], c2[2]);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function initCyberGridWebGL() {
+    if (glReadyCyberGrid) return;
+
+    if (!gl) {
+        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+    }
+    if (!gl) return;
+
+    const vs = `
+    attribute vec2 a_pos;
+    void main(){
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+    }`;
+	
+	const fs = `
+    precision highp float;
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    // Pseudo-random helper
+    float rand(vec2 co){
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+        // Normalize UV to Center (-1.0 to 1.0)
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        float horizon = 0.1;
+        float fov = 0.8;
+        
+        vec2 p = uv;
+        p.y -= horizon;
+        
+        // =========================================================
+        // ดึงระนาบด้านบนและล่างเข้ามาชนกันตรงกลาง (โดยไม่เปลี่ยนสเกลลึก)
+        // =========================================================
+        // กำหนดระยะขั้นต่ำของ Y เพื่อไม่ให้มีช่องว่างดำตรงกลาง แต่สเกลมุมมองเท่าเดิม
+        float minGap = 0.08; 
+        float shiftedY = abs(p.y) + minGap;
+        
+        // คำนวณความลึก Z-Depth จากพิกัดที่ดึงเข้าหากันแล้ว
+        float z = fov / shiftedY;
+        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+
+        // Grid & Cell Calculations (เท่าเดิมเป๊ะ)
+        vec2 gridCount = vec2(12.0, 12.0);
+        vec2 cellId = floor(gridUv * gridCount);
+        vec2 cellUv = fract(gridUv * gridCount);
+
+        // เส้นขอบตารางพิกเซล
+        // vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
+        // float cellMask = border.x * border.y;
+		float cellMask = 1.0; // บล็อกจะชนกันพอดีโดยไม่มีช่องว่าง
+
+        // Digital Wave & Pulse Activity (เท่าเดิมเป๊ะ)
+        float rnd = rand(cellId);
+        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
+        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
+        
+        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
+        activity = clamp(activity, 0.05, 1.0);
+
+        // Color & Depth Fog Fade (เท่าเดิมเป๊ะ)
+        float colorSelect = step(0.5, rand(cellId + 1.0));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+
+        // คงเอฟเฟกต์แสงหมอกและ Glow แสงเดิมไว้ทั้งหมด
+		// เลข 12.0 คือระยะความลึกที่เริ่มมืด:
+		// - ปรับเพิ่มเป็น 20.0 หรือ 30.0 = ตารางตรงกลางจะสว่างชัดขึ้น ไม่โดนหมอกสีดำบัง
+		// - ปรับลดเหลือ 5.0 = หมอกมืดจะกินพื้นที่สว่างตรงกลางมากขึ้น
+        float fog = smoothstep(15.5, 0.0, z);
+        float centerGlow = exp(-length(uv - vec2(0.0, horizon)) * 3.0);
+
+        // รวมแสงและสีตามโค้ดแรกสุด
+        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
+        finalColor += u_colorAccent * centerGlow * 0.6; 
+        finalColor *= fog;
+
+        gl_FragColor = vec4(finalColor, fog);
+    }`;
+	/*
+มีหมอกลอยตรงกกลาง
+	const fs = `
+    precision highp float;
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    // Pseudo-random helper
+    float rand(vec2 co){
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    // Smooth Noise Function สำหรับสร้างเมฆหมอกนุ่มนวล
+    float noise(vec2 st) {
+        vec2 i = floor(st);
+        vec2 f = fract(st);
+
+        float a = rand(i);
+        float b = rand(i + vec2(1.0, 0.0));
+        float c = rand(i + vec2(0.0, 1.0));
+        float d = rand(i + vec2(1.0, 1.0));
+
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+    }
+
+    void main() {
+        // Normalize UV to Center (-1.0 to 1.0)
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        float horizon = 0.1;
+        float fov = 0.8;
+        
+        vec2 p = uv;
+        p.y -= horizon;
+        
+        float z = fov / abs(p.y);
+        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+
+        // Grid & Cell Calculations
+        vec2 gridCount = vec2(12.0, 12.0);
+        vec2 cellId = floor(gridUv * gridCount);
+        vec2 cellUv = fract(gridUv * gridCount);
+
+        vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
+        float cellMask = border.x * border.y;
+
+        // Digital Wave & Pulse Activity
+        float rnd = rand(cellId);
+        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
+        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
+        
+        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
+        activity = clamp(activity, 0.05, 1.0);
+
+        float colorSelect = step(0.5, rand(cellId + 1.0));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+
+        // Fog ละลายไปกับเส้นขอบฟ้า
+        float fog = smoothstep(12.0, 0.0, z);
+
+        // =========================================================
+        // เมฆ/หมอกเคลื่อนที่จากซ้ายไปขวา (Horizontal Moving Fog)
+        // =========================================================
+        // สเกลตำแหน่งหมอกให้อยู่เฉพาะตรงขอบฟ้า
+        vec2 fogUv = vec2(uv.x * 1.2 - u_time * 0.12, uv.y * 1.8); 
+    
+		float fogNoise = noise(fogUv * 2.0) * 0.5 + noise(fogUv * 4.0) * 0.5;
+		
+		// คืนค่ารัศมีการฟุ้งกระจายของหมอกไว้เท่าเดิม (3.5)
+		float fogMask = exp(-abs(uv.y - horizon) * 3.5); 
+		
+		// ลดตัวคูณความเข้มลงเหลือเพียง 0.25 (จางลงมาก แต่พื้นที่ครอบคลุมเท่าเดิม)
+		vec3 fogColor = mix(u_colorAccent, u_colorMain, fogNoise) * fogNoise * fogMask * 0.25;
+
+        // รวมแสงทั้งหมด
+        vec3 finalColor = baseColor * (activity * 1.5) * cellMask * fog;
+        finalColor += fogColor; // เพิ่มชั้นหมอกเลื่อนลงไปตรงกลาง
+
+        gl_FragColor = vec4(finalColor, max(fog, fogMask * fogNoise));
+    }`;
+default มีช่องมืดตรงกลาง
+    const fs = `
+    precision highp float;
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    // Pseudo-random helper
+    float rand(vec2 co){
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+        // Normalize UV to Center (-1.0 to 1.0)
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        // 1. Perspective Grid Projection (สร้างมิติมุมมองพุ่งเข้าหาจอ)
+        float horizon = 0.1;
+        float fov = 0.8;
+        
+        // แยกส่วนพื้นทางเดินข้างล่างกับเพดานข้างบน
+        vec2 p = uv;
+        p.y -= horizon;
+        
+        // คำนวณความลึก (Z-Depth)
+        float z = fov / abs(p.y);
+        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8); // เคลื่อนที่พุ่งไปข้างหน้า
+
+        // 2. Grid & Cell Calculations
+        vec2 gridCount = vec2(12.0, 12.0);
+        vec2 cellId = floor(gridUv * gridCount);
+        vec2 cellUv = fract(gridUv * gridCount);
+
+        // เส้นขอบตารางพิกเซล
+        vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
+        float cellMask = border.x * border.y;
+
+        // 3. Digital Wave & Pulse Activity (สร้างเอฟเฟกต์ไฟวิ่งบนตึก/ตาราง)
+        float rnd = rand(cellId);
+        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
+        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
+        
+        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
+        activity = clamp(activity, 0.05, 1.0);
+
+        // 4. Color & Depth Fog Fade
+        float colorSelect = step(0.5, rand(cellId + 1.0));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+
+        // Fog ละลายไปกับเส้นขอบฟ้า (Horizon Fog)
+        float fog = smoothstep(12.0, 0.0, z);
+
+        // แสง Glow จากกึ่งกลางขอบฟ้า (Horizon Core Glow)
+        float centerGlow = exp(-length(uv - vec2(0.0, horizon)) * 3.0);
+
+        // รวมแสงและสีทั้งหมด
+        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
+        finalColor += u_colorAccent * centerGlow * 0.6; // ใส่ไฟสว่างตรงขอบฟ้า
+        finalColor *= fog;
+
+        gl_FragColor = vec4(finalColor, fog);
+    }`;
+	
+ไม่มีช่องตรงกลาง
+	const fs = `
+    precision highp float;
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec3 u_colorMain;
+    uniform vec3 u_colorAccent;
+
+    // Pseudo-random helper
+    float rand(vec2 co){
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+        // Normalize UV to Center (-1.0 to 1.0)
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+
+        // 1. Perspective Grid Projection
+        float horizon = 0.1;
+        float fov = 0.8;
+        
+        vec2 p = uv;
+        p.y -= horizon;
+        
+        // ป้องกันค่า division by zero บริเวณเส้นแนวนอนพอดี
+        float safeY = sign(p.y) * max(abs(p.y), 0.001);
+        float z = fov / abs(safeY);
+        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+
+        // 2. Grid & Cell Calculations
+        vec2 gridCount = vec2(12.0, 12.0);
+        vec2 cellId = floor(gridUv * gridCount);
+        vec2 cellUv = fract(gridUv * gridCount);
+
+        // เส้นขอบตารางพิกเซล
+        vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
+        float cellMask = border.x * border.y;
+
+        // 3. Digital Wave & Pulse Activity
+        float rnd = rand(cellId);
+        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
+        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
+        
+        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
+        activity = clamp(activity, 0.05, 1.0);
+
+        // 4. Color Selection
+        float colorSelect = step(0.5, rand(cellId + 1.0));
+        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+
+        // รวมแสงและสีทั้งหมด (ตัด fog มืดตรงกลางออก เพื่อให้ตารางชนชิดติดกันพอดี)
+        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
+
+        gl_FragColor = vec4(finalColor, 1.0);
+    }`;
+*/
+    function shader(type, src) {
+        let s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.error(gl.getShaderInfoLog(s));
+        }
+        return s;
+    }
+
+    glProgramCyberGrid = gl.createProgram();
+    gl.attachShader(glProgramCyberGrid, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(glProgramCyberGrid, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(glProgramCyberGrid);
+
+    if (!gl.getProgramParameter(glProgramCyberGrid, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(glProgramCyberGrid));
+        return;
+    }
+
+    glCyberGridBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridBuffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        gl.STATIC_DRAW
+    );
+
+    glReadyCyberGrid = true;
+}
+
 // --- Centralized Scene Registry ---
 const scenes = { 
     inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "inkWebGL", render: (k) => inkBubblesWebGL(k) }, 
@@ -3297,6 +3651,7 @@ const scenes = {
     matrixWebGL:     { category: "webgl", type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
     tunnelWebGL:     { category: "webgl", type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
     spectrumWebGL:   { category: "webgl", type: "webgl", title: "Spectrum Matrix [WebGL]", init: initSpectrumWebGL, glSceneName: "spectrumWebGL", render: (k) => spectrumWebGL(k) }, 
+    cyberGridWebGL:   { category: "webgl", type: "webgl", title: "Cyber City Grid [WebGL]", init: initCyberGridWebGL, glSceneName: "cyberGridWebGL", render: (k) => cyberGridWebGL(k) }, 
 
     tv_clock:      { category: "tv", type: "canvas", title: "TV FLIP CLOCK [60FPS]", render: () => tv_clock() }, 
     tv_stars:      { category: "tv", type: "canvas", title: "TV COSMIC STAR WARP [60FPS]", render: (k) => tv_stars(k) }, 
