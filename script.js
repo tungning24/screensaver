@@ -2652,165 +2652,645 @@ function tv_dvd(k) {
 // --- WebGL Init & Render Logic (OPTIMIZED FAST COLOR CONVERSION) ---
 let glProgramNebula = null;
 let glReadyNebula = false;
+let glNebulaBuffer = null;
+
+let nebulaLoc = {
+    pos: null,
+    res: null,
+    time: null,
+    colors: null
+};
+
 
 function nebulaWebGL(k) {
-    x.clearRect(0, 0, W, H);
-    if (!glReadyNebula) initNebulaWebGL();
 
-    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    gl.useProgram(glProgramNebula);
-
-    gl.uniform2f(gl.getUniformLocation(glProgramNebula, "u_res"), glCanvas.width, glCanvas.height);
-    gl.uniform1f(gl.getUniformLocation(glProgramNebula, "u_time"), t);
-
-    let c1 = hexToRgbNormalizedFast(tone(0));
-    let c2 = hexToRgbNormalizedFast(tone(1));
-    let c3 = hexToRgbNormalizedFast(tone(2));
-    let cols = [...c1, ...c2, ...c3];
-
-    gl.uniform3fv(gl.getUniformLocation(glProgramNebula, "colors[0]"), new Float32Array(cols));
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-}
-
-function initNebulaWebGL(){
-    if (glReadyNebula) return;
-
-    if (!gl) {
-        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
-    }
-    if (!gl) return;
-
-    const vs = `
-    attribute vec2 a_pos;
-    varying vec2 v_uv;
-    void main(){
-        v_uv = a_pos * 0.5 + 0.5;
-        gl_Position = vec4(a_pos, 0.0, 1.0);
-    }`;
-
-    const fs = `
-    precision highp float;
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 colors[3];
-    varying vec2 v_uv;
-
-    float hash(vec2 p){
-        p = fract(p * vec2(123.34, 456.21));
-        p += dot(p, p + 45.32);
-        return fract(p.x * p.y);
-    }
-
-    float noise(vec2 p){
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        float a = hash(i);
-        float b = hash(i + vec2(1.0, 0.0));
-        float c = hash(i + vec2(0.0, 1.0));
-        float d = hash(i + vec2(1.0, 1.0));
-        vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-    }
-
-    float fbm(vec2 p){
-        float v = 0.0;
-        float a = 0.5;
-        mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
-        for(int i = 0; i < 5; i++){
-            v += noise(p) * a;
-            p = rot * p * 2.0;
-            a *= 0.5;
-        }
-        return v;
-    }
-
-    void main(){
-        vec2 st = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.x, u_res.y);
-        vec2 p = st * 2.5;
-        p.x += mod(u_time * 0.015, 300.0);
-        float n = fbm(p);
-        float n_smooth = smoothstep(0.1, 0.9, n);
-        vec3 col = mix(colors[0], colors[1], n_smooth);
-        col = mix(col, colors[2], pow(n_smooth, 2.0));
-        float glow = smoothstep(0.15, 0.85, n);
-        gl_FragColor = vec4(col * (0.45 + glow * 0.55), 1.0);
-    }`;
-
-    function shader(type, src){
-        let s = gl.createShader(type);
-        gl.shaderSource(s, src);
-        gl.compileShader(s);
-        if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
-            console.log(gl.getShaderInfoLog(s));
-        }
-        return s;
-    }
-
-    glProgramNebula = gl.createProgram();
-    gl.attachShader(glProgramNebula, shader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(glProgramNebula, shader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(glProgramNebula);
-
-    if(!gl.getProgramParameter(glProgramNebula, gl.LINK_STATUS)){
-        console.log(gl.getProgramInfoLog(glProgramNebula));
-        return;
-    }
-
-    gl.useProgram(glProgramNebula);
-
-    let buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
-        gl.STATIC_DRAW
+    x.clearRect(
+        0,
+        0,
+        W,
+        H
     );
 
-    let loc = gl.getAttribLocation(glProgramNebula, "a_pos");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
-    glReadyNebula = true;
+    if (!glReadyNebula)
+        initNebulaWebGL();
+
+
+    if (!glProgramNebula)
+        return;
+
+
+
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+
+    gl.clearColor(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    gl.clear(
+        gl.COLOR_BUFFER_BIT
+    );
+
+
+
+    gl.useProgram(
+        glProgramNebula
+    );
+
+
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glNebulaBuffer
+    );
+
+
+    gl.enableVertexAttribArray(
+        nebulaLoc.pos
+    );
+
+
+    gl.vertexAttribPointer(
+        nebulaLoc.pos,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
+
+
+
+    gl.uniform2f(
+        nebulaLoc.res,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+
+    gl.uniform1f(
+        nebulaLoc.time,
+        t
+    );
+
+
+
+    let c1 =
+        hexToRgbNormalizedFast(
+            tone(0)
+        );
+
+    let c2 =
+        hexToRgbNormalizedFast(
+            tone(1)
+        );
+
+    let c3 =
+        hexToRgbNormalizedFast(
+            tone(2)
+        );
+
+
+    let cols = [
+        ...c1,
+        ...c2,
+        ...c3
+    ];
+
+
+
+    gl.uniform3fv(
+        nebulaLoc.colors,
+        new Float32Array(cols)
+    );
+
+
+
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
+
+}
+
+
+
+
+function initNebulaWebGL(){
+
+    if (glReadyNebula)
+        return;
+
+
+
+    if (!gl) {
+		gl = createGL();
+    }
+
+
+    if (!gl)
+        return;
+
+
+
+const vs = `
+attribute vec2 a_pos;
+
+varying vec2 v_uv;
+
+void main(){
+
+    v_uv =
+        a_pos * 0.5 + 0.5;
+
+
+    gl_Position =
+        vec4(
+            a_pos,
+            0.0,
+            1.0
+        );
+}`;
+
+
+
+const fs = `
+precision highp float;
+
+uniform vec2 u_res;
+uniform float u_time;
+
+uniform vec3 colors[3];
+
+varying vec2 v_uv;
+
+
+float hash(vec2 p){
+
+    p =
+        fract(
+            p *
+            vec2(
+                123.34,
+                456.21
+            )
+        );
+
+    p +=
+        dot(
+            p,
+            p + 45.32
+        );
+
+    return fract(
+        p.x * p.y
+    );
+}
+
+
+float noise(vec2 p){
+
+    vec2 i =
+        floor(p);
+
+    vec2 f =
+        fract(p);
+
+
+    float a =
+        hash(i);
+
+    float b =
+        hash(
+            i + vec2(1.0,0.0)
+        );
+
+    float c =
+        hash(
+            i + vec2(0.0,1.0)
+        );
+
+    float d =
+        hash(
+            i + vec2(1.0,1.0)
+        );
+
+
+    vec2 u =
+        f*f*f*
+        (
+            f*
+            (
+                f*6.0-15.0
+            )
+            +10.0
+        );
+
+
+    return mix(a,b,u.x)
+        +
+        (c-a)
+        *
+        u.y
+        *
+        (1.0-u.x)
+        +
+        (d-b)
+        *
+        u.x
+        *
+        u.y;
+}
+
+
+
+float fbm(vec2 p){
+
+    float v = 0.0;
+    float a = 0.5;
+
+
+    mat2 rot =
+        mat2(
+            0.8,
+            0.6,
+            -0.6,
+            0.8
+        );
+
+
+    for(int i=0;i<5;i++){
+
+        v +=
+            noise(p)
+            *
+            a;
+
+
+        p =
+            rot *
+            p *
+            2.0;
+
+
+        a *= 0.5;
+    }
+
+
+    return v;
+}
+
+
+
+void main(){
+
+    vec2 st =
+        (
+            gl_FragCoord.xy -
+            0.5*u_res.xy
+        )
+        /
+        min(
+            u_res.x,
+            u_res.y
+        );
+
+
+    vec2 p =
+        st * 2.5;
+
+
+    p.x +=
+        mod(
+            u_time * 0.015,
+            300.0
+        );
+
+
+    float n =
+        fbm(p);
+
+
+    float n_smooth =
+        smoothstep(
+            0.1,
+            0.9,
+            n
+        );
+
+
+    vec3 col =
+        mix(
+            colors[0],
+            colors[1],
+            n_smooth
+        );
+
+
+    col =
+        mix(
+            col,
+            colors[2],
+            pow(
+                n_smooth,
+                2.0
+            )
+        );
+
+
+    float glow =
+        smoothstep(
+            0.15,
+            0.85,
+            n
+        );
+
+
+    gl_FragColor =
+        vec4(
+            col *
+            (
+                0.45 +
+                glow *
+                0.55
+            ),
+            1.0
+        );
+}`;
+
+
+
+function shader(type,src){
+
+    let s =
+        gl.createShader(type);
+
+
+    gl.shaderSource(
+        s,
+        src
+    );
+
+
+    gl.compileShader(
+        s
+    );
+
+
+    if(
+        !gl.getShaderParameter(
+            s,
+            gl.COMPILE_STATUS
+        )
+    ){
+
+        console.log(
+            gl.getShaderInfoLog(s)
+        );
+    }
+
+
+    return s;
+}
+
+
+
+glProgramNebula =
+    gl.createProgram();
+
+
+
+gl.attachShader(
+    glProgramNebula,
+    shader(
+        gl.VERTEX_SHADER,
+        vs
+    )
+);
+
+
+gl.attachShader(
+    glProgramNebula,
+    shader(
+        gl.FRAGMENT_SHADER,
+        fs
+    )
+);
+
+
+
+gl.linkProgram(
+    glProgramNebula
+);
+
+
+
+if(
+    !gl.getProgramParameter(
+        glProgramNebula,
+        gl.LINK_STATUS
+    )
+){
+
+    console.log(
+        gl.getProgramInfoLog(
+            glProgramNebula
+        )
+    );
+
+    return;
+}
+
+
+
+
+nebulaLoc =
+cacheLocations(
+    gl,
+    glProgramNebula,
+    [
+        "a_pos"
+    ],
+    [
+        "u_res",
+        "u_time",
+        "colors[0]"
+    ]
+);
+
+
+
+
+// fullscreen quad
+
+glNebulaBuffer =
+    gl.createBuffer();
+
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    glNebulaBuffer
+);
+
+
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+        -1,-1,
+         1,-1,
+        -1, 1,
+
+        -1, 1,
+         1,-1,
+         1, 1
+    ]),
+    gl.STATIC_DRAW
+);
+
+
+
+glReadyNebula = true;
+
 }
 
 let glProgramInkBubbles = null;
 let glReadyInkBubbles = false;
+let glInkBubblesBuffer = null;
+
+let inkBubblesLoc = {
+    pos: null,
+    res: null,
+    time: null,
+    blobs: null,
+    colors: null
+};
+
 
 function inkBubblesWebGL(k) {
-    x.clearRect(0, 0, W, H);
-    if (!glReadyInkBubbles) initInkWebGL();
 
-    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    x.clearRect(0, 0, W, H);
+
+    if (!glReadyInkBubbles)
+        initInkBubblesWebGL();
+
+    if (!glProgramInkBubbles)
+        return;
+
+
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    gl.clearColor(
+        0,
+        0,
+        0,
+        0
+    );
+
+    gl.clear(
+        gl.COLOR_BUFFER_BIT
+    );
+
+
+    gl.useProgram(
+        glProgramInkBubbles
+    );
+
+
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glInkBubblesBuffer
+    );
+
+
+    gl.enableVertexAttribArray(
+        inkBubblesLoc.pos
+    );
+
+
+    gl.vertexAttribPointer(
+        inkBubblesLoc.pos,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
+
 
     let arr = [];
 
     for (let b of S.b) {
+
         b.x += b.vx * k * 8;
         b.y += b.vy * k * 8;
 
-        if (b.x < 0 || b.x > W) b.vx *= -1;
-        if (b.y < 0 || b.y > H) b.vy *= -1;
 
-        arr.push(b.x / W, 1 - b.y / H, b.r / 180);
+        if (b.x < 0 || b.x > W)
+            b.vx *= -1;
+
+        if (b.y < 0 || b.y > H)
+            b.vy *= -1;
+
+
+        arr.push(
+            b.x / W,
+            1 - b.y / H,
+            b.r / 180
+        );
     }
 
-    while (arr.length < 24) arr.push(0);
 
-    gl.useProgram(glProgramInkBubbles);
+    while (arr.length < 24)
+        arr.push(0);
 
-    gl.uniform2f(locRes, glCanvas.width, glCanvas.height);
-    gl.uniform1f(locTime, t);
-    gl.uniform3fv(locBlobs, new Float32Array(arr));
+    gl.uniform2f(
+        inkBubblesLoc.res,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+
+    gl.uniform1f(
+        inkBubblesLoc.time,
+        t
+    );
+
+
+    gl.uniform3fv(
+        inkBubblesLoc.blobs,
+        new Float32Array(arr)
+    );
+
 
     const hexToRgb01 = h => {
-        let n = parseInt(h.slice(1), 16);
-        return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+
+        let n = parseInt(
+            h.slice(1),
+            16
+        );
+
+        return [
+            ((n >> 16) & 255) / 255,
+            ((n >> 8) & 255) / 255,
+            (n & 255) / 255
+        ];
     };
+
 
     const cols = [
         ...hexToRgb01(tone(0)),
@@ -2818,109 +3298,376 @@ function inkBubblesWebGL(k) {
         ...hexToRgb01(tone(2))
     ];
 
-    gl.uniform3fv(locColors, new Float32Array(cols));
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-}
 
-function initInkWebGL(){
-    if (glReadyInkBubbles) return;
-
-    if (!gl) {
-        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
-    }
-    if (!gl) return;
-
-    const vs = `
-    attribute vec2 a_pos;
-    void main(){
-        gl_Position = vec4(a_pos,0.0,1.0);
-    }`;
-
-    const fs = `
-    precision mediump float;
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 blobs[8];
-    uniform vec3 colors[3];
-
-    void main(){
-        vec2 uv = gl_FragCoord.xy / u_res.xy;
-        float v = 0.0;
-        for(int i=0;i<8;i++){
-            vec2 p = blobs[i].xy;
-            float r = blobs[i].z;
-            float d = distance(uv, p);
-            v += r*r / (d*d*40.0);
-        }
-        vec3 col = mix(colors[0], colors[1], clamp(v * 0.5,0.0,1.0));
-        col = mix(col, colors[2], clamp(v * 0.25,0.0,1.0));
-        float glow = smoothstep(.8, 1.4, v);
-        gl_FragColor = vec4(col * glow, glow);
-    }`;
-
-    function shader(type,src){
-        let s = gl.createShader(type);
-        gl.shaderSource(s, src);
-        gl.compileShader(s);
-        return s;
-    }
-
-    glProgramInkBubbles = gl.createProgram();
-    gl.attachShader(glProgramInkBubbles, shader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(glProgramInkBubbles, shader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(glProgramInkBubbles);
-    gl.useProgram(glProgramInkBubbles);
-
-    locRes = gl.getUniformLocation(glProgramInkBubbles, "u_res");
-    locTime = gl.getUniformLocation(glProgramInkBubbles, "u_time");
-    locBlobs = gl.getUniformLocation(glProgramInkBubbles, "blobs[0]");
-    locColors = gl.getUniformLocation(glProgramInkBubbles, "colors[0]");
-
-    let buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array([-1,-1, 1,-1, -1, 1, -1, 1, 1,-1, 1, 1]),
-        gl.STATIC_DRAW
+    gl.uniform3fv(
+        inkBubblesLoc.colors,
+        new Float32Array(cols)
     );
 
-    let loc = gl.getAttribLocation(glProgramInkBubbles, "a_pos");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
+}
 
-    glReadyInkBubbles = true;
+
+
+function initInkBubblesWebGL() {
+
+    if (glReadyInkBubbles)
+        return;
+
+
+    if (!gl) {
+		gl = createGL();
+    }
+
+
+    if (!gl)
+        return;
+
+
+
+const vs = `
+attribute vec2 a_pos;
+
+void main(){
+
+    gl_Position =
+        vec4(
+            a_pos,
+            0.0,
+            1.0
+        );
+}`;
+
+
+
+const fs = `
+precision mediump float;
+
+uniform vec2 u_res;
+uniform float u_time;
+
+uniform vec3 blobs[8];
+uniform vec3 colors[3];
+
+
+void main(){
+
+    vec2 uv =
+        gl_FragCoord.xy /
+        u_res.xy;
+
+
+    float v = 0.0;
+
+
+    for(int i = 0; i < 8; i++){
+
+        vec2 p =
+            blobs[i].xy;
+
+        float r =
+            blobs[i].z;
+
+
+        float d =
+            distance(
+                uv,
+                p
+            );
+
+
+        v += r*r / (d*d*30.0);
+    }
+
+
+    vec3 col =
+        mix(
+            colors[0],
+            colors[1],
+            clamp(
+                v * 0.5,
+                0.0,
+                1.0
+            )
+        );
+
+
+    col =
+        mix(
+            col,
+            colors[2],
+            clamp(
+                v * 0.25,
+                0.0,
+                1.0
+            )
+        );
+
+
+    float glow =
+    smoothstep(0.8, 1.4, v);
+
+
+    gl_FragColor =
+        vec4(
+            col * glow,
+            glow
+        );
+}`;
+
+
+
+function shader(type, src){
+
+    let s =
+        gl.createShader(type);
+
+    gl.shaderSource(
+        s,
+        src
+    );
+
+    gl.compileShader(
+        s
+    );
+
+
+    if(
+        !gl.getShaderParameter(
+            s,
+            gl.COMPILE_STATUS
+        )
+    ){
+
+        console.error(
+            gl.getShaderInfoLog(s)
+        );
+    }
+
+
+    return s;
+}
+
+
+
+glProgramInkBubbles =
+    gl.createProgram();
+
+
+gl.attachShader(
+    glProgramInkBubbles,
+    shader(
+        gl.VERTEX_SHADER,
+        vs
+    )
+);
+
+
+gl.attachShader(
+    glProgramInkBubbles,
+    shader(
+        gl.FRAGMENT_SHADER,
+        fs
+    )
+);
+
+
+gl.linkProgram(
+    glProgramInkBubbles
+);
+
+
+
+if(
+    !gl.getProgramParameter(
+        glProgramInkBubbles,
+        gl.LINK_STATUS
+    )
+){
+
+    console.error(
+        gl.getProgramInfoLog(
+            glProgramInkBubbles
+        )
+    );
+
+    return;
+}
+
+
+
+inkBubblesLoc =
+cacheLocations(
+    gl,
+    glProgramInkBubbles,
+    [
+        "a_pos"
+    ],
+    [
+        "u_res",
+        "u_time",
+        "blobs[0]",
+        "colors[0]"
+    ]
+);
+
+
+
+// fullscreen quad
+
+glInkBubblesBuffer =
+    gl.createBuffer();
+
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    glInkBubblesBuffer
+);
+
+
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+        -1,-1,
+         1,-1,
+        -1, 1,
+
+        -1, 1,
+         1,-1,
+         1, 1
+    ]),
+    gl.STATIC_DRAW
+);
+
+
+
+glReadyInkBubbles = true;
+
 }
 
 let glProgramMatrix = null;
 let glReadyMatrix = false;
+
+let glMatrixBuffer = null;
 let fontTexture = null;
 
+let matrixLoc = {
+    pos: null,
+    res: null,
+    time: null,
+    colorMain: null,
+    colorHead: null,
+    fontTexture: null
+};
 function matrixWebGL(k) {
+
     x.clearRect(0, 0, W, H);
-    if (!glReadyMatrix) initMatrixWebGL();
 
-    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    if (!glReadyMatrix)
+        initMatrixWebGL();
 
-    gl.useProgram(glProgramMatrix);
+    if (!glProgramMatrix)
+        return;
 
-    gl.uniform2f(gl.getUniformLocation(glProgramMatrix, "u_res"), glCanvas.width, glCanvas.height);
-    gl.uniform1f(gl.getUniformLocation(glProgramMatrix, "u_time"), (t * 0.001) % 10000.0);
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
 
-    let c1 = hexToRgbNormalizedFast(tone(0)); 
-    let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
+    gl.clearColor(
+        0,
+        0,
+        0,
+        0
+    );
 
-    gl.uniform3f(gl.getUniformLocation(glProgramMatrix, "u_colorMain"), c1[0], c1[1], c1[2]);
-    gl.uniform3f(gl.getUniformLocation(glProgramMatrix, "u_colorHead"), c2[0], c2[1], c2[2]);
+    gl.clear(
+        gl.COLOR_BUFFER_BIT
+    );
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, fontTexture);
-    gl.uniform1i(gl.getUniformLocation(glProgramMatrix, "u_fontTexture"), 0);
+    gl.useProgram(
+        glProgramMatrix
+    );
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glMatrixBuffer
+    );
+
+    gl.enableVertexAttribArray(
+        matrixLoc.pos
+    );
+
+    gl.vertexAttribPointer(
+        matrixLoc.pos,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
+
+    gl.uniform2f(
+        matrixLoc.res,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    gl.uniform1f(
+        matrixLoc.time,
+        (t * 0.001) % 100.0
+    );
+
+    const c1 =
+        hexToRgbNormalizedFast(
+            tone(0)
+        );
+
+    const c2 =
+        hexToRgbNormalizedFast(
+            tone(1) || tone(0)
+        );
+
+    gl.uniform3f(
+        matrixLoc.colorMain,
+        c1[0],
+        c1[1],
+        c1[2]
+    );
+
+    gl.uniform3f(
+        matrixLoc.colorHead,
+        c2[0],
+        c2[1],
+        c2[2]
+    );
+
+    gl.activeTexture(
+        gl.TEXTURE0
+    );
+
+    gl.bindTexture(
+        gl.TEXTURE_2D,
+        fontTexture
+    );
+
+    gl.uniform1i(
+        matrixLoc.fontTexture,
+        0
+    );
+
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
 }
-
 function createFontTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -2954,7 +3701,7 @@ function initMatrixWebGL() {
     if (glReadyMatrix) return;
 
     if (!gl) {
-        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+        gl = createGL();
     }
     if (!gl) return;
 
@@ -3038,53 +3785,147 @@ function initMatrixWebGL() {
         return;
     }
 
-    gl.useProgram(glProgramMatrix);
+    matrixLoc =
+    cacheLocations(
+        gl,
+        glProgramMatrix,
+        ["a_pos"],
+        [
+            "u_res",
+            "u_time",
+            "u_colorMain",
+            "u_colorHead",
+            "u_fontTexture"
+        ]
+    );
 
-    let buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    glMatrixBuffer =
+    gl.createBuffer();
+
+	gl.bindBuffer(
+		gl.ARRAY_BUFFER,
+		glMatrixBuffer
+	);
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
         gl.STATIC_DRAW
     );
 
-    let loc = gl.getAttribLocation(glProgramMatrix, "a_pos");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
     glReadyMatrix = true;
 }
 
 let glProgramTunnel = null;
 let glReadyTunnel = false;
+let glTunnelBuffer = null;
 
+let tunnelLoc = {
+    pos: null,
+    res: null,
+    time: null,
+    colorMain: null,
+    colorAccent: null
+};
 function tunnelWebGL(k) {
+
     x.clearRect(0, 0, W, H);
-    if (!glReadyTunnel) initTunnelWebGL();
 
-    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    if (!glReadyTunnel)
+        initTunnelWebGL();
 
-    gl.useProgram(glProgramTunnel);
+    if (!glProgramTunnel)
+        return;
 
-    gl.uniform2f(gl.getUniformLocation(glProgramTunnel, "u_res"), glCanvas.width, glCanvas.height);
-    gl.uniform1f(gl.getUniformLocation(glProgramTunnel, "u_time"), (t * 0.001) % 10000.0);
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
 
-    let c1 = hexToRgbNormalizedFast(tone(0)); 
-    let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
+    gl.clearColor(
+        0,
+        0,
+        0,
+        0
+    );
 
-    gl.uniform3f(gl.getUniformLocation(glProgramTunnel, "u_colorMain"), c1[0], c1[1], c1[2]);
-    gl.uniform3f(gl.getUniformLocation(glProgramTunnel, "u_colorAccent"), c2[0], c2[1], c2[2]);
+    gl.clear(
+        gl.COLOR_BUFFER_BIT
+    );
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.useProgram(
+        glProgramTunnel
+    );
+
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glTunnelBuffer
+    );
+
+    gl.enableVertexAttribArray(
+        tunnelLoc.pos
+    );
+
+    gl.vertexAttribPointer(
+        tunnelLoc.pos,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
+
+    gl.uniform2f(
+        tunnelLoc.res,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    const safeTime =
+        (t * 0.001) % 100.0;
+
+    gl.uniform1f(
+        tunnelLoc.time,
+        safeTime
+    );
+
+    const c1 =
+        hexToRgbNormalizedFast(
+            tone(0)
+        );
+
+    const c2 =
+        hexToRgbNormalizedFast(
+            tone(1) || tone(0)
+        );
+
+    gl.uniform3f(
+        tunnelLoc.colorMain,
+        c1[0],
+        c1[1],
+        c1[2]
+    );
+
+    gl.uniform3f(
+        tunnelLoc.colorAccent,
+        c2[0],
+        c2[1],
+        c2[2]
+    );
+
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
 }
 
 function initTunnelWebGL() {
     if (glReadyTunnel) return;
 
     if (!gl) {
-        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+        gl = createGL();
     }
     if (!gl) return;
 
@@ -3144,20 +3985,32 @@ function initTunnelWebGL() {
         console.log(gl.getProgramInfoLog(glProgramTunnel));
         return;
     }
+	
+	tunnelLoc =
+    cacheLocations(
+        gl,
+        glProgramTunnel,
+        ["a_pos"],
+        [
+            "u_res",
+            "u_time",
+            "u_colorMain",
+            "u_colorAccent"
+        ]
+    );
 
-    gl.useProgram(glProgramTunnel);
+    glTunnelBuffer =
+    gl.createBuffer();
 
-    let buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+	gl.bindBuffer(
+		gl.ARRAY_BUFFER,
+		glTunnelBuffer
+	);
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
         gl.STATIC_DRAW
     );
-
-    let loc = gl.getAttribLocation(glProgramTunnel, "a_pos");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
     glReadyTunnel = true;
 }
@@ -3394,11 +4247,7 @@ function initSpectrumWebGL() {
     if (glReadySpectrum) return;
 
     if (!gl) {
-        gl = glCanvas.getContext("webgl", {
-            alpha: true,
-            antialias: false,
-            preserveDrawingBuffer: false
-        });
+        gl = createGL();
     }
 
     if (!gl) return;
@@ -3436,73 +4285,41 @@ function initSpectrumWebGL() {
             step(vec2(0.06), cellUv) *
             step(cellUv, vec2(0.94));
 
-        float cellMask =
-            border.x * border.y;
+        float cellMask = 1.0;
+            //border.x * border.y;
 
         float time =
-            u_time * 0.8;
+			u_time * 0.2;
 
-        float mode =
-            mod(
-                floor(time / 8.0),
-                3.0
-            );
+		// --- ส่วนที่แก้ไข: ทำให้ wave1 แสดง 1 ครั้ง ซ่อน 2 ครั้ง ---
+        
+        // 1. คำนวณเฟสเวลาของ wave1 (ดึงออกมาจาก sin)
+        float wave1Phase = cellId.x * 0.35 + time;
 
-        float val = 0.0;
+        // 2. แบ่งรอบของคลื่นด้วย 3.0 * PI (3 รอบคลื่น)
+        // แสดงแค่ช่วง 1 รอบแรก (2.0 * PI) และซ่อนช่วงที่เหลือ (อีก 2 รอบ)
+        float cycle = mod(wave1Phase, 6.28318 * 4.0);
+        float wave1Mask = step(cycle, 6.28318); // ได้ 1.0 ในรอบแรก และ 0.0 ใน 2 รอบถัดไป
 
-        if (mode < 0.5) {
+        // 3. นำ mask ไปคูณกับ sin เพื่อปิด/เปิด wave1
+        float wave1 = sin(wave1Phase) * wave1Mask;
 
-            float wave1 =
-                sin(
-                    cellId.x * 0.3 +
-                    time
-                );
+        // --- จบส่วนที่แก้ไข ---
 
-            float wave2 =
-                cos(
-                    cellId.y * 0.2 -
-                    time
-                );
+		float wave2 =
+			sin(
+				cellId.x * 0.18 -
+				time * 0.5
+			);
 
-            val =
-                (wave1 + wave2 + 2.0)
-                * 0.25;
 
-        } else if (mode < 1.5) {
-
-            vec2 center =
-                u_gridCount * 0.5;
-
-            vec2 d =
-                cellId - center;
-
-            float dist2 =
-                dot(d, d);
-
-            val =
-                (
-                    sin(
-                        dist2 * 0.02 -
-                        time * 2.0
-                    )
-                    + 1.0
-                ) * 0.5;
-
-        } else {
-
-            val =
-                abs(
-                    sin(
-                        cellId.x * 0.5 +
-                        time
-                    )
-                    *
-                    cos(
-                        cellId.y * 0.5 +
-                        time
-                    )
-                );
-        }
+		float val =
+			(wave1 * 0.5 +
+			 wave2 * 0.1)
+			 *
+			 0.5
+			 +
+			 0.5;
 
         float opacity =
             clamp(
@@ -3511,15 +4328,8 @@ function initSpectrumWebGL() {
                 1.0
             );
 
-        float colorSwitch =
-            step(
-                0.5,
-                fract(
-                    (cellId.x +
-                     cellId.y)
-                     * 0.1
-                )
-            );
+        vec2 blink = step(0.5, fract(cellId * 0.1));
+		float colorSwitch = abs(blink.x - blink.y);
 
         vec3 baseColor =
             mix(
@@ -3606,42 +4416,21 @@ function initSpectrumWebGL() {
         );
         return;
     }
+	
+	spectrumLoc =
+    cacheLocations(
+        gl,
+        glProgramSpectrum,
+        ["a_pos"],
+        [
+            "u_res",
+            "u_time",
+            "u_colorMain",
+            "u_colorAccent",
+			"u_gridCount"
+        ]
+    );
 
-    spectrumLoc.pos =
-        gl.getAttribLocation(
-            glProgramSpectrum,
-            "a_pos"
-        );
-
-    spectrumLoc.res =
-        gl.getUniformLocation(
-            glProgramSpectrum,
-            "u_res"
-        );
-
-    spectrumLoc.time =
-        gl.getUniformLocation(
-            glProgramSpectrum,
-            "u_time"
-        );
-
-    spectrumLoc.gridCount =
-        gl.getUniformLocation(
-            glProgramSpectrum,
-            "u_gridCount"
-        );
-
-    spectrumLoc.colorMain =
-        gl.getUniformLocation(
-            glProgramSpectrum,
-            "u_colorMain"
-        );
-
-    spectrumLoc.colorAccent =
-        gl.getUniformLocation(
-            glProgramSpectrum,
-            "u_colorAccent"
-        );
 
     glSpectrumBuffer =
         gl.createBuffer();
@@ -3671,6 +4460,14 @@ let glProgramCyberGrid = null;
 let glReadyCyberGrid = false;
 let glCyberGridBuffer = null;
 
+let cyberGridLoc = {
+    pos: null,
+    res: null,
+    time: null,
+    colorMain: null,
+    colorAccent: null
+};
+
 function cyberGridWebGL(k) {
     x.clearRect(0, 0, W, H);
     if (!glReadyCyberGrid) initCyberGridWebGL();
@@ -3684,24 +4481,50 @@ function cyberGridWebGL(k) {
 
     // Bind Buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridBuffer);
-    let loc = gl.getAttribLocation(glProgramCyberGrid, "a_pos");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(
+    cyberGridLoc.pos
+	);
+
+	gl.vertexAttribPointer(
+		cyberGridLoc.pos,
+		2,
+		gl.FLOAT,
+		false,
+		0,
+		0
+	);
 
     // Uniforms
-    gl.uniform2f(gl.getUniformLocation(glProgramCyberGrid, "u_res"), glCanvas.width, glCanvas.height);
+    gl.uniform2f(
+    cyberGridLoc.res,
+    glCanvas.width,
+    glCanvas.height
+	);
     
     // ใช้สเกลเวลา 0.1 ที่ไหลลื่นกำลังดี
     let currentTime = (typeof t !== 'undefined' ? t : performance.now()) * 0.1;
     //gl.uniform1f(gl.getUniformLocation(glProgramCyberGrid, "u_time"), currentTime % 10000.0);
 	let safeTime = (performance.now() * 0.001) % 100.0; // หรือใช้ (t * 0.001) % 100.0
-	gl.uniform1f(gl.getUniformLocation(glProgramCyberGrid, "u_time"), safeTime);
+	gl.uniform1f(
+    cyberGridLoc.time,
+    safeTime
+	);
 
     let c1 = hexToRgbNormalizedFast(tone(0)); 
     let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
 
-    gl.uniform3f(gl.getUniformLocation(glProgramCyberGrid, "u_colorMain"), c1[0], c1[1], c1[2]);
-    gl.uniform3f(gl.getUniformLocation(glProgramCyberGrid, "u_colorAccent"), c2[0], c2[1], c2[2]);
+    gl.uniform3f(
+    cyberGridLoc.colorMain,
+    c1[0],
+    c1[1],
+    c1[2]
+	);
+    gl.uniform3f(
+    cyberGridLoc.colorAccent,
+    c2[0],
+    c2[1],
+    c2[2]
+	);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
@@ -3710,7 +4533,7 @@ function initCyberGridWebGL() {
     if (glReadyCyberGrid) return;
 
     if (!gl) {
-        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+        gl = createGL();
     }
     if (!gl) return;
 
@@ -3719,348 +4542,205 @@ function initCyberGridWebGL() {
     void main(){
         gl_Position = vec4(a_pos, 0.0, 1.0);
     }`;
-	/*
-	//chatgpt fixed
+
 	const fs = `
-    // เปลี่ยนเป็น mediump เพื่อลดภาระ GPU มือถือ และป้องกัน OOM
-    precision mediump float;
+		precision mediump float;
 
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 u_colorMain;
-    uniform vec3 u_colorAccent;
+		uniform vec2 u_res;
+		uniform float u_time;
+		uniform vec3 u_colorMain;
+		uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper ที่ปลอดภัยสำหรับ GPU มือถือ
-	float hash21(vec2 p){
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-	}
 
-    void main() {
-        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+		float rand(vec2 co){
 
-        float horizon = 0.1;
-        float fov = 0.8;
-        
-        vec2 p = uv;
-        p.y -= horizon;
+			return fract(
+				sin(
+					dot(
+						co,
+						vec2(12.9898,78.233)
+					)
+				)
+				*
+				437.585
+			);
+		}
 
-        // -------------------------------------------------------------
-        // จุดสำคัญ: ป้องกัน Division by Zero / Infinity ใน GPU มือถือ
-        // -------------------------------------------------------------
-        float minGap = 0.08;
-        float shiftedY = abs(p.y) + minGap;
-        
-        // บังคับไม่ให้ shiftedY เข้าใกล้ 0 มากเกินไป
-        shiftedY = max(shiftedY, 0.001);
 
-        float z = fov / shiftedY;
-        
-        // จำกัดค่า z ไม่ให้พุ่งสูงเกินไปจน GPU คำนวณไม่ไหว
-        z = min(z, 30.0);
+		void main(){
 
-        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
+			vec2 uv =
+				(gl_FragCoord.xy -
+				0.5 * u_res.xy)
+				/
+				u_res.y;
 
-        // Grid Calculations
-        vec2 gridCount = vec2(8.0);
-        vec2 cellId = floor(gridUv * gridCount);
 
-        // ตัดเส้นขอบออก บล็อกติดกัน (cellMask = 1.0)
-        float cellMask = 1.0; 
+			float horizon = 0.1;
+			float fov = 0.8;
 
-        // Digital Wave & Pulse
-        float rnd = hash21(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28318) * 0.5 + 0.5;
-        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
-        
-        float activity = smoothstep(0.4,0.8,rnd);
-        activity = clamp(activity, 0.05, 1.0)*(pulse * 0.6 + wave * 0.4);;
-		
-		float center =1.0 / (1.0 + abs(p.x) * z * 0.25);
-		activity *= center;
 
-        // Color & Depth Fog Fade
-        float colorSelect = step(0.5, hash21(cellId));
-        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+			vec2 p = uv;
+			p.y -= horizon;
 
-        // คำนวณ Fog และ Glow แบบปลอดภัย
-        float fog = 1.0 - clamp(z / 25.0, 0.0, 1.0); // ปรับระยะหมอก
-        
-        vec2 d = uv - vec2(0.0, horizon);
-		float dist2 = dot(d, d);
-        float centerGlow = 1.0 - smoothstep(0.0, 2.0, dist2);
 
-        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
-        finalColor += u_colorAccent * centerGlow * 0.8; 
-        finalColor *= fog;
+			float safeY =
+				max(
+					abs(p.y),
+					0.04
+				);
 
-        gl_FragColor = vec4(finalColor, 1.0);
-    }`;
-	*/
-	
-//gemini fixed	
-	const fs = `
-    precision mediump float;
 
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 u_colorMain;
-    uniform vec3 u_colorAccent;
+			float z =
+				min(
+					fov / safeY,
+					15.0
+				);
 
-    float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 437.585);
-    }
 
-    void main() {
-        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
 
-        float horizon = 0.1;
-        float fov = 0.8;
-        
-        vec2 p = uv;
-        p.y -= horizon;
+			vec2 gridUv =
+				vec2(
+					p.x * z,
+					fract(
+						z * 0.1 +
+						u_time * 0.05
+					)
+					*
+					10.0
+				);
 
-        // --- แก้ไขจุดนี้: ล็อกตัวหารไม่ให้เป็น 0 ป้องกันตารางยืดเป็นเส้นแนวตั้ง ---
-        float safeY = max(abs(p.y), 0.04);
-        float z = clamp(fov / safeY, 0.0, 15.0); 
 
-        //vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
-		vec2 gridUv = vec2(p.x * z, fract(z * 0.1 + u_time * 0.05) * 10.0);
+			vec2 cellId =
+				floor(
+					gridUv *
+					12.0
+				);
 
-        // Grid Calculations
-        vec2 gridCount = vec2(12.0, 12.0);
-        vec2 cellId = floor(gridUv * gridCount);
 
-        // บล็อกติดกัน ชนกันพอดี
-        float cellMask = 1.0; 
 
-        // Digital Wave & Pulse
-        float rnd = rand(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28318) * 0.5 + 0.5;
-        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
-        
-        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
-        activity = clamp(activity, 0.05, 1.0);
+			float rnd =
+				rand(cellId);
 
-        // Color & Depth Fog Fade
-        float colorSelect = step(0.5, rand(cellId + vec2(1.0, 1.0)));
-        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
 
-        // Fog & Center Glow
-        float fog = smoothstep(18.0, 0.0, z);
-        float distToCenter = length(uv - vec2(0.0, horizon));
-        float centerGlow = exp(-clamp(distToCenter * 2.5, 0.0, 10.0));
 
-        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
-        finalColor += u_colorAccent * centerGlow * 0.8; 
-        finalColor *= fog;
+			float pulse =
+				sin(
+					u_time * 2.0 +
+					rnd * 6.28318
+				)
+				*
+				0.5
+				+
+				0.5;
 
-        gl_FragColor = vec4(finalColor, fog);
-    }`;
-	/*
-มีหมอกลอยตรงกกลาง
-	const fs = `
-    precision highp float;
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 u_colorMain;
-    uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper
-    float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-    }
 
-    // Smooth Noise Function สำหรับสร้างเมฆหมอกนุ่มนวล
-    float noise(vec2 st) {
-        vec2 i = floor(st);
-        vec2 f = fract(st);
+			// ลด cos ออก
+			float wave =
+				sin(
+					cellId.y * 0.3 -
+					u_time * 1.5
+				)
+				*
+				0.5;
 
-        float a = rand(i);
-        float b = rand(i + vec2(1.0, 0.0));
-        float c = rand(i + vec2(0.0, 1.0));
-        float d = rand(i + vec2(1.0, 1.0));
 
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-    }
 
-    void main() {
-        // Normalize UV to Center (-1.0 to 1.0)
-        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+			float activity =
+				step(
+					0.3,
+					rnd
+				)
+				*
+				(
+					pulse * 0.6 +
+					wave * 0.4
+				);
 
-        float horizon = 0.1;
-        float fov = 0.8;
-        
-        vec2 p = uv;
-        p.y -= horizon;
-        
-        float z = fov / abs(p.y);
-        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
 
-        // Grid & Cell Calculations
-        vec2 gridCount = vec2(12.0, 12.0);
-        vec2 cellId = floor(gridUv * gridCount);
-        vec2 cellUv = fract(gridUv * gridCount);
+			activity =
+				clamp(
+					activity,
+					0.05,
+					1.0
+				);
 
-        vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
-        float cellMask = border.x * border.y;
 
-        // Digital Wave & Pulse Activity
-        float rnd = rand(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
-        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
-        
-        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
-        activity = clamp(activity, 0.05, 1.0);
 
-        float colorSelect = step(0.5, rand(cellId + 1.0));
-        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+			// ใช้ rnd เดิมแทน rand รอบสอง
+			float colorSelect =
+				step(
+					0.5,
+					fract(rnd * 17.0)
+				);
 
-        // Fog ละลายไปกับเส้นขอบฟ้า
-        float fog = smoothstep(12.0, 0.0, z);
 
-        // =========================================================
-        // เมฆ/หมอกเคลื่อนที่จากซ้ายไปขวา (Horizontal Moving Fog)
-        // =========================================================
-        // สเกลตำแหน่งหมอกให้อยู่เฉพาะตรงขอบฟ้า
-        vec2 fogUv = vec2(uv.x * 1.2 - u_time * 0.12, uv.y * 1.8); 
-    
-		float fogNoise = noise(fogUv * 2.0) * 0.5 + noise(fogUv * 4.0) * 0.5;
-		
-		// คืนค่ารัศมีการฟุ้งกระจายของหมอกไว้เท่าเดิม (3.5)
-		float fogMask = exp(-abs(uv.y - horizon) * 3.5); 
-		
-		// ลดตัวคูณความเข้มลงเหลือเพียง 0.25 (จางลงมาก แต่พื้นที่ครอบคลุมเท่าเดิม)
-		vec3 fogColor = mix(u_colorAccent, u_colorMain, fogNoise) * fogNoise * fogMask * 0.25;
+			vec3 baseColor =
+				mix(
+					u_colorMain,
+					u_colorAccent,
+					colorSelect
+				);
 
-        // รวมแสงทั้งหมด
-        vec3 finalColor = baseColor * (activity * 1.5) * cellMask * fog;
-        finalColor += fogColor; // เพิ่มชั้นหมอกเลื่อนลงไปตรงกลาง
 
-        gl_FragColor = vec4(finalColor, max(fog, fogMask * fogNoise));
-    }`;
-default มีช่องมืดตรงกลาง
-    const fs = `
-    precision highp float;
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 u_colorMain;
-    uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper
-    float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-    }
+			// แทน smoothstep
+			float fog =
+				clamp(
+					(18.0-z)
+					/
+					18.0,
+					0.0,
+					1.0
+				);
 
-    void main() {
-        // Normalize UV to Center (-1.0 to 1.0)
-        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
 
-        // 1. Perspective Grid Projection (สร้างมิติมุมมองพุ่งเข้าหาจอ)
-        float horizon = 0.1;
-        float fov = 0.8;
-        
-        // แยกส่วนพื้นทางเดินข้างล่างกับเพดานข้างบน
-        vec2 p = uv;
-        p.y -= horizon;
-        
-        // คำนวณความลึก (Z-Depth)
-        float z = fov / abs(p.y);
-        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8); // เคลื่อนที่พุ่งไปข้างหน้า
 
-        // 2. Grid & Cell Calculations
-        vec2 gridCount = vec2(12.0, 12.0);
-        vec2 cellId = floor(gridUv * gridCount);
-        vec2 cellUv = fract(gridUv * gridCount);
+			float distToCenter =
+				length(
+					uv -
+					vec2(
+						0.0,
+						horizon
+					)
+				);
 
-        // เส้นขอบตารางพิกเซล
-        vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
-        float cellMask = border.x * border.y;
 
-        // 3. Digital Wave & Pulse Activity (สร้างเอฟเฟกต์ไฟวิ่งบนตึก/ตาราง)
-        float rnd = rand(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
-        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
-        
-        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
-        activity = clamp(activity, 0.05, 1.0);
 
-        // 4. Color & Depth Fog Fade
-        float colorSelect = step(0.5, rand(cellId + 1.0));
-        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
+			// แทน exp()
+			float centerGlow =
+				1.0 /
+				(
+					1.0 +
+					distToCenter * 3.0
+				);
 
-        // Fog ละลายไปกับเส้นขอบฟ้า (Horizon Fog)
-        float fog = smoothstep(12.0, 0.0, z);
 
-        // แสง Glow จากกึ่งกลางขอบฟ้า (Horizon Core Glow)
-        float centerGlow = exp(-length(uv - vec2(0.0, horizon)) * 3.0);
 
-        // รวมแสงและสีทั้งหมด
-        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
-        finalColor += u_colorAccent * centerGlow * 0.6; // ใส่ไฟสว่างตรงขอบฟ้า
-        finalColor *= fog;
+			vec3 finalColor =
+				baseColor *
+				activity *
+				1.5;
 
-        gl_FragColor = vec4(finalColor, fog);
-    }`;
-	
-ไม่มีช่องตรงกลาง
-	const fs = `
-    precision highp float;
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 u_colorMain;
-    uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper
-    float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-    }
 
-    void main() {
-        // Normalize UV to Center (-1.0 to 1.0)
-        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+			finalColor +=
+				u_colorAccent *
+				centerGlow *
+				0.8;
 
-        // 1. Perspective Grid Projection
-        float horizon = 0.1;
-        float fov = 0.8;
-        
-        vec2 p = uv;
-        p.y -= horizon;
-        
-        // ป้องกันค่า division by zero บริเวณเส้นแนวนอนพอดี
-        float safeY = sign(p.y) * max(abs(p.y), 0.001);
-        float z = fov / abs(safeY);
-        vec2 gridUv = vec2(p.x * z, z + u_time * 0.8);
 
-        // 2. Grid & Cell Calculations
-        vec2 gridCount = vec2(12.0, 12.0);
-        vec2 cellId = floor(gridUv * gridCount);
-        vec2 cellUv = fract(gridUv * gridCount);
+			finalColor *= fog;
 
-        // เส้นขอบตารางพิกเซล
-        vec2 border = step(vec2(0.08), cellUv) * step(cellUv, vec2(0.92));
-        float cellMask = border.x * border.y;
 
-        // 3. Digital Wave & Pulse Activity
-        float rnd = rand(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28) * 0.5 + 0.5;
-        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
-        
-        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
-        activity = clamp(activity, 0.05, 1.0);
+			gl_FragColor =
+				vec4(
+					finalColor,
+					fog
+				);
+		}`;
 
-        // 4. Color Selection
-        float colorSelect = step(0.5, rand(cellId + 1.0));
-        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
-
-        // รวมแสงและสีทั้งหมด (ตัด fog มืดตรงกลางออก เพื่อให้ตารางชนชิดติดกันพอดี)
-        vec3 finalColor = baseColor * (activity * 1.5) * cellMask;
-
-        gl_FragColor = vec4(finalColor, 1.0);
-    }`;
-*/
     function shader(type, src) {
         let s = gl.createShader(type);
         gl.shaderSource(s, src);
@@ -4080,6 +4760,19 @@ default มีช่องมืดตรงกลาง
         console.error(gl.getProgramInfoLog(glProgramCyberGrid));
         return;
     }
+	
+	cyberGridLoc =
+    cacheLocations(
+        gl,
+        glProgramCyberGrid,
+        ["a_pos"],
+        [
+            "u_res",
+            "u_time",
+            "u_colorMain",
+            "u_colorAccent"
+        ]
+    );
 
     glCyberGridBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridBuffer);
@@ -4096,145 +4789,432 @@ let glProgramCyberGridFloor = null;
 let glReadyCyberGridFloor = false;
 let glCyberGridFloorBuffer = null;
 
+let cyberGridFloorLoc = {
+    pos: null,
+    res: null,
+    time: null,
+    colorMain: null,
+    colorAccent: null
+};
 function cyberGridFloorWebGL(k) {
-    x.clearRect(0, 0, W, H);
-    if (!glReadyCyberGridFloor) initCyberGridFloorWebGL();
-    if (!glProgramCyberGridFloor) return;
 
-    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-    gl.clearColor(0.05, 0.05, 0.08, 1.0);
+    x.clearRect(0, 0, W, H);
+
+    if (!glReadyCyberGridFloor)
+        initCyberGridFloorWebGL();
+
+    if (!glProgramCyberGridFloor)
+        return;
+
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    gl.clearColor(
+        0.05,
+        0.05,
+        0.08,
+        1.0
+    );
+
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.useProgram(glProgramCyberGridFloor);
+    gl.useProgram(
+        glProgramCyberGridFloor
+    );
 
-    // Bind Buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridFloorBuffer);
-    let loc = gl.getAttribLocation(glProgramCyberGridFloor, "a_pos");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glCyberGridFloorBuffer
+    );
 
-    // Uniforms
-    gl.uniform2f(gl.getUniformLocation(glProgramCyberGridFloor, "u_res"), glCanvas.width, glCanvas.height);
-    
-    // ใช้สเกลเวลา 0.1 ที่ไหลลื่นกำลังดี
-    let currentTime = (typeof t !== 'undefined' ? t : performance.now()) * 0.1;
-    //gl.uniform1f(gl.getUniformLocation(glProgramCyberGridFloor, "u_time"), currentTime % 10000.0);
-	let safeTime = (performance.now() * 0.001) % 100.0; // หรือใช้ (t * 0.001) % 100.0
-	gl.uniform1f(gl.getUniformLocation(glProgramCyberGridFloor, "u_time"), safeTime);
+    gl.enableVertexAttribArray(
+        cyberGridFloorLoc.pos
+    );
 
-    let c1 = hexToRgbNormalizedFast(tone(0)); 
-    let c2 = hexToRgbNormalizedFast(tone(1) || tone(0));
+    gl.vertexAttribPointer(
+        cyberGridFloorLoc.pos,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
 
-    gl.uniform3f(gl.getUniformLocation(glProgramCyberGridFloor, "u_colorMain"), c1[0], c1[1], c1[2]);
-    gl.uniform3f(gl.getUniformLocation(glProgramCyberGridFloor, "u_colorAccent"), c2[0], c2[1], c2[2]);
+    gl.uniform2f(
+        cyberGridFloorLoc.res,
+        glCanvas.width,
+        glCanvas.height
+    );
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    const safeTime =
+        (performance.now() * 0.001)
+        % 100.0;
+
+    gl.uniform1f(
+        cyberGridFloorLoc.time,
+        safeTime
+    );
+
+    const c1 =
+        hexToRgbNormalizedFast(
+            tone(0)
+        );
+
+    const c2 =
+        hexToRgbNormalizedFast(
+            tone(1) || tone(0)
+        );
+
+    gl.uniform3f(
+        cyberGridFloorLoc.colorMain,
+        c1[0],
+        c1[1],
+        c1[2]
+    );
+
+    gl.uniform3f(
+        cyberGridFloorLoc.colorAccent,
+        c2[0],
+        c2[1],
+        c2[2]
+    );
+
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
 }
 function initCyberGridFloorWebGL() {
+
     if (glReadyCyberGridFloor) return;
 
     if (!gl) {
-        gl = glCanvas.getContext("webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false }) ||
-             glCanvas.getContext("experimental-webgl", { alpha: true, antialias: false, preserveDrawingBuffer: false });
+        gl = createGL();
     }
+
     if (!gl) return;
 
     const vs = `
     attribute vec2 a_pos;
-    void main(){
+
+    void main() {
         gl_Position = vec4(a_pos, 0.0, 1.0);
     }`;
 
     const fs = `
-    precision mediump float;
+		precision mediump float;
 
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec3 u_colorMain;
-    uniform vec3 u_colorAccent;
+		uniform vec2 u_res;
+		uniform float u_time;
+		uniform vec3 u_colorMain;
+		uniform vec3 u_colorAccent;
 
-    // Pseudo-random helper (Safe for Mobile GPU)
-    float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 437.585);
-    }
 
-    void main() {
-        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+		float rand(vec2 co){
 
-        // คำนวณเฉพาะระนาบพื้นล่างที่ Horizon อยู่สูง (0.6)
-        float horizon = 0.6;
-        float fov = 0.8;
-        
-        // คำนวณระยะห่างจากเส้นขอบฟ้าลงมาด้านล่าง
-        float pY = horizon - uv.y;
+			return fract(
+				sin(
+					dot(
+						co,
+						vec2(12.9898,78.233)
+					)
+				)
+				*
+				437.585
+			);
+		}
 
-        // บังคับคำนวณเฉพาะพื้นที่ใต้เส้น Horizon เท่านั้น
-        if (pY <= 0.0) {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-            return;
-        }
 
-        // ป้องกัน Division by Zero & Precision Loss บน Android
-        float safeY = max(pY, 0.04);
-        float z = clamp(fov / safeY, 0.0, 15.0); 
+		void main(){
 
-        // คำนวณ Grid UV แบบ Safe Time Loop
-        vec2 gridUv = vec2(uv.x * z, fract(z * 0.1 + u_time * 0.05) * 10.0);
+			vec2 uv =
+				(
+					gl_FragCoord.xy -
+					0.5 * u_res.xy
+				)
+				/
+				u_res.y;
 
-        // Grid & Cell Calculations
-        vec2 gridCount = vec2(12.0, 12.0);
-        vec2 cellId = floor(gridUv * gridCount);
 
-        // Digital Wave & Pulse Activity
-        float rnd = rand(cellId);
-        float pulse = sin(u_time * 2.0 + rnd * 6.28318) * 0.5 + 0.5;
-        float wave = sin(cellId.y * 0.3 - u_time * 1.5) * cos(cellId.x * 0.3);
-        
-        float activity = step(0.3, rnd) * (pulse * 0.6 + wave * 0.4);
-        activity = clamp(activity, 0.05, 1.0);
+			float horizon = 0.6;
 
-        // Color Selection
-        float colorSelect = step(0.5, rand(cellId + vec2(1.0, 1.0)));
-        vec3 baseColor = mix(u_colorMain, u_colorAccent, colorSelect);
 
-        // Depth Fog & Center Glow
-        float fog = smoothstep(18.0, 0.0, z);
-        float distToCenter = length(uv - vec2(0.0, horizon));
-        float centerGlow = exp(-clamp(distToCenter * 2.5, 0.0, 10.0));
+			float pY =
+				horizon - uv.y;
 
-        // รวมแสงและสีทั้งหมด
-        vec3 finalColor = baseColor * (activity * 1.5);
-        finalColor += u_colorAccent * centerGlow * 0.8; 
-        finalColor *= fog;
 
-        gl_FragColor = vec4(finalColor, fog);
-    }`;
+			if(pY <= 0.0){
+
+				gl_FragColor =
+					vec4(
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					);
+
+				return;
+			}
+
+
+
+			float z =
+				min(
+					0.8 / max(pY,0.04),
+					15.0
+				);
+
+
+
+			vec2 gridUv =
+				vec2(
+					uv.x * z,
+					fract(
+						z * 0.1 +
+						u_time * 0.05
+					)
+					*
+					10.0
+				);
+
+
+
+			vec2 cellId =
+				floor(
+					gridUv *
+					10.0
+				);
+
+
+
+			float rnd =
+				rand(cellId);
+
+
+
+			float pulse =
+				sin(
+					u_time * 2.0 +
+					rnd * 6.28318
+				)
+				*
+				0.5
+				+
+				0.5;
+
+
+
+			float wave =
+				sin(
+					cellId.y * 0.3 -
+					u_time * 1.5
+				)
+				*
+				cos(
+					cellId.x * 0.3
+				);
+
+
+
+			float activity =
+				step(
+					0.3,
+					rnd
+				)
+				*
+				(
+					pulse * 0.6 +
+					wave * 0.4
+				);
+
+
+			activity =
+				clamp(
+					activity,
+					0.05,
+					1.0
+				);
+
+
+
+			float colorSelect =
+				step(
+					0.5,
+					fract(rnd * 17.0)
+				);
+
+
+
+			vec3 baseColor =
+				mix(
+					u_colorMain,
+					u_colorAccent,
+					colorSelect
+				);
+
+
+
+			float fog =
+				clamp(
+					(18.0-z)
+					/
+					18.0,
+					0.0,
+					1.0
+				);
+
+
+
+			float distToCenter =
+				length(
+					uv -
+					vec2(
+						0.0,
+						horizon
+					)
+				);
+
+
+
+			// แทน exp() เบากว่าบนมือถือ
+			float centerGlow =
+				1.0 /
+				(
+					1.0 +
+					distToCenter * 3.0
+				);
+
+
+
+			vec3 finalColor =
+				baseColor *
+				activity *
+				1.5;
+
+
+
+			finalColor +=
+				u_colorAccent *
+				centerGlow *
+				0.8;
+
+
+
+			finalColor *= fog;
+
+
+
+			gl_FragColor =
+				vec4(
+					finalColor,
+					fog
+				);
+		}`;
 
     function shader(type, src) {
-        let s = gl.createShader(type);
-        gl.shaderSource(s, src);
+
+        const s =
+            gl.createShader(type);
+
+        gl.shaderSource(
+            s,
+            src
+        );
+
         gl.compileShader(s);
-        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-            console.error(gl.getShaderInfoLog(s));
+
+        if (
+            !gl.getShaderParameter(
+                s,
+                gl.COMPILE_STATUS
+            )
+        ) {
+            console.error(
+                gl.getShaderInfoLog(s)
+            );
         }
+
         return s;
     }
 
-    glProgramCyberGridFloor = gl.createProgram();
-    gl.attachShader(glProgramCyberGridFloor, shader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(glProgramCyberGridFloor, shader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(glProgramCyberGridFloor);
+    glProgramCyberGridFloor =
+        gl.createProgram();
 
-    if (!gl.getProgramParameter(glProgramCyberGridFloor, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(glProgramCyberGridFloor));
+    gl.attachShader(
+        glProgramCyberGridFloor,
+        shader(
+            gl.VERTEX_SHADER,
+            vs
+        )
+    );
+
+    gl.attachShader(
+        glProgramCyberGridFloor,
+        shader(
+            gl.FRAGMENT_SHADER,
+            fs
+        )
+    );
+
+    gl.linkProgram(
+        glProgramCyberGridFloor
+    );
+
+    if (
+        !gl.getProgramParameter(
+            glProgramCyberGridFloor,
+            gl.LINK_STATUS
+        )
+    ) {
+        console.error(
+            gl.getProgramInfoLog(
+                glProgramCyberGridFloor
+            )
+        );
         return;
     }
 
-    glCyberGridFloorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, glCyberGridFloorBuffer);
+    // ===== CACHE LOCATIONS =====
+
+    cyberGridFloorLoc =
+    cacheLocations(
+        gl,
+        glProgramCyberGridFloor,
+        ["a_pos"],
+        [
+            "u_res",
+            "u_time",
+            "u_colorMain",
+            "u_colorAccent"
+        ]
+    );
+
+    // ===== FULLSCREEN QUAD =====
+
+    glCyberGridFloorBuffer =
+        gl.createBuffer();
+
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glCyberGridFloorBuffer
+    );
+
     gl.bufferData(
         gl.ARRAY_BUFFER,
-        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+
+            -1,  1,
+             1, -1,
+             1,  1
+        ]),
         gl.STATIC_DRAW
     );
 
@@ -4242,7 +5222,7 @@ function initCyberGridFloorWebGL() {
 }
 // --- Centralized Scene Registry ---
 const scenes = { 
-    inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkWebGL, glSceneName: "inkWebGL", render: (k) => inkBubblesWebGL(k) }, 
+    inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkBubblesWebGL, glSceneName: "inkBubblesWebGL", render: (k) => inkBubblesWebGL(k) }, 
     nebulaWebGL:     { category: "webgl", type: "webgl", title: "COSMIC NEBULA[WebGL]", init: initNebulaWebGL, glSceneName: "nebulaWebGL", render: (k) => nebulaWebGL(k) }, 
     matrixWebGL:     { category: "webgl", type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
     tunnelWebGL:     { category: "webgl", type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
@@ -4294,6 +5274,50 @@ const scenes = {
     synthwave: { category: "pc", type: "canvas", title: "RETRO SYNTHWAVE", render: (k) => synthwave(k) } 
 };
 
+function cacheLocations(gl, program, attribs = [], uniforms = []) {
+
+    const loc = {};
+
+    for (const name of attribs) {
+
+        const key =
+            name.replace(/^a_/, "");
+
+        loc[key] =
+            gl.getAttribLocation(
+                program,
+                name
+            );
+    }
+
+
+    for (const name of uniforms) {
+
+        const key =
+            name
+            .replace(/^u_/, "")
+            .replace(/\[0\]$/, "");
+
+        loc[key] =
+            gl.getUniformLocation(
+                program,
+                name
+            );
+    }
+
+    return loc;
+}
+function createGL(){
+
+    return glCanvas.getContext(
+        "webgl",
+        {
+            alpha:true,
+            antialias:false,
+            preserveDrawingBuffer:false,
+        }
+    );
+}
 function renderSceneOptions() {
     const meta = {
         webgl: { group: document.getElementById('group-webgl'), icon: '🧮 ' },
