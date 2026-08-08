@@ -2377,67 +2377,59 @@ function tv_grid_spectrum(k) {
     }
 
     let g = S.tv_spec;
-    g.time += k * 0.08; // ความเร็วของคลื่น
+    g.time += k * 0.01; // ความเร็วของคลื่น 0.08
+	/*
+	const MODE_DURATION = 35 * 60; // 35 วินาที @ 60fps
     g.modeTimer += k;
-
+	
     // สลับโหมดการเล่นทุกๆ 80 เฟรม เพื่อไม่ให้ภาพซ้ำจำเจ
-    if (g.modeTimer > 80) {
+    if (g.modeTimer > MODE_DURATION) {
         g.modeTimer = 0;
-        g.mode = (g.mode + 1) % 3;
-    }
+        g.mode = (g.mode + 1) % 2;
+    }*/
 
     const gap = 1.5;
 
     // วาดครอบคลุมทั้งจอ (Loop เดียวรวดเดียว)
     for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            let val = 0;
+    for (let c = 0; c < cols; c++) {
+        let cx = cols / 2;
+        let cy = rows / 2;
+        let dist = Math.sqrt((c - cx) ** 2 + (r - cy) ** 2);
 
-            if (g.mode === 0) {
-                // โหมด คลื่นวิ่งแนวนอน/แนวตั้งสลับกัน (Equalizer Wave)
-                let wave1 = Math.sin(c * 0.3 + g.time + g.offsets[c]);
-                let wave2 = Math.cos(r * 0.2 - g.time);
-                val = (wave1 + wave2 + 2) / 4; // Normalized 0..1
-            } else if (g.mode === 1) {
-                // โหมด คลื่นวงกลมกระจายออกจากจุดศูนย์กลาง (Center Ripple)
-                let cx = cols / 2;
-                let cy = rows / 2;
-                let dist = Math.sqrt((c - cx) ** 2 + (r - cy) ** 2);
-                val = (Math.sin(dist * 0.5 - g.time * 2) + 1) / 2;
-            } else {
-                // โหมด สัญญาณรบกวนอนาล็อกแบบเป็นจังหวะ (Pulse Noise)
-                val = Math.sin(c * 0.5 + g.time) * Math.cos(r * 0.5 + g.time);
-                val = Math.abs(val);
-            }
+        // -------------------------------------------------------------
+        // 1. [ปรับระยะเวลาเว้นนานขึ้น]: 0.02ปรับตัวคูณหน้า dist (ยิ่งน้อยยิ่งเว้นนาน)
+        // -------------------------------------------------------------
+        let rawWave = (Math.sin(dist * 0.015 - g.time * 0.7) + 1) / 2; // [0, 1]
 
-            // คำนวณความสว่างและความเข้มแสง
-            let opacity = Math.min(1, Math.max(0, val));
+        // -------------------------------------------------------------
+        // 2. [ปรับแถบดำให้เล็กลง/บางลง]:16 ปรับเลขยกกำลัง (ยิ่งเยอะแถบดำยิ่งบาง)
+        // -------------------------------------------------------------
+        let darkFactor = Math.pow(rawWave, 500); 
 
-            // ข้ามการวาดช่องที่มืดสนิท เพื่อประหยัด Render Performance บนเครื่องเก่า
-            if (opacity < 0.1) continue;
+        // 3. นำไปลบความสว่างปกติ (0.9 คือสว่างเต็มจอ, ดรอปเหลือ 0.1 ตอนแถบดำมา)
+        let opacity = 0.50 - (darkFactor * 0.8);
 
-            let cellX = c * cellW + gap;
-            let cellY = r * cellH + gap;
-            let drawW = cellW - gap * 2;
-            let drawH = cellH - gap * 2;
+        let cellX = c * cellW + gap;
+        let cellY = r * cellH + gap;
+        let drawW = cellW - gap * 2;
+        let drawH = cellH - gap * 2;
 
-            // เลือกสีตามความสูง/ตำแหน่ง (ไล่เฉด RGB สไตล์ไซเบอร์ปังก์)
-            let colorIndex = (r + c + Math.floor(g.time * 2)) % 3;
-            let cellColor = tone(colorIndex);
+        let colorIndex = (r + c + Math.floor(g.time * 2)) % 3;
+        let cellColor = tone(colorIndex);
 
-            x.save();
-            x.fillStyle = `rgba(${rgb(cellColor)}, ${opacity * 0.8})`;
+        x.save();
+        x.fillStyle = `rgba(${rgb(cellColor)}, ${opacity})`;
 
-            // เปิด Glow เฉพาะช่องที่สว่างมากๆ เพื่อประหยัดการคำนวณ Shadow
-            if (opacity > 0.7) {
-                x.shadowColor = cellColor;
-                x.shadowBlur = opacity * 8;
-            }
-
-            x.fillRect(cellX, cellY, drawW, drawH);
-            x.restore();
+        if (opacity > 0.7) {
+            x.shadowColor = cellColor;
+            x.shadowBlur = opacity * 6;
         }
+
+        x.fillRect(cellX, cellY, drawW, drawH);
+        x.restore();
     }
+}
 }
 /*
 function tv_grid2(k) {
