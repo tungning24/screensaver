@@ -1481,6 +1481,103 @@ function tv_stars(k) {
     x.globalAlpha = 1;
 }
 
+const spaceImages = {};
+
+for(let i=1;i<=3;i++){
+    let name = String(i).padStart(3,'0');
+    let img = new Image();
+    img.src = `img/space/${name}.png`;
+    spaceImages[name] = img;
+}
+let spaceImg = new Image();
+spaceImg.src = "img/001.png";
+
+function tv_space(k, imgName="001") {
+
+    const img = spaceImages[imgName];
+
+    if (!img?.complete || !img.width) {
+        bg(0);
+		x.fillStyle = "#888";
+		x.font = "20px sans-serif";
+		x.textAlign = "center";
+		x.fillText("Loading...", W/2, H/2);
+        return;
+    }
+    if (!S.tv_space) {
+        S.tv_space = {
+            x1: 0,
+            y1: 0,
+            speedX: 5,
+            speedY: 1
+        };
+    }
+
+    bg(0);
+
+    let s = S.tv_space;
+
+    s.x1 = (s.x1 + k * s.speedX) % img.width;
+    s.y1 = (s.y1 + k * s.speedY) % img.height;
+
+    let ox = -s.x1;
+    let oy = -s.y1;
+
+    for (let xPos = ox; xPos < W; xPos += img.width) {
+        for (let yPos = oy; yPos < H; yPos += img.height) {
+            x.drawImage(
+                img,
+                xPos,
+                yPos,
+                img.width,
+                img.height
+            );
+        }
+    }
+}
+function tv_space2(k, imgName="001") {
+	const img = spaceImages[imgName];
+
+    if (!img?.complete || !img.width) {
+        bg(0);
+		x.fillStyle = "#888";
+		x.font = "20px sans-serif";
+		x.textAlign = "center";
+		x.fillText("Loading...", W/2, H/2);
+        return;
+    }
+    if (!S.tv_space) {
+        S.tv_space = {
+            a: 0,
+            b: 0
+        };
+    }
+
+    bg(0);
+
+    let s = S.tv_space;
+
+    s.a += k * 5; //15
+    s.b += k * 10; //40
+
+    drawTile(img, -s.a, -s.a * 0.3, 1.0);
+    drawTile(img, -s.b, -s.b * 0.6, 0.25);
+}
+
+function drawTile(img, ox, oy, alpha) {
+    x.globalAlpha = alpha;
+
+    ox %= img.width;
+    oy %= img.height;
+
+    for (let px = -ox - img.width; px < W; px += img.width) {
+        for (let py = -oy - img.height; py < H; py += img.height) {
+            x.drawImage(img, px, py);
+        }
+    }
+
+    x.globalAlpha = 1;
+}
 function tv_matrix(k) {
     bg(.18);
     let fs = 24;
@@ -5234,6 +5331,12 @@ const scenes = {
     tv_blobs:      { category: "tv", type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
     tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
     tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
+    tv_spacep1:  	   { category: "tv", type: "canvas", title: "TV SPACE : 1", render: (k) => tv_space(k,"001") }, 
+    tv_spacep2:  	   { category: "tv", type: "canvas", title: "TV SPACE : 2", render: (k) => tv_space(k,"002") }, 
+    tv_spacep3:  	   { category: "tv", type: "canvas", title: "TV SPACE : 3", render: (k) => tv_space(k,"003") }, 
+    tv_space2p1:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 1", render: (k) => tv_space2(k,"001") }, 
+    tv_space2p2:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 2", render: (k) => tv_space2(k,"002") }, 
+    tv_space2p3:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 3", render: (k) => tv_space2(k,"003") }, 
 
     matrix:    { category: "pc", type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
     matrix2:   { category: "pc", type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
