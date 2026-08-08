@@ -1483,7 +1483,7 @@ function tv_stars(k) {
 
 const spaceImages = {};
 
-for(let i=1;i<=33;i++){
+for(let i=1;i<=27;i++){
     let name = String(i).padStart(3,'0');
     let img = new Image();
     img.src = `img/space/${name}.png`;
@@ -1538,7 +1538,7 @@ function tv_space(k, imgName="001") {
 
 // ฟังก์ชันสุ่มชื่อรูปภาพจากรายการ 001 - 020
 function getRandomSpaceImgName() {
-    let randomNum = Math.floor(Math.random() * 33) + 1;
+    let randomNum = Math.floor(Math.random() * 27) + 1;
     return String(randomNum).padStart(3, '0');
 }
 
