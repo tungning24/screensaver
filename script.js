@@ -1483,7 +1483,7 @@ function tv_stars(k) {
 
 const spaceImages = {};
 
-for(let i=1;i<=3;i++){
+for(let i=1;i<=33;i++){
     let name = String(i).padStart(3,'0');
     let img = new Image();
     img.src = `img/space/${name}.png`;
@@ -1523,6 +1523,70 @@ function tv_space(k, imgName="001") {
     let ox = -s.x1;
     let oy = -s.y1;
 
+    for (let xPos = ox; xPos < W; xPos += img.width) {
+        for (let yPos = oy; yPos < H; yPos += img.height) {
+            x.drawImage(
+                img,
+                xPos,
+                yPos,
+                img.width,
+                img.height
+            );
+        }
+    }
+}
+
+// ฟังก์ชันสุ่มชื่อรูปภาพจากรายการ 001 - 020
+function getRandomSpaceImgName() {
+    let randomNum = Math.floor(Math.random() * 33) + 1;
+    return String(randomNum).padStart(3, '0');
+}
+
+function tv_space_random(k) {
+    // 1. กำหนดค่าเริ่มต้นให้กับ State ถ้ายังไม่มี
+    if (!S.tv_space) {
+        S.tv_space = {
+            x1: 0,
+            y1: 0,
+            speedX: 5,
+            speedY: 1,
+            currentImgName: getRandomSpaceImgName(), // รูปเริ่มต้นจากการสุ่ม
+            lastSwitchTime: Date.now()                // บันทึกเวลาเริ่มต้น
+        };
+    }
+
+    let s = S.tv_space;
+
+    // 2. ตรวจสอบว่าผ่านไปครบ 60 วินาที (60,000 ms) หรือยัง
+    const now = Date.now();
+    if (now - s.lastSwitchTime >= 60000) {
+        s.currentImgName = getRandomSpaceImgName(); // สุ่มรูปใหม่
+        s.lastSwitchTime = now;                     // รีเซ็ตเวลาเริ่มต้นใหม่
+    }
+
+    // 3. ดึงรูปภาพตามคีย์ที่สุ่มได้ปัจจุบัน
+    const img = spaceImages[s.currentImgName];
+
+    // ตรวจสอบการโหลดรูป
+    if (!img?.complete || !img.width) {
+        bg(0);
+        x.fillStyle = "#888";
+        x.font = "20px sans-serif";
+        x.textAlign = "center";
+        x.fillText("Loading...", W/2, H/2);
+        return;
+    }
+
+    bg(0);
+
+    // คำนวณตำแหน่งการเลื่อน (Scrolling)
+    s.x1 = (s.x1 + k * s.speedX) % img.width;
+    s.y1 = (s.y1 + k * s.speedY) % img.height;
+
+    let ox = -s.x1;
+    let oy = -s.y1;
+
+    // วาดรูปต่อกันเต็มหน้าจอ
     for (let xPos = ox; xPos < W; xPos += img.width) {
         for (let yPos = oy; yPos < H; yPos += img.height) {
             x.drawImage(
@@ -5332,11 +5396,8 @@ const scenes = {
     tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
     tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
     tv_spacep1:  	   { category: "tv", type: "canvas", title: "TV SPACE : 1", render: (k) => tv_space(k,"001") }, 
-    tv_spacep2:  	   { category: "tv", type: "canvas", title: "TV SPACE : 2", render: (k) => tv_space(k,"002") }, 
-    tv_spacep3:  	   { category: "tv", type: "canvas", title: "TV SPACE : 3", render: (k) => tv_space(k,"003") }, 
     tv_space2p1:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 1", render: (k) => tv_space2(k,"001") }, 
-    tv_space2p2:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 2", render: (k) => tv_space2(k,"002") }, 
-    tv_space2p3:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 3", render: (k) => tv_space2(k,"003") }, 
+    tv_space_random:	   { category: "tv", type: "canvas", title: "TV SPACE Random", render: (k) => tv_space_random(k) }, 
 
     matrix:    { category: "pc", type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
     matrix2:   { category: "pc", type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
