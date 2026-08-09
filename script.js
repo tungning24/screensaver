@@ -1483,7 +1483,7 @@ function tv_stars(k) {
 
 const spaceImages = {};
 
-for(let i=1;i<=26;i++){
+for(let i=1;i<=27;i++){
     let name = String(i).padStart(3,'0');
     let img = new Image();
     img.src = `img/space/${name}.png`;
@@ -1491,6 +1491,45 @@ for(let i=1;i<=26;i++){
 }
 let spaceImg = new Image();
 spaceImg.src = "img/001.png";
+
+function tv_scroll(k, imageSet, imgName="001") {
+
+    const img = imageSet[imgName];
+
+    if (!img?.complete || !img.width) {
+        bg(0);
+        x.fillStyle = "#888";
+        x.font = "20px sans-serif";
+        x.textAlign = "center";
+        x.fillText("Loading...", W/2, H/2);
+        return;
+    }
+
+    if (!S.tv_scroll) {
+        S.tv_scroll = {
+            x1: 0,
+            y1: 0,
+            speedX: 5,
+            speedY: 1
+        };
+    }
+
+    bg(0);
+
+    let s = S.tv_scroll;
+
+    s.x1 = (s.x1 + k * s.speedX) % img.width;
+    s.y1 = (s.y1 + k * s.speedY) % img.height;
+
+    let ox = -s.x1;
+    let oy = -s.y1;
+
+    for (let xPos = ox; xPos < W; xPos += img.width) {
+        for (let yPos = oy; yPos < H; yPos += img.height) {
+            x.drawImage(img, xPos, yPos);
+        }
+    }
+}
 
 function tv_space(k, imgName="001") {
 
@@ -1538,7 +1577,7 @@ function tv_space(k, imgName="001") {
 
 // ฟังก์ชันสุ่มชื่อรูปภาพจากรายการ 001 - 020
 function getRandomSpaceImgName() {
-    let randomNum = Math.floor(Math.random() * 26) + 1;
+    let randomNum = Math.floor(Math.random() * 27) + 1;
     return String(randomNum).padStart(3, '0');
 }
 
@@ -5395,7 +5434,7 @@ const scenes = {
     tv_blobs:      { category: "tv", type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
     tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
     tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
-    tv_spacep1:  	   { category: "tv", type: "canvas", title: "TV SPACE : 1", render: (k) => tv_space(k,"001") }, 
+    tv_scroll:  	   { category: "tv", type: "canvas", title: "TV SPACE : 1", render: (k) => tv_scroll(k,spaceImages,"001") }, 
     tv_space2p1:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 1", render: (k) => tv_space2(k,"001") }, 
     tv_space_random:	   { category: "tv", type: "canvas", title: "TV SPACE Random", render: (k) => tv_space_random(k) }, 
 

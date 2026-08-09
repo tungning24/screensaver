@@ -66,7 +66,7 @@ tabs{
     <button class="tab-btn" onclick="showTab(2,this)">Palette Converter</button>
 </div>
 
-<!-- TAB 1 https://mynoise.net/-->
+<!-- TAB 1 -->
 <div id="tab1" class="tab-content active">
 
 <h2>Link Generator</h2>
@@ -80,10 +80,13 @@ tabs{
 <br><br>
 
 <label>Start</label>
-<input type="number" id="start" value="1">
+<input type="number" id="start" value="0">
 
 <label>End</label>
-<input type="number" id="end" value="10">
+<input type="number" id="end" value="9">
+
+<label>Digits</label>
+<input type="number" id="digits" value="1" min="1" max="10">
 
 <button onclick="generateLinks()">สร้างลิงก์</button>
 
@@ -91,7 +94,7 @@ tabs{
 
 </div>
 
-<!-- TAB 2 https://coolors.co/palettes/popular/violet -->
+<!-- TAB 2 -->
 <div id="tab2" class="tab-content">
 
 <h2>Palette Converter</h2>
@@ -249,13 +252,15 @@ function generateLinks() {
     const template = document.getElementById("template").value;
     const startNum = parseInt(document.getElementById("start").value);
     const endNum = parseInt(document.getElementById("end").value);
+    const digits = parseInt(document.getElementById("digits").value);
 
     const result = document.getElementById("result");
     result.innerHTML = "";
 
     for(let i = startNum; i <= endNum; i++) {
 
-        const url = template.replaceAll("[genNum]", i);
+        const num = String(i).padStart(digits, "0");
+        const url = template.replaceAll("[genNum]", num);
 
         const div = document.createElement("div");
         div.className = "link-item";
