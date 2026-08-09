@@ -1672,7 +1672,7 @@ function tv_random_scroll(k, imageSet, stateKey="tv_random") {
 
     const now = Date.now();
 
-    if (now - s.lastSwitchTime >= 10000) {
+    if (now - s.lastSwitchTime >= 60000) {
         s.currentImgName = getRandomImgName(imageSet);
         s.lastSwitchTime = now;
     }
