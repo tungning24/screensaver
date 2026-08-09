@@ -77,7 +77,7 @@ const soundConfig = {
       quietude: { title: 'Quietude', levels: [0, 0, 0, 0, 0, 0, 60.61, 0, 0, 75.76] },
       lonelyBird: { title: 'Lonely Bird', levels: [0, 0, 53.03, 45.45, 0, 75.76, 60.61, 60.61, 0, 0] }
     }
-  },
+  },/*
   singingBowl: {
     type: 'multi',
     title: 'Singing Bowls',
@@ -87,7 +87,7 @@ const soundConfig = {
     modes: {
       natural:  { title: 'Natural', levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45] }
     }
-  },
+  },*/
   unrealOcean: {
     type: 'multi',
     title: 'Unreal Ocean',
@@ -106,7 +106,7 @@ const soundConfig = {
       rainyShore: { title: 'Rainy Shore', levels: [0, 0, 37.88, 56.77, 37.88, 56.77, 56.77, 56.77, 75.76, 56.77] },
       underwater: { title: 'Underwater', levels: [0, 53.03, 0, 75.76, 37.88, 0, 0, 0, 0, 0] }
     }
-  },
+  },/*
   stormyWeather: {
     type: 'multi',
     title: 'Stormy Weather',
@@ -121,7 +121,7 @@ const soundConfig = {
       calmRain: { title: 'Calm Rain', levels: [0, 0, 0, 0, 0, 0, 75.76, 60.61, 45.45, 0] },
       sizzlingRain: { title: 'Sizzling Rain', levels: [0, 0, 0, 0, 0, 0, 0, 45.45, 60.61, 75.76] }
     }
-  },
+  },*//*
   calmLake: {
     type: 'multi',
     title: 'Calm Lake',
@@ -138,7 +138,7 @@ const soundConfig = {
       loonCalls: { title: 'Loon Calls', levels: [34.34, 0, 0, 0, 0, 0, 0, 68.69, 68.69, 0] },
       windyLake: { title: 'Windy Lake', levels: [61.01, 22.93, 0, 0, 0, 0, 0, 22.93, 22.93, 68.69] }
     }
-  },
+  },*//*
   distantThunder: {
     type: 'multi',
     title: 'Distant Thunder',
@@ -154,7 +154,7 @@ const soundConfig = {
       summerRain: { title: 'Summer Rain', levels: [51.52, 51.52, 51.52, 0, 0, 0, 0, 51.52, 51.52, 51.52] },
       almostGone: { title: 'Almost Gone', levels: [0, 56.57, 0, 0, 56.57, 0, 0, 28.28, 49.49, 49.49] }
     }
-  },
+  },*/
   healingWater: {
     type: 'multi',
     title: 'Healing Water',
@@ -171,6 +171,64 @@ const soundConfig = {
       calming: { title: 'Calming', levels: [0, 54.55, 0, 68.69, 0, 0, 56.57, 0, 0, 0] },
       walkwithMe: { title: 'Walk with Me', levels: [75.76, 31.82, 25.66, 0, 36.67, 0, 29.29, 0, 0, 24.44] },
       woodenBridges: { title: 'Wooden Bridges', levels: [75.76, 21.01, 25.25, 0, 0, 0, 0, 0, 0, 0] }
+    }
+  },
+  theFireplace: {
+    type: 'multi',
+    title: 'The Fireplace',
+    folder: 'mp3/theFireplace/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+      natural:  { title: 'Natural', levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45] },
+	  brown: 	{ title: 'Brown',levels: [62.12, 57.17, 52.22, 47.17, 42.22, 37.27, 33.54, 29.8, 26.06, 22.32] },
+	  pink: 	{ title: 'Pink',  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45] },
+	  speechBlocker:    { title: 'Speech Blocker',  levels: [18.89, 29.7, 37.78, 54.04, 62.12, 56.77, 37.78, 28.38, 17.58, 6.77] },
+	  comfy:    { title: 'Comfy',  levels: [68.69, 59.8, 0, 0, 43.23, 0, 0, 30.5, 0, 0] },
+	  warmandCosy:    { title: 'Warm and Cosy',  levels: [0, 75.76, 0, 53.03, 0, 0, 37.88, 0, 0, 0] },
+	  drawingWell:    { title: 'Drawing Well',  levels: [53.13, 47.78, 51.72, 57.07, 49.09, 0, 26.57, 17.27, 6.67, 0] },
+	  sauna:    { title: 'Sauna',  levels: [0, 0, 0, 0, 0, 75.76, 0, 0, 0, 0] },
+	  hotEmbers:    { title: 'Hot Embers',  levels: [0, 0, 0, 0, 0, 0, 0, 68.69, 0, 68.69] },
+	  dampWood:    { title: 'Damp Wood',  levels: [0, 56.77, 56.77, 0, 0, 0, 56.77, 0, 75.76, 0] },
+	  pineLogs:    { title: 'Pine Logs',  levels: [0, 56.77, 56.77, 56.77, 0, 0, 0, 75.76, 0, 0] },
+	  rumble:    { title: 'Rumble',  levels: [75.76, 0, 0, 0, 22.73, 22.73, 22.73, 0, 0, 0] }
+    }
+  },
+  templeBells: {
+    type: 'multi',
+    title: 'Temple Bells',
+    folder: 'mp3/templeBells/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+      natural:  { title: 'Natural', levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45] },
+	  brown:    { title: 'Brown',  levels: [62.12, 57.17, 52.22, 47.17, 42.22, 37.27, 33.54, 29.8, 26.06, 22.32] },
+	  pink:    { title: 'Pink',  levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45] },
+	  speechBlocker:    { title: 'Speech Blocker',  levels: [18.89, 29.7, 37.78, 54.04, 62.12, 56.77, 37.78, 28.38, 17.58, 6.77] },
+	  chiming:    { title: 'Chiming',  levels: [0, 0, 68.69, 41.52, 68.69, 43.13, 0, 44.75, 0, 0] },
+	  tinkling:    { title: 'Tinkling',  levels: [0, 0, 0, 0, 0, 0, 43.33, 65.05, 68.69, 54.24] },
+	  balineseTemple:    { title: 'Balinese Temple',  levels: [0, 29.39, 49.09, 67.07, 68.69, 49.09, 24.55, 0, 37.58, 0] },
+	  tibetanTemple:    { title: 'Tibetan Temple',  levels: [0, 75.76, 0, 56.36, 0, 38.79, 0, 35.25, 0, 35.25] },
+	  pattern1:    { title: 'Pattern 1',  levels: [57.07, 0, 57.07, 0, 57.07, 0, 57.07, 0, 57.07, 0] },
+	  pattern2:    { title: 'Pattern 2',  levels: [0, 57.07, 0, 57.07, 0, 57.07, 0, 57.07, 0, 57.07] },
+	  pattern3:    { title: 'Pattern 3',  levels: [0, 0, 37.88, 0, 45.45, 75.76, 45.45, 0, 37.88, 0] }
+    }
+  },
+  japaneseOase: {
+    type: 'multi',
+    title: 'Japanese Oase',
+    folder: 'mp3/japaneseOase/',
+    volume: 1.0,
+    defaultMode: 'natural',
+    modes: {
+      natural:  { title: 'Natural', levels: [45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45, 45.45] },
+	  suikinkutsu:    { title: 'Suikinkutsu',  levels: [0, 0, 0, 0, 75.76, 60.61, 45.45, 0, 0, 0] },
+	  flowing:    { title: 'Flowing',  levels: [0, 0, 0, 68.69, 49.09, 58.89, 49.09, 0, 0, 0] },
+	  templeRain:    { title: 'Temple Rain',  levels: [0, 0, 75.76, 56.77, 56.77, 0, 0, 0, 0, 0] },
+	  windChimes:    { title: 'Wind Chimes',  levels: [68.69, 68.69, 0, 0, 0, 0, 0, 0, 0, 0] },
+	  praying:    { title: 'Praying',  levels: [56.77, 0, 75.76, 0, 0, 0, 0, 0, 0, 0] },
+	  lonelyShakuhachi:    { title: 'Lonely Shakuhachi',  levels: [0, 0, 0, 0, 0, 56.77, 0, 75.76, 0, 0] },
+	  japaneseSummer:    { title: 'Japanese Summer',  levels: [0, 0, 0, 0, 0, 0, 0, 0, 68.69, 68.69] }
     }
   },
   rainOnTent: {
@@ -1489,8 +1547,24 @@ for(let i=1;i<=27;i++){
     img.src = `img/space/${name}.png`;
     spaceImages[name] = img;
 }
-let spaceImg = new Image();
-spaceImg.src = "img/001.png";
+
+const lavaImages = {};
+
+for(let i=1;i<=15;i++){
+    let name = String(i).padStart(3,'0');
+    let img = new Image();
+    img.src = `img/lava/${name}.png`;
+    lavaImages[name] = img;
+}
+
+const skyImages = {};
+
+for(let i=1;i<=46;i++){
+    let name = String(i).padStart(3,'0');
+    let img = new Image();
+    img.src = `img/sky/${name}.png`;
+    skyImages[name] = img;
+}
 
 function tv_scroll(k, imageSet, imgName="001") {
 
@@ -1576,37 +1650,35 @@ function tv_space(k, imgName="001") {
 }
 
 // ฟังก์ชันสุ่มชื่อรูปภาพจากรายการ 001 - 020
-function getRandomSpaceImgName() {
-    let randomNum = Math.floor(Math.random() * 27) + 1;
-    return String(randomNum).padStart(3, '0');
+function getRandomImgName(imageSet) {
+    const keys = Object.keys(imageSet);
+    return keys[Math.floor(Math.random() * keys.length)];
 }
 
-function tv_space_random(k) {
-    // 1. กำหนดค่าเริ่มต้นให้กับ State ถ้ายังไม่มี
-    if (!S.tv_space) {
-        S.tv_space = {
+function tv_random_scroll(k, imageSet, stateKey="tv_random") {
+
+    if (!S[stateKey]) {
+        S[stateKey] = {
             x1: 0,
             y1: 0,
             speedX: 5,
             speedY: 1,
-            currentImgName: getRandomSpaceImgName(), // รูปเริ่มต้นจากการสุ่ม
-            lastSwitchTime: Date.now()                // บันทึกเวลาเริ่มต้น
+            currentImgName: getRandomImgName(imageSet),
+            lastSwitchTime: Date.now()
         };
     }
 
-    let s = S.tv_space;
+    let s = S[stateKey];
 
-    // 2. ตรวจสอบว่าผ่านไปครบ 60 วินาที (60,000 ms) หรือยัง
     const now = Date.now();
-    if (now - s.lastSwitchTime >= 60000) {
-        s.currentImgName = getRandomSpaceImgName(); // สุ่มรูปใหม่
-        s.lastSwitchTime = now;                     // รีเซ็ตเวลาเริ่มต้นใหม่
+
+    if (now - s.lastSwitchTime >= 10000) {
+        s.currentImgName = getRandomImgName(imageSet);
+        s.lastSwitchTime = now;
     }
 
-    // 3. ดึงรูปภาพตามคีย์ที่สุ่มได้ปัจจุบัน
-    const img = spaceImages[s.currentImgName];
+    const img = imageSet[s.currentImgName];
 
-    // ตรวจสอบการโหลดรูป
     if (!img?.complete || !img.width) {
         bg(0);
         x.fillStyle = "#888";
@@ -1618,23 +1690,15 @@ function tv_space_random(k) {
 
     bg(0);
 
-    // คำนวณตำแหน่งการเลื่อน (Scrolling)
     s.x1 = (s.x1 + k * s.speedX) % img.width;
     s.y1 = (s.y1 + k * s.speedY) % img.height;
 
     let ox = -s.x1;
     let oy = -s.y1;
 
-    // วาดรูปต่อกันเต็มหน้าจอ
     for (let xPos = ox; xPos < W; xPos += img.width) {
         for (let yPos = oy; yPos < H; yPos += img.height) {
-            x.drawImage(
-                img,
-                xPos,
-                yPos,
-                img.width,
-                img.height
-            );
+            x.drawImage(img, xPos, yPos);
         }
     }
 }
@@ -5434,9 +5498,13 @@ const scenes = {
     tv_blobs:      { category: "tv", type: "canvas", title: "TV NEON FLUID BLOBS [60FPS]", render: (k) => tv_blobs(k) }, 
     tv_dvd:        { category: "tv", type: "canvas", title: "TV RETRO DVD DRIFT [60FPS]", render: (k) => tv_dvd(k) }, 
     tv_inkBubbles: { category: "tv", type: "canvas", title: "TV FLOATING BUBBLES", render: (k) => tv_inkBubbles(k) }, 
-    tv_scroll:  	   { category: "tv", type: "canvas", title: "TV SPACE : 1", render: (k) => tv_scroll(k,spaceImages,"001") }, 
-    tv_space2p1:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 1", render: (k) => tv_space2(k,"001") }, 
-    tv_space_random:	   { category: "tv", type: "canvas", title: "TV SPACE Random", render: (k) => tv_space_random(k) }, 
+    tv_scroll_space:  	   { category: "tv", type: "canvas", title: "TV SPACE : 1", render: (k) => tv_scroll(k,spaceImages,"001") }, 
+    tv_scroll_lava:  	   { category: "tv", type: "canvas", title: "TV LAVA : 1", render: (k) => tv_scroll(k,lavaImages,"003") }, 
+    tv_scroll_sky:  	   { category: "tv", type: "canvas", title: "TV SKY : 1", render: (k) => tv_scroll(k,skyImages,"029") }, 
+    //tv_space2p1:	   { category: "tv", type: "canvas", title: "TV SPACE 2Layer : 1", render: (k) => tv_space2(k,"001") }, 
+    tv_random_scroll_space:  { category: "tv", type: "canvas", title: "TV SPACE Random", render: (k) => tv_random_scroll(k,spaceImages,"space") }, 
+    tv_random_scroll_lava:  { category: "tv", type: "canvas", title: "TV LAVA Random", render: (k) => tv_random_scroll(k,lavaImages,"lava") }, 
+    tv_random_scroll_sky:  { category: "tv", type: "canvas", title: "TV SKY Random", render: (k) => tv_random_scroll(k,skyImages,"sky") }, 
 
     matrix:    { category: "pc", type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
     matrix2:   { category: "pc", type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
