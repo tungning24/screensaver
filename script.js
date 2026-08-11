@@ -3636,7 +3636,7 @@ void main(){
             );
 
 
-        v += r*r / (d*d*90.0); //size all hight=small
+        v += r*r / (d*d*75.0); //size all hight=small
     }
 
 
