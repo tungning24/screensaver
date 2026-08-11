@@ -3636,7 +3636,7 @@ void main(){
             );
 
 
-        v += r*r / (d*d*75.0); //size all hight=small
+        v += r*r / (d*d*80.0); //size all hight=small
     }
 
 
@@ -3802,6 +3802,375 @@ gl.bufferData(
 
 
 glReadyInkBubbles = true;
+
+}
+
+let glProgramInkBubbles2 = null;
+let glReadyInkBubbles2 = false;
+let glInkBubbles2Buffer = null;
+
+let inkBubbles2Loc = {
+    pos: null,
+    res: null,
+    time: null,
+    blobs: null,
+    colors: null
+};
+
+
+function inkBubbles2WebGL(k) {
+
+    x.clearRect(0, 0, W, H);
+
+    if (!glReadyInkBubbles2)
+        initInkBubbles2WebGL();
+
+    if (!glProgramInkBubbles2)
+        return;
+
+
+    gl.viewport(
+        0,
+        0,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+    gl.clearColor(
+        0,
+        0,
+        0,
+        0
+    );
+
+    gl.clear(
+        gl.COLOR_BUFFER_BIT
+    );
+
+
+    gl.useProgram(
+        glProgramInkBubbles2
+    );
+
+
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        glInkBubbles2Buffer
+    );
+
+
+    gl.enableVertexAttribArray(
+        inkBubbles2Loc.pos
+    );
+
+
+    gl.vertexAttribPointer(
+        inkBubbles2Loc.pos,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0
+    );
+
+
+    let arr = [];
+
+    for (let b of S.b) {
+
+        b.x += b.vx * k * 8;
+        b.y += b.vy * k * 8;
+
+
+        if (b.x < 0 || b.x > W)
+            b.vx *= -1;
+
+        if (b.y < 0 || b.y > H)
+            b.vy *= -1;
+
+
+        arr.push(
+            b.x / W,
+            1 - b.y / H,
+            b.r / 180
+        );
+    }
+
+
+    while (arr.length < 24)
+        arr.push(0);
+
+    gl.uniform2f(
+        inkBubbles2Loc.res,
+        glCanvas.width,
+        glCanvas.height
+    );
+
+
+    gl.uniform1f(
+        inkBubbles2Loc.time,
+        t
+    );
+
+
+    gl.uniform3fv(
+        inkBubbles2Loc.blobs,
+        new Float32Array(arr)
+    );
+
+
+    const hexToRgb01 = h => {
+
+        let n = parseInt(
+            h.slice(1),
+            16
+        );
+
+        return [
+            ((n >> 16) & 255) / 255,
+            ((n >> 8) & 255) / 255,
+            (n & 255) / 255
+        ];
+    };
+
+
+    const cols = [
+        ...hexToRgb01(tone(0)),
+        ...hexToRgb01(tone(1)),
+        ...hexToRgb01(tone(2))
+    ];
+
+
+    gl.uniform3fv(
+        inkBubbles2Loc.colors,
+        new Float32Array(cols)
+    );
+
+    gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        6
+    );
+}
+
+
+
+function initInkBubbles2WebGL() {
+
+    if (glReadyInkBubbles2)
+        return;
+
+
+    if (!gl) {
+		gl = createGL();
+    }
+
+
+    if (!gl)
+        return;
+
+
+
+const vs = `
+attribute vec2 a_pos;
+
+void main(){
+
+    gl_Position =
+        vec4(
+            a_pos,
+            0.0,
+            1.0
+        );
+}`;
+
+
+
+const fs = `
+precision mediump float;
+
+uniform vec2 u_res;
+uniform float u_time;
+
+uniform vec3 blobs[8];
+uniform vec3 colors[3];
+
+void main(){
+    vec2 uv = gl_FragCoord.xy / u_res.xy;
+
+    vec3 finalColor = vec3(0.0);
+    float totalField = 0.0;
+
+    for(int i = 0; i < 6; i++){
+        vec2 p = blobs[i].xy;
+        float r = blobs[i].z;
+
+        float d = distance(uv, p);
+
+        // 1. พลังงาน Metaball เดิม (ใช้สำหรับหลอมรวมขอบลูกบอลเข้าด้วยกัน)
+        float field = (r * r) / (d * d * 80.0);
+        totalField += field;
+
+        // 2. เลือกสีประจำลูก
+        vec3 ballColor;
+        if (i == 0 || i == 3)      ballColor = colors[0];
+        else if (i == 1 || i == 4) ballColor = colors[1];
+        else                       ballColor = colors[2];
+
+        // 3. --- เทคนิคไล่สีเข้มไปอ่อนอย่างชัดเจน ---
+        // คำนวณระยะห่างจากศูนย์กลางแบบ Normalize (0.0 = ศูนย์กลาง, 1.0 = ขอบรัศมี r)
+        float distFromCenter = clamp(d / r, 0.0, 1.0);
+
+        // กำหนดการไล่สี: 
+        // ตรงกลาง (distFromCenter = 0.0) -> สีเข้มแน่น (ballColor * 1.5)
+        // ตรงขอบ  (distFromCenter = 1.0) -> สีอ่อน/จางมาก (ballColor * 0.1)
+        vec3 gradientColor = mix(ballColor * 1.2, ballColor * 0.1, distFromCenter);
+
+        // สะสมสีตามอิทธิพลของระยะทาง
+        finalColor += gradientColor * field;
+    }
+
+    // เฉลี่ยสีเพื่อไม่ให้สีสว่างไหม้/ตันเป็นสีเดียว
+    if (totalField > 0.0) {
+        finalColor /= totalField;
+    }
+
+    // ตัดขอบให้เห็นเป็นลูกบอล
+    float glowMask = smoothstep(0.2, 0.9, totalField);
+
+    gl_FragColor = vec4(
+        finalColor * glowMask,
+        glowMask
+    );
+}`;
+
+
+
+function shader(type, src){
+
+    let s =
+        gl.createShader(type);
+
+    gl.shaderSource(
+        s,
+        src
+    );
+
+    gl.compileShader(
+        s
+    );
+
+
+    if(
+        !gl.getShaderParameter(
+            s,
+            gl.COMPILE_STATUS
+        )
+    ){
+
+        console.error(
+            gl.getShaderInfoLog(s)
+        );
+    }
+
+
+    return s;
+}
+
+
+
+glProgramInkBubbles2 =
+    gl.createProgram();
+
+
+gl.attachShader(
+    glProgramInkBubbles2,
+    shader(
+        gl.VERTEX_SHADER,
+        vs
+    )
+);
+
+
+gl.attachShader(
+    glProgramInkBubbles2,
+    shader(
+        gl.FRAGMENT_SHADER,
+        fs
+    )
+);
+
+
+gl.linkProgram(
+    glProgramInkBubbles2
+);
+
+
+
+if(
+    !gl.getProgramParameter(
+        glProgramInkBubbles2,
+        gl.LINK_STATUS
+    )
+){
+
+    console.error(
+        gl.getProgramInfoLog(
+            glProgramInkBubbles2
+        )
+    );
+
+    return;
+}
+
+
+
+inkBubbles2Loc =
+cacheLocations(
+    gl,
+    glProgramInkBubbles2,
+    [
+        "a_pos"
+    ],
+    [
+        "u_res",
+        "u_time",
+        "blobs[0]",
+        "colors[0]"
+    ]
+);
+
+
+
+// fullscreen quad
+
+glInkBubbles2Buffer =
+    gl.createBuffer();
+
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    glInkBubbles2Buffer
+);
+
+
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+        -1,-1,
+         1,-1,
+        -1, 1,
+
+        -1, 1,
+         1,-1,
+         1, 1
+    ]),
+    gl.STATIC_DRAW
+);
+
+
+
+glReadyInkBubbles2 = true;
 
 }
 
@@ -5479,6 +5848,7 @@ function initCyberGridFloorWebGL() {
 // --- Centralized Scene Registry ---
 const scenes = { 
     inkBubblesWebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES [WebGL]", init: initInkBubblesWebGL, glSceneName: "inkBubblesWebGL", render: (k) => inkBubblesWebGL(k) }, 
+    inkBubbles2WebGL: { category: "webgl", type: "webgl", title: "INK BUBBLES 2 [WebGL]", init: initInkBubbles2WebGL, glSceneName: "inkBubbles2WebGL", render: (k) => inkBubbles2WebGL(k) }, 
     nebulaWebGL:     { category: "webgl", type: "webgl", title: "COSMIC NEBULA[WebGL]", init: initNebulaWebGL, glSceneName: "nebulaWebGL", render: (k) => nebulaWebGL(k) }, 
     matrixWebGL:     { category: "webgl", type: "webgl", title: "Matrix [WebGL]", init: initMatrixWebGL, glSceneName: "matrixWebGL", render: (k) => matrixWebGL(k) }, 
     tunnelWebGL:     { category: "webgl", type: "webgl", title: "Tunnel [WebGL]", init: initTunnelWebGL, glSceneName: "tunnelWebGL", render: (k) => tunnelWebGL(k) }, 
