@@ -4024,7 +4024,15 @@ void main(){
         // กำหนดการไล่สี: 
         // ตรงกลาง (distFromCenter = 0.0) -> สีเข้มแน่น (ballColor * 1.5)
         // ตรงขอบ  (distFromCenter = 1.0) -> สีอ่อน/จางมาก (ballColor * 0.1)
-        vec3 gradientColor = mix(ballColor * 1.2, ballColor * 0.1, distFromCenter);
+        //vec3 gradientColor = mix(ballColor * 1.2, ballColor * 0.1, distFromCenter);
+		float core = 1.0 - distFromCenter;
+
+		vec3 gradientColor =
+			ballColor * (
+				0.05 +
+				pow(core, 1.5) * 0.8 +
+				pow(core, 3.0) * 1.0
+			);
 
         // สะสมสีตามอิทธิพลของระยะทาง
         finalColor += gradientColor * field;
