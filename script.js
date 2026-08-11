@@ -3620,7 +3620,7 @@ void main(){
     float v = 0.0;
 
 
-    for(int i = 0; i < 8; i++){
+    for(int i = 0; i < 5; i++){
 
         vec2 p =
             blobs[i].xy;
