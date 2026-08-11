@@ -3620,7 +3620,7 @@ void main(){
     float v = 0.0;
 
 
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < 5; i++){ //ball count
 
         vec2 p =
             blobs[i].xy;
@@ -3636,7 +3636,7 @@ void main(){
             );
 
 
-        v += r*r / (d*d*30.0);
+        v += r*r / (d*d*60.0); //size all hight=small
     }
 
 
