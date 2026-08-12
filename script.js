@@ -1114,8 +1114,25 @@ function blobs(k, ink = false) {
     S.b.forEach(b => {
         b.x += b.vx * k * (ink ? 8 : 3);
         b.y += b.vy * k * (ink ? 8 : 3);
-        if (b.x < 0 || b.x > W) b.vx *= -1;
-        if (b.y < 0 || b.y > H) b.vy *= -1;
+        if (b.x < 0) {
+			b.x = 0;
+			b.vx = Math.abs(b.vx);
+		}
+
+		if (b.x > W) {
+			b.x = W;
+			b.vx = -Math.abs(b.vx);
+		}
+
+		if (b.y < 0) {
+			b.y = 0;
+			b.vy = Math.abs(b.vy);
+		}
+
+		if (b.y > H) {
+			b.y = H;
+			b.vy = -Math.abs(b.vy);
+		}
         let g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
         g.addColorStop(0, `rgba(${rgb(tone(b.c))},${ink?.3:.45})`);
         g.addColorStop(1, 'transparent');
@@ -1130,8 +1147,25 @@ function inkBubbles(k) {
     S.b.forEach(b => {
         b.x += b.vx * k * 8;
         b.y += b.vy * k * 8;
-        if (b.x < 0 || b.x > W) b.vx *= -1;
-        if (b.y < 0 || b.y > H) b.vy *= -1;
+        if (b.x < 0) {
+			b.x = 0;
+			b.vx = Math.abs(b.vx);
+		}
+
+		if (b.x > W) {
+			b.x = W;
+			b.vx = -Math.abs(b.vx);
+		}
+
+		if (b.y < 0) {
+			b.y = 0;
+			b.vy = Math.abs(b.vy);
+		}
+
+		if (b.y > H) {
+			b.y = H;
+			b.vy = -Math.abs(b.vy);
+		}
 
         let g = x.createRadialGradient(b.x - b.r * .3, b.y - b.r * .3, 1, b.x, b.y, b.r);
         g.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
@@ -1157,8 +1191,25 @@ function tv_inkBubbles(k) {
     for (let b of S.b) {
         b.x += b.vx * k * 8;
         b.y += b.vy * k * 8;
-        if (b.x < 0 || b.x > W) b.vx *= -1;
-        if (b.y < 0 || b.y > H) b.vy *= -1;
+        if (b.x < 0) {
+			b.x = 0;
+			b.vx = Math.abs(b.vx);
+		}
+
+		if (b.x > W) {
+			b.x = W;
+			b.vx = -Math.abs(b.vx);
+		}
+
+		if (b.y < 0) {
+			b.y = 0;
+			b.vy = Math.abs(b.vy);
+		}
+
+		if (b.y > H) {
+			b.y = H;
+			b.vy = -Math.abs(b.vy);
+		}
 
         let col = tone(b.c);
         let g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
@@ -2871,8 +2922,27 @@ function tv_blobs(k) {
     S.tv_blobs.forEach(b => {
         b.x += b.vx * k * 2.5;
         b.y += b.vy * k * 2.5;
-        if (b.x < 0 || b.x > W) b.vx *= -1;
-        if (b.y < 0 || b.y > H) b.vy *= -1;
+        //if (b.x < 0 || b.x > W) b.vx *= -1;
+        //if (b.y < 0 || b.y > H) b.vy *= -1;
+		if (b.x < 0) {
+			b.x = 0;
+			b.vx = Math.abs(b.vx);
+		}
+
+		if (b.x > W) {
+			b.x = W;
+			b.vx = -Math.abs(b.vx);
+		}
+
+		if (b.y < 0) {
+			b.y = 0;
+			b.vy = Math.abs(b.vy);
+		}
+
+		if (b.y > H) {
+			b.y = H;
+			b.vy = -Math.abs(b.vy);
+		}
         
         let g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
         g.addColorStop(0, `rgba(${rgb(tone(b.c))}, 0.5)`);
@@ -3496,11 +3566,25 @@ function inkBubblesWebGL(k) {
         b.y += b.vy * k * 8;
 
 
-        if (b.x < 0 || b.x > W)
-            b.vx *= -1;
+        if (b.x < 0) {
+			b.x = 0;
+			b.vx = Math.abs(b.vx);
+		}
 
-        if (b.y < 0 || b.y > H)
-            b.vy *= -1;
+		if (b.x > W) {
+			b.x = W;
+			b.vx = -Math.abs(b.vx);
+		}
+
+		if (b.y < 0) {
+			b.y = 0;
+			b.vy = Math.abs(b.vy);
+		}
+
+		if (b.y > H) {
+			b.y = H;
+			b.vy = -Math.abs(b.vy);
+		}
 
 
         arr.push(
@@ -3511,7 +3595,7 @@ function inkBubblesWebGL(k) {
     }
 
 
-    while (arr.length < 24)
+    while (arr.length < 18)
         arr.push(0);
 
     gl.uniform2f(
@@ -3606,7 +3690,7 @@ precision mediump float;
 uniform vec2 u_res;
 uniform float u_time;
 
-uniform vec3 blobs[8];
+uniform vec3 blobs[6];
 uniform vec3 colors[3];
 
 
@@ -3620,7 +3704,7 @@ void main(){
     float v = 0.0;
 
 
-    for(int i = 0; i < 5; i++){ //ball count
+    for(int i = 0; i < 6; i++){ //ball count
 
         vec2 p =
             blobs[i].xy;
@@ -3882,11 +3966,25 @@ function inkBubbles2WebGL(k) {
         b.y += b.vy * k * 8;
 
 
-        if (b.x < 0 || b.x > W)
-            b.vx *= -1;
+        if (b.x < 0) {
+			b.x = 0;
+			b.vx = Math.abs(b.vx);
+		}
 
-        if (b.y < 0 || b.y > H)
-            b.vy *= -1;
+		if (b.x > W) {
+			b.x = W;
+			b.vx = -Math.abs(b.vx);
+		}
+
+		if (b.y < 0) {
+			b.y = 0;
+			b.vy = Math.abs(b.vy);
+		}
+
+		if (b.y > H) {
+			b.y = H;
+			b.vy = -Math.abs(b.vy);
+		}
 
 
         arr.push(
@@ -3897,7 +3995,7 @@ function inkBubbles2WebGL(k) {
     }
 
 
-    while (arr.length < 24)
+    while (arr.length < 18)
         arr.push(0);
 
     gl.uniform2f(
@@ -3992,7 +4090,7 @@ precision mediump float;
 uniform vec2 u_res;
 uniform float u_time;
 
-uniform vec3 blobs[8];
+uniform vec3 blobs[6];
 uniform vec3 colors[3];
 
 void main(){
