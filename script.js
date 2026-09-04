@@ -24,6 +24,46 @@ let W, H, last = 0,
     S = {},
     theme = localStorage.screenTheme || 'normal';
 
+// The video stays off-DOM and is composited into the existing 2D canvas.
+let ponponponVideo = null;
+
+function getPonponponVideo() {
+    if (ponponponVideo) return ponponponVideo;
+
+    ponponponVideo = document.createElement('video');
+    ponponponVideo.src = 'vdo/vdo02.mp4';
+    ponponponVideo.loop = true;
+    ponponponVideo.preload = 'auto';
+    ponponponVideo.playsInline = true;
+    // Muted enables autoplay in modern browsers while the video is rendered to canvas.
+    ponponponVideo.muted = true;
+    return ponponponVideo;
+}
+
+function playPonponponVideo() {
+    const playback = getPonponponVideo().play();
+    if (playback) playback.catch(() => {});
+}
+
+function stopPonponponVideo() {
+    if (ponponponVideo) ponponponVideo.pause();
+}
+
+function ponponponVideoScene() {
+    const video = getPonponponVideo();
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        x.fillStyle = '#000';
+        x.fillRect(0, 0, W, H);
+        return;
+    }
+
+    // Cover sizing preserves the video aspect ratio while filling the canvas.
+    const scale = Math.max(W / video.videoWidth, H / video.videoHeight);
+    const drawW = video.videoWidth * scale;
+    const drawH = video.videoHeight * scale;
+    x.drawImage(video, (W - drawW) / 2, (H - drawH) / 2, drawW, drawH);
+}
+
 // --- Sound Configuration ---
 const soundConfig = {
   rain: {
@@ -5982,6 +6022,7 @@ const scenes = {
     tv_random_scroll_lava:  { category: "tv", type: "canvas", title: "TV LAVA Random", render: (k) => tv_random_scroll(k,lavaImages,"lava") }, 
     tv_random_scroll_sky:  { category: "tv", type: "canvas", title: "TV SKY Random", render: (k) => tv_random_scroll(k,skyImages,"sky") }, 
 
+    video_ponponpon: { category: "pc", type: "canvas", title: "PONPONPON VIDEO", render: () => ponponponVideoScene() },
     matrix:    { category: "pc", type: "canvas", title: "MATRIX FLOW", render: (k) => matrix(k) }, 
     matrix2:   { category: "pc", type: "canvas", title: "AUTHENTIC MATRIX", render: (k) => matrix2(k) }, 
     stars:     { category: "pc", type: "canvas", title: "STARFIELD", render: (k) => stars(k) }, 
@@ -6098,6 +6139,9 @@ function renderSceneOptions() {
 function pick(v) {
     const sc = scenes[v] ? v : 'tv_clock';
     scene = sc;
+
+    if (sc === 'video_ponponpon') playPonponponVideo();
+    else stopPonponponVideo();
 
     const currentSceneObj = scenes[sc];
 
